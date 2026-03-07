@@ -414,7 +414,7 @@ namespace HelpersGUI {
 				_tcsncpy_s(buff, BUF_LEN, CNLS::GetString(_T("Pasting image from clipboard failed!")), BUF_LEN);
 				break;
 			case FileLoad_LoadError:
-				_stprintf_s(buff, BUF_LEN, CNLS::GetString(_T("The file '%s' could not be read! (%d)")), sFailedFileName, nLoadErrorDetail);
+				_stprintf_s(buff, BUF_LEN, CNLS::GetString(_T("The file '%s' could not be read!")), sFailedFileName, nLoadErrorDetail);
 				break;
 			case FileLoad_SlideShowListInvalid:
 				_stprintf_s(buff, BUF_LEN, CNLS::GetString(_T("The file '%s' does not contain a list of file names!")), sFailedFileName);
