@@ -40,10 +40,19 @@ CJPEGImage* CJPEGProvider::RequestImage(CFileList* pFileList, EReadAheadDirectio
 		return NULL;
 	}
 
+	/*
+	Outline on how this is supposed to work:
+		1. Process and finish current request, assuming the default m_nNumThread=1.
+		2. Start read-ahead requests 50/50 in forward and backward direction.
+		3. Remove anything from cache that's not
+			a.) the currently requested image
+			b.) a read-ahead request
+			c.) the marked toggle image
+			d.) in case the current image is multiframe, but not container - all frames of current image
+	*/
+
 	// Search if we have the requested image already present or in progress
 	CImageRequest* pRequest = FindRequest(strFileName, nFrameIndex);
-	bool bDirectionChanged = eDirection != m_eOldDirection || eDirection == TOGGLE;
-	bool bRemoveAlsoActiveRequests = (eDirection == TOGGLE && eDirection != m_eOldDirection); // we use a symmetrical cache, so direction changes don't make our cache invalid.
 	bool bWasOutOfMemory = false;
 	m_eOldDirection = eDirection;
 
@@ -51,9 +60,9 @@ CJPEGImage* CJPEGProvider::RequestImage(CFileList* pFileList, EReadAheadDirectio
 		// no request pending for this file, add to request queue and start async
 		pRequest = StartNewRequest(strFileName, nFrameIndex, processParams);
 		// wait with read ahead when direction changed - maybe user just wants to re-see last image
-		if (!bDirectionChanged && eDirection != NONE) {
+		if (eDirection == FORWARD || eDirection == BACKWARD) {
 			// start parallel if more than one thread
-			StartNewRequestBundle(pFileList, eDirection, processParams, m_nNumThread - 1, NULL);
+			StartNewRequestBundle(pFileList, eDirection, processParams, m_nNumThread - 1, pRequest);
 		}
 	}
 
@@ -95,44 +104,13 @@ CJPEGImage* CJPEGProvider::RequestImage(CFileList* pFileList, EReadAheadDirectio
 		}
 	}
 
-//[GF] Do the cleanup later. We first need StartNewRequestBundle() to mark all files to keep in cache as IsActive.
-/*
-	// cleanup stuff no longer used
-	RemoveUnusedImages(bRemoveAlsoActiveRequests);
-	ClearOldestInactiveRequest();
-*/
-
 	// Check if we shall start new requests. (But don't start another request if we are short of memory.)
-	if (!bWasOutOfMemory && eDirection != NONE) {
-		SetAllRequestsInactive();	// The caching relevant requests will be set active again in StartNewRequestBundle().
-		pRequest->IsActive = true;	// Set current request back to active.
-
-		// Based on https://github.com/aviscaerulea/jpegview-nt.git
-		int nAvailableSlots = m_nNumBuffers - 1;
-		if (nAvailableSlots > 0) {
-			// Number of read-ahead pages in reverse direction
-			int nBackwardRequests = max(0, (nAvailableSlots >> 1));
-			
-			// Number of read ahead pages in direction of travel
-			int nForwardRequests = max(1, nAvailableSlots - nBackwardRequests);
-
-			// "No bidirectional read-ahead for TOGGLE (only for switching between 2 images)"
-			if (eDirection == TOGGLE) {
-				nBackwardRequests = 0;
-			}
-
-			// "Predicting the direction of travel"
-			StartNewRequestBundle(pFileList, eDirection, processParams, nForwardRequests, pRequest);
-
-			// "Backward read-ahead (non-TOGGLE)"
-			if (nBackwardRequests > 0) {
-				EReadAheadDirection eReverseDirection = (eDirection == FORWARD) ? BACKWARD : FORWARD;
-				StartNewRequestBundle(pFileList, eReverseDirection, processParams, nBackwardRequests, pRequest);
-			}
+	if (eDirection == FORWARD || eDirection == BACKWARD) {
+		if (!bWasOutOfMemory) {
+			StartNewRequestBundle(pFileList, eDirection, processParams, m_nNumBuffers - 1, pRequest);
 		}
+		RemoveUnusedImages(false);
 	}
-	
-	RemoveUnusedImages(bRemoveAlsoActiveRequests);
 
 	bOutOfMemory = pRequest->OutOfMemory;
 	bExceptionError = pRequest->ExceptionError;
@@ -247,10 +225,32 @@ void CJPEGProvider::StartNewRequestBundle(CFileList* pFileList, EReadAheadDirect
 	if (nNumRequests == 0 || pFileList == NULL) {
 		return;
 	}
+
+	// Set all reqests (except for the marked toggle file) inactive for now
+	// The caching relevant requests will be set active again in StartNewRequestBundle().
+	SetAllRequestsInactive(pFileList);
+	if (pLastReadyRequest != NULL) {
+		pLastReadyRequest->IsActive = true;	// Set current request back to active.
+	}
+
+	// Todo: Add way to keep animations comletely in cache
+
+
+	int iDistance = 0;
+
 	for (int i = 0; i < nNumRequests; i++) {
+		// This will produce 1, -1, 2, -2, etc. until we run out of nNumRequests
+		if (iDistance < 1) {
+			iDistance = -iDistance + 1;
+		} else {
+			iDistance = -iDistance;
+		}
+		
+		eDirection = (iDistance > 0) ? FORWARD : BACKWARD;
+
 		bool bSwitchImage = true;
-		int nFrameIndex = (pLastReadyRequest != NULL) ? Helpers::GetFrameIndex(pLastReadyRequest->Image, (eDirection == BACKWARD) ? -(i+1) : (i+1), true, bSwitchImage) : 0;
-		LPCTSTR sFileName = bSwitchImage ? pFileList->PeekNextPrev(i + 1, eDirection == FORWARD, eDirection == TOGGLE) : pFileList->Current();
+		int nFrameIndex = (pLastReadyRequest != NULL) ? Helpers::GetFrameIndex(pLastReadyRequest->Image, iDistance, true, bSwitchImage) : 0;
+		LPCTSTR sFileName = bSwitchImage ? pFileList->PeekNextPrev((iDistance>0) ? iDistance : -iDistance, eDirection == FORWARD, eDirection == TOGGLE) : pFileList->Current();
 		if (sFileName != NULL) {
 			CImageRequest* pRequest = FindRequest(sFileName, nFrameIndex);
 			if (pRequest == NULL) {
@@ -383,10 +383,25 @@ void CJPEGProvider::ClearOldestInactiveRequest() {
 	}
 }
 
-void CJPEGProvider::SetAllRequestsInactive() {
+void CJPEGProvider::SetAllRequestsInactive(CFileList* pFileList) {
+	LPCTSTR sFileMarkedForToggle = NULL;
+	if (pFileList != NULL) {
+		sFileMarkedForToggle = pFileList->GetFileMarkedForToggle();
+	}
+	
 	std::list<CImageRequest*>::iterator iter;
-	for (iter = m_requestList.begin( ); iter != m_requestList.end( ); iter++ ) {
-		(*iter)->IsActive = false;
+	if (sFileMarkedForToggle == NULL) {
+		for (iter = m_requestList.begin( ); iter != m_requestList.end( ); iter++ ) {
+			(*iter)->IsActive = false;
+		}
+	} else {
+			for (iter = m_requestList.begin( ); iter != m_requestList.end( ); iter++ ) {
+				if (_tcscmp((*iter)->FileName, sFileMarkedForToggle) != 0) { // _tcsicmp?
+					(*iter)->IsActive = false;
+				} else {
+					(*iter)->IsActive = true;
+				}
+			}
 	}
 }
 

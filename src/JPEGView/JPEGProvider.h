@@ -127,5 +127,5 @@ private:
 	void DeleteElement(CImageRequest* pRequest);
 	bool IsDestructivelyProcessed(CJPEGImage* pImage);
 
-/*GF*/	void SetAllRequestsInactive();
+/*GF*/	void SetAllRequestsInactive(CFileList* pFileList);
 };

@@ -1020,3 +1020,11 @@ bool CFileList::IsEndpoint() {
 
 	return false;
 }
+
+// Used by JPEGProvider to keep buffer for marked toggle file alive
+LPCTSTR CFileList::GetFileMarkedForToggle() {
+	if (!m_sMarkedFile.IsEmpty())
+		return  (LPCTSTR)m_sMarkedFile;
+
+	return NULL;
+}

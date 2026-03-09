@@ -146,6 +146,7 @@ public:
 	void DeleteHistory(bool onlyForward = false);
 
 /*GF*/	bool IsEndpoint();	// Check if at the beginning or end of the file list. Used by custom function SaveBookmark()
+/*GF*/	LPCTSTR GetFileMarkedForToggle();
 
 private:
 	static Helpers::ENavigationMode sm_eMode;
