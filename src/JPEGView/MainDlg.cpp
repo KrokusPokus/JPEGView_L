@@ -3999,16 +3999,6 @@ void CMainDlg::AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool n
 				m_dZoom = m_pCurrentImage->GetInititialZoom();
 				m_offsets = m_pCurrentImage->GetInitialOffsets();
 
-				// [GF] Adjust m_offsets for BookMode
-				if (GetAutoZoomMode() == Helpers::ZM_BookMode) {
-					if (bMoveBack == false)
-						m_offsets = CPoint(-65000,65000);	// Book page RTL manga mode: focus top right (RTL). TODO: implement LTR option. (Not really needed - in BookMode, the page is never wider than window.)
-					else
-						m_offsets = CPoint(65000,-65000);	// Book page RTL mode: focus bottom left (RTL). TODO: implement LTR option. (Not really needed - in BookMode, the page is never wider than window.)
-		
-					m_offsets_custom = m_offsets;
-				}
-
 				if (m_pCurrentImage->HasZoomStoredInParamDB()) {
 					m_bUserZoom = m_bUserPan = true;
 				}
@@ -4023,6 +4013,15 @@ void CMainDlg::AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool n
 			}
 			if (m_bKeepParams) {
 				m_nRotation = m_pCurrentImage->GetInitialRotation() + m_nUserRotation;
+			}
+			// [GF] Adjust m_offsets for BookMode
+			if (GetAutoZoomMode() == Helpers::ZM_BookMode) {
+				if (bMoveBack == false)
+					m_offsets = CPoint(-65000,65000);	// Book page RTL manga mode: focus top right (RTL). TODO: implement LTR option. (Not really needed - in BookMode, the page is never wider than window.)
+				else
+					m_offsets = CPoint(65000,-65000);	// Book page RTL mode: focus bottom left (RTL). TODO: implement LTR option. (Not really needed - in BookMode, the page is never wider than window.)
+	
+				m_offsets_custom = m_offsets;
 			}
 		}
 		if (!bAfterStartup && !m_bIsAnimationPlaying && !noAdjustWindow) {
