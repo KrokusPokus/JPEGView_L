@@ -486,7 +486,7 @@ Zoom to Selection		தேர்வுக்கு பெரிதாக்கு
 //! Home page of this fork
 //! Software:
 
-// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-07T23:55:05.740541+00:00 //
+// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-09T22:21:30.524197+00:00 //
 //! Translation Progress: 99%
 //! * Total (Strings + Menu) = 431
 //! * Done = 426

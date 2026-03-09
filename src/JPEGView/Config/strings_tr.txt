@@ -491,7 +491,7 @@ Zoom to Selection	Seçime yakınlaştır
 //! in
 //! Normal
 
-// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-07T23:55:05.777253+00:00 //
+// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-09T22:21:30.564447+00:00 //
 //! Translation Progress: 99%
 //! * Total (Strings + Menu) = 431
 //! * Done = 426

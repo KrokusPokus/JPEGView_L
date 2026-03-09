@@ -490,7 +490,7 @@ Zoom to Selection	Povečaj na izbiro
 //! C - R
 //! Filter:
 
-// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-07T23:55:05.631985+00:00 //
+// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-09T22:21:30.417525+00:00 //
 //! Translation Progress: 99%
 //! * Total (Strings + Menu) = 431
 //! * Done = 426

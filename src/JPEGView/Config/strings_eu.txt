@@ -539,7 +539,7 @@ Zoom to Selection	Zooma Hautapenean
 //! Hide window title bar
 //! Set window always on top
 
-// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-07T23:55:04.768986+00:00 //
+// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-09T22:21:29.954525+00:00 //
 //! Translation Progress: 90%
 //! * Total (Strings + Menu) = 431
 //! * Done = 389

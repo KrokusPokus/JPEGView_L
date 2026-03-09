@@ -566,7 +566,7 @@ Zoom to Selection	Масштабувати до виділеного
 //! Update user settings...
 //! Set current parameters as default values...
 
-// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-07T23:55:05.810427+00:00 //
+// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-09T22:21:30.598843+00:00 //
 //! Translation Progress: 85%
 //! * Total (Strings + Menu) = 431
 //! * Done = 366
