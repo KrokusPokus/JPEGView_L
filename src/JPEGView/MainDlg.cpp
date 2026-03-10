@@ -332,7 +332,7 @@ void CMainDlg::SetStartupInfo(LPCTSTR sStartupFile, int nAutostartSlideShow, Hel
 
 LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/) {
 	// 	UpdateWindowTitle();
-	// There is no point doing a full UpdateWindowTitle() yet, since we don't know any file path yet, so just do SetWindowText() instead
+	// There is no point doing a full UpdateWindowTitle() at this point since we don't know any file path yet, so just do SetWindowText() instead
 	this->SetWindowText(_T("JPEGView"));
 
 	// set the scaling of the screen (DPI) compared to 96 DPI (design value)
@@ -2263,8 +2263,8 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_TOGGLE_AUTO_ZOOM_FIT:
 			{
 			// This command is meant to be used with keyboard shortcuts.
-			// It is toggles the AutoZoomMode between FitToScreen and None,
-			// or, in case of BookMode, between BookMode and None.
+			// It toggles the AutoZoomMode between FitToScreen and None,
+			// or, in case of BookMode, between FitToScreen and BookMode.
 			// This is meant as an alternative to IDM_TOGGLE_FIT_TO_SCREEN_100_PERCENTS,
 			// which changes the view size only for the current image.
 				bool bIsBookModeFile = false;
@@ -3962,7 +3962,7 @@ void CMainDlg::ExchangeProcessingParams() {
 }
 
 void CMainDlg::AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool noAdjustWindow, bool bMoveBack) {
-	UpdateWindowTitle(false);
+	UpdateWindowTitle();
 	InvalidateHelpDlg();
 	m_pDirectoryWatcher->SetCurrentFile(CurrentFileName(false));
 	if (!m_bIsAnimationPlaying) m_pNavPanelCtl->HideNavPanelTemporary();

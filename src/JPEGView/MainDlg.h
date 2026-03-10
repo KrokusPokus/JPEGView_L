@@ -205,7 +205,7 @@ public:
 	void DisplayFileName(const CRect& imageProcessingArea, CDC& dc, double realizedZoom);
 	void BlendBlackRect(CDC & targetDC, CPanel& panel, float fBlendFactor);
 
-	void UpdateWindowTitle(bool bForce);
+	void UpdateWindowTitle(bool bForce = false);
 	void MouseOff();
 	void MouseOn();
 	void GotoImage(EImagePosition ePos);
