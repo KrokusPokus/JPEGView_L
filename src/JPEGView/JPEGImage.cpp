@@ -30,7 +30,7 @@ static void RotateInplace(const CSize& imageSize, double& dX, double& dY, double
 static bool SupportsSIMD(Helpers::CPUType cpuType) {
 	switch (cpuType)
 	{
-//	case Helpers::CPU_MMX:
+	case Helpers::CPU_MMX:
 	case Helpers::CPU_SSE:
 	case Helpers::CPU_AVX2:
 		return true;
@@ -590,7 +590,6 @@ void* CJPEGImage::Resample(CSize fullTargetSize, CSize clippingSize, CPoint targ
 
 	if (GetProcessingFlag(eProcFlags, PFLAG_HighQualityResampling) && 
 		!(eResizeType == NoResize) && (filter>0)) {
-/*GF*/	dSharpen = 0.0;		// [GF] Todo: Set this at some better place
 		if (SupportsSIMD(cpu)) {
 			if (eResizeType == UpSample) {
 				return CBasicProcessing::SampleUp_HQ_SIMD(fullTargetSize, targetOffset, clippingSize, 

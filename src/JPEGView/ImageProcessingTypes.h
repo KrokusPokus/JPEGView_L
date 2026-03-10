@@ -20,6 +20,9 @@ enum EFilterType {
 	Filter_Downsampling_Mitchell,
 	Filter_Downsampling_Catrom,
 	Filter_Downsampling_Lanczos2,
+	Filter_Downsampling_Best_Quality,  // prefer this filter for sampling down
+	Filter_Downsampling_No_Aliasing, // this is a Lanczos type filter
+	Filter_Downsampling_Narrow, // as Filter_Downsampling_Best_Quality but narrow support
 	Filter_Upsampling_Bicubic
 };
 
@@ -44,7 +47,7 @@ enum EImageFormat {
 	IF_QOI,
 	IF_PSD,
 	IF_ICO,
-    IF_WIC,
+	IF_WIC,
 	IF_CLIPBOARD,
 	IF_CameraRAW,
 	IF_JPEG_Embedded, // JPEG embedded in another file, e.g. camera raw

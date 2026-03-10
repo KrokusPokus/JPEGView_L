@@ -354,6 +354,7 @@ void CJPEGProvider::RemoveUnusedImages(bool bRemoveAlsoActiveRequests) {
 			if (nSmallestTimeStamp < INT_MAX) {
 				bRemoved = true;
 				nTimeStampToRemove = nSmallestTimeStamp;
+
 			}
 		}
 	} while (bRemoved); // repeat until no element could be removed anymore

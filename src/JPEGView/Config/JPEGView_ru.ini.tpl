@@ -316,11 +316,12 @@ ReloadWhenDisplayedImageChanged=true
 ; Если "true", то по умолчанию используется высококачественное сглаживание.
 HighQualityResampling=true
 
-; DownSamplingFilter can be None, Hermite, Mitchell, Catrom or Laczos2
+; Значение параметра "DownSamplingFilter" может быть "None", "Hermite", "Mitchell", "Catrom" или "Laczos2".
 ; Hermite (B=0, C=0)		Sharpness: 0, Ringing 0
 ; Mitchell (B=1/3, C=1/3)	Sharpness: 1, Ringing 1
-; Catrom (B=0, C=0.5)		Sharpness: 2, Ringing 2
+; Catrom (B=0, C=0.5)		Sharpness: 2, Ringing 2 <- Рекомендуется
 ; Lanczos2					Sharpness: 2, Ringing 2
+; Устаревшие методы "BestQuality", "NoAliasing" и "Narrow" технически все еще доступны, но их следует избегать по соображениям качества.
 DownSamplingFilter=Catrom
 
 ; Включить/отключить автоматический поворот JPEG-изображений
@@ -395,7 +396,7 @@ Saturation=1.0
 ; Повышение резкости для уменьшаемых изображений (0 .. 0.5).
 ; При масштабе 100% и использовании фильтра BestQuality резкость не повышается,
 ; усиление действует только для других фильтров.
-Sharpen=0.3
+Sharpen=0.0
 
 
 

@@ -137,6 +137,7 @@ CSettingsProvider::CSettingsProvider(void) {
 	else {
 		m_eCPUAlgorithm = Helpers::ProbeCPU();
 	}
+
 	m_nNumCores = GetInt(_T("CPUCoresUsed"), 0, 0, 128);
 	if (m_nNumCores == 0) {
 /*
@@ -145,7 +146,6 @@ CSettingsProvider::CSettingsProvider(void) {
 */
 		m_nNumCores = Helpers::NumConcurrentThreads();
 	}
-
 
 	CString sDownSampling = GetString(_T("DownSamplingFilter"), _T("Catrom"));
 	if (sDownSampling.CompareNoCase(_T("None")) == 0) {
@@ -162,6 +162,15 @@ CSettingsProvider::CSettingsProvider(void) {
 	}
 	else if (sDownSampling.CompareNoCase(_T("Lanczos2")) == 0) {
 		m_eDownsamplingFilter = Filter_Downsampling_Lanczos2;
+	}
+	else if (sDownSampling.CompareNoCase(_T("NoAliasing")) == 0) {
+		m_eDownsamplingFilter = Filter_Downsampling_No_Aliasing;
+	}
+	else if (sDownSampling.CompareNoCase(_T("Narrow")) == 0) {
+		m_eDownsamplingFilter = Filter_Downsampling_Narrow;
+	}
+	else if (sDownSampling.CompareNoCase(_T("BestQuality")) == 0) {
+		m_eDownsamplingFilter = Filter_Downsampling_Best_Quality;
 	}
 	else {
 		m_eDownsamplingFilter = Filter_Downsampling_Catrom;
