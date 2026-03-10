@@ -188,7 +188,7 @@ public:
 /*GF*/	bool AllowSmoothPanning() { return m_bSmoothPanning; }
 /*GF*/	bool SmartPanningKeys() { return m_bSmartPanningKeys; }
 /*GF*/	bool TitleBarUseFileIcon() { return m_bTitleBarUseFileIcon; }
-/*GF*/	int ReadAheadBuffers() { return m_nReadAheadBuffers; }
+/*GF*/	int CacheRange() { return m_nCacheRange; }
 
 private:
 	static CSettingsProvider* sm_instance;
@@ -351,5 +351,5 @@ private:
 /*GF*/	bool m_bSmoothPanning;
 /*GF*/	bool m_bSmartPanningKeys;
 /*GF*/	bool m_bTitleBarUseFileIcon;
-/*GF*/	int m_nReadAheadBuffers;
+/*GF*/	int m_nCacheRange;
 };

@@ -63,9 +63,10 @@ CPUType=AutoDetect
 ; There are diminishing returns in processing speed when going beyond 4. Memory bandwidth might be the limiting factor.
 CPUCoresUsed=0
 
-; Number of files to preload and keep cached (beyond the currently displayed one).
-; Specify a value between 1 and 8. [Default: 4]
-ReadAheadBuffers=4
+; Distance in file list for which decoded images will be kept in cache to speed up access.
+; The default of 2 means: Two pages forward + two pages backward.
+; Specify a value between 0 and 8. [Default: 2]
+CacheRange=2
 
 ; Editor for INI files
 ; notepad : Use notepad.exe

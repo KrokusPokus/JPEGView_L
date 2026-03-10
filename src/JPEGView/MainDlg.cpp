@@ -467,16 +467,7 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	CProcessingThreadPool::This().CreateThreadPoolThreads();
 
 
-// Setting this to higher values will not only read more files ahead, since NUM_THREADS is still only 1,
-// it will keep more of the already read file data cached, and, more importantly, will prevent more resampled
-// DIBs from being thrown away. (DIBs are deleted the same time as file cache data)
-// Of course, with large images, we will be starting to use a crapload of memory really fast
-// Keep in mind that there is only this one pool for buffering images already seen and images that are read ahead,
-// so when using NUM_THREADS=1 and READ_AHEAD_BUFFERS=5, we will read ahead 1 image, and keep cached the 1 present
-// image as well as the previous 3 images.
-// When using READ_AHEAD_BUFFERS=2, as the original author suggested, we would have a file buffer of the
-// next and current file and a DIB buffer of the current, but no file nor dib buffer for the previous files.
-	int nReadAheadBuffers = CSettingsProvider::This().ReadAheadBuffers() + 1;	// The +1 is the current image
+	int nReadAheadBuffers = CSettingsProvider::This().CacheRange()*2 + 1;	// The +1 is the current image
 	
 	// create JPEG provider and request first image - do no processing yet if not in fullscreen mode (as we do not know the size yet)
 	m_pJPEGProvider = new CJPEGProvider(m_hWnd, NUM_THREADS, nReadAheadBuffers);

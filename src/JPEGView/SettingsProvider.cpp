@@ -366,10 +366,9 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_bSmartPanningKeys = GetBool(_T("SmartPanningKeys"), true);
 	m_bTitleBarUseFileIcon = GetBool(_T("TitleBarUseFileIcon"), true);
 
-	// based on code by nikai/aviscaerulea
-	// Number of files to preload and keep cached (beyond the currently displayed one).
-	// Default is 4: Two pages forward + two pages backward.
-	m_nReadAheadBuffers = GetInt(_T("ReadAheadBuffers"), 4, 1, 8);
+	// Distance in file list for which decoded images will be kept in cache to speed up access.
+	// The default of 2 means: Two pages forward + two pages backward.
+	m_nCacheRange = GetInt(_T("CacheRange"), 2, 0, 8);
 
 // -------------------------------------------------------------------------------------------
 
