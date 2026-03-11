@@ -226,7 +226,6 @@ private:
 	CString m_sLanguage;
 	Helpers::CPUType m_eCPUAlgorithm;
 	int m_nNumCores;
-	
 	EFilterType m_eDownsamplingFilter;
 	Helpers::ESorting m_eSorting;
 	bool m_bIsSortedAscending;

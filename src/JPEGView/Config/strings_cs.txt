@@ -610,7 +610,7 @@ Zoom to Selection	Zobrazit výběr
 //! Update user settings...
 //! User commands
 
-// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-07T23:55:04.603032+00:00 //
+// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-09T22:21:29.786357+00:00 //
 //! Translation Progress: 73%
 //! * Total (Strings + Menu) = 431
 //! * Done = 316

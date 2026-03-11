@@ -121,6 +121,7 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_fBlendFactorNavPanel = (float)GetDouble(_T("BlendFactorNavPanel"), 0.5, 0.0, 1.0);
 	m_fScaleFactorNavPanel = (float)GetDouble(_T("ScaleFactorNavPanel"), 1.0, 0.8, 2.5);
 
+
 	CString sCPU = GetString(_T("CPUType"), _T("AutoDetect"));
 	if (sCPU.CompareNoCase(_T("Generic")) == 0) {
 		m_eCPUAlgorithm = Helpers::CPU_Generic;
@@ -138,6 +139,7 @@ CSettingsProvider::CSettingsProvider(void) {
 		m_eCPUAlgorithm = Helpers::ProbeCPU();
 	}
 
+
 	m_nNumCores = GetInt(_T("CPUCoresUsed"), 0, 0, 128);
 	if (m_nNumCores == 0) {
 /*
@@ -147,8 +149,18 @@ CSettingsProvider::CSettingsProvider(void) {
 		m_nNumCores = Helpers::NumConcurrentThreads();
 	}
 
+
 	CString sDownSampling = GetString(_T("DownSamplingFilter"), _T("Catrom"));
-	if (sDownSampling.CompareNoCase(_T("None")) == 0) {
+	if (sDownSampling.CompareNoCase(_T("NoAliasing")) == 0) {
+		m_eDownsamplingFilter = Filter_Downsampling_No_Aliasing;
+	}
+	else if (sDownSampling.CompareNoCase(_T("Narrow")) == 0) {
+		m_eDownsamplingFilter = Filter_Downsampling_Narrow;
+	}
+	else if (sDownSampling.CompareNoCase(_T("BestQuality")) == 0) {
+		m_eDownsamplingFilter = Filter_Downsampling_Best_Quality;
+	}
+	else if (sDownSampling.CompareNoCase(_T("None")) == 0) {
 		m_eDownsamplingFilter = Filter_Downsampling_None;
 	}
 	else if (sDownSampling.CompareNoCase(_T("Hermite")) == 0) {
@@ -162,15 +174,6 @@ CSettingsProvider::CSettingsProvider(void) {
 	}
 	else if (sDownSampling.CompareNoCase(_T("Lanczos2")) == 0) {
 		m_eDownsamplingFilter = Filter_Downsampling_Lanczos2;
-	}
-	else if (sDownSampling.CompareNoCase(_T("NoAliasing")) == 0) {
-		m_eDownsamplingFilter = Filter_Downsampling_No_Aliasing;
-	}
-	else if (sDownSampling.CompareNoCase(_T("Narrow")) == 0) {
-		m_eDownsamplingFilter = Filter_Downsampling_Narrow;
-	}
-	else if (sDownSampling.CompareNoCase(_T("BestQuality")) == 0) {
-		m_eDownsamplingFilter = Filter_Downsampling_Best_Quality;
 	}
 	else {
 		m_eDownsamplingFilter = Filter_Downsampling_Catrom;
@@ -187,6 +190,7 @@ CSettingsProvider::CSettingsProvider(void) {
 	} else {
 		m_eSingleInstanceMode = Helpers::SI_PerFolder;
 	}
+
 
 	m_bNavigateMouseWheel = GetBool(_T("NavigateWithMouseWheel"), false);
 	m_dMouseWheelZoomSpeed = GetDouble(_T("MouseWheelZoomSpeed"), 1.0, 0.1, 10);

@@ -10,9 +10,6 @@
 #endif
 #include <math.h>
 #include "LookupTables.h"	// needed for LinRGB12_sRGB8[4096]
-//#include "stdint.h"
-//#include <emmintrin.h>
-//#include <smmintrin.h>
 
 // This macro allows for aligned definition of a 16 byte value with initialization of the 8 components
 // to a single value
@@ -32,14 +29,14 @@ static TCHAR s_TimingInfo[256];
 
 static void* SampleDown_HQ_MMX_SSE_Core(CSize fullTargetSize, CPoint fullTargetOffset, CSize clippedTargetSize,
 	CSize sourceSize, const void* pIJLPixels, int nChannels, double dSharpen,
-	EFilterType eFilter, uint8* pTarget);
+	EFilterType eFilter, bool bSSE, uint8* pTarget);
 
 static void* SampleDown_HQ_AVX_Core(CSize fullTargetSize, CPoint fullTargetOffset, CSize clippedTargetSize,
 	CSize sourceSize, const void* pIJLPixels, int nChannels, double dSharpen,
 	EFilterType eFilter, uint8* pTarget);
 
 static void* SampleUp_HQ_MMX_SSE_Core(CSize fullTargetSize, CPoint fullTargetOffset, CSize clippedTargetSize,
-	CSize sourceSize, const void* pIJLPixels, int nChannels,
+	CSize sourceSize, const void* pIJLPixels, int nChannels, bool bSSE,
 	uint8* pTarget);
 
 static void* SampleUp_HQ_AVX_Core(CSize fullTargetSize, CPoint fullTargetOffset, CSize clippedTargetSize,
@@ -95,7 +92,7 @@ public:
 					CPoint(FullTargetOffset.x, FullTargetOffset.y + offsetY),
 					CSize(ClippedTargetSize.cx, sizeY),
 					SourceSize, SourcePixels,
-					Channels,
+					Channels, SIMD == CBasicProcessing::SSE,
 					(uint8*)TargetPixels + ClippedTargetSize.cx * 4 * offsetY);
 		}
 		else if (SIMD == CBasicProcessing::AVX2)
@@ -112,7 +109,7 @@ public:
 				CSize(ClippedTargetSize.cx, sizeY),
 				SourceSize, SourcePixels,
 				Channels, Sharpen,
-				Filter,
+				Filter, SIMD == CBasicProcessing::SSE,
 				(uint8*)TargetPixels + ClippedTargetSize.cx * 4 * offsetY);
 	}
 
@@ -2342,7 +2339,7 @@ FilterKernelLoop:
 
 void* SampleDown_HQ_MMX_SSE_Core(CSize fullTargetSize, CPoint fullTargetOffset, CSize clippedTargetSize,
 	CSize sourceSize, const void* pPixels, int nChannels, double dSharpen,
-	EFilterType eFilter, uint8* pTarget) {
+	EFilterType eFilter, bool bSSE, uint8* pTarget) {
 
 	CAutoXMMFilter filterY(sourceSize.cy, fullTargetSize.cy, dSharpen, eFilter);
 	const XMMFilterKernelBlock& kernelsY = filterY.Kernels();
@@ -2465,7 +2462,7 @@ void* SampleDown_HQ_AVX_Core(CSize fullTargetSize, CPoint fullTargetOffset, CSiz
 }
 
 void* SampleUp_HQ_MMX_SSE_Core(CSize fullTargetSize, CPoint fullTargetOffset, CSize clippedTargetSize,
-	CSize sourceSize, const void* pPixels, int nChannels, uint8* pTarget) {
+	CSize sourceSize, const void* pPixels, int nChannels, bool bSSE, uint8* pTarget) {
 	int nTargetWidth = clippedTargetSize.cx;
 	int nTargetHeight = clippedTargetSize.cy;
 	int nSourceWidth = sourceSize.cx;

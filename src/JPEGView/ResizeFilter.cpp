@@ -160,7 +160,8 @@ static inline double EvaluateCore_NoAliasing(double dX, double dSharpen) {
 }
 
 // 2-lobe Lanczos filter (Equivalent to IM Lanczos2, support is [-2.0, 2.0]
-// For all matters an purposes, this is identical to EvaluateCore_NoAliasing(), but doesn't apply dSharpen
+// For all matters an purposes, this is identical to EvaluateCore_NoAliasing(),
+// but doesn't apply dSharpen.
 static inline double EvaluateCore_Lanczos2(double dX) {
 	if (abs(dX) < 1e-6) {
 		return 1.0;
@@ -223,7 +224,8 @@ static double EvaluateKernelIntegrated(double dX, EFilterType eFilter, double dM
 }
 
 static double EvaluateCubicFilterKernel(double dFrac, int nKernelElement) {
-	//GF: This original version was using Catrom for upscaling
+	// [GF] The original version was using the equivalent of Catrom for upscaling,
+	//      but calculated it with a cdFactorA=-0.5 instead of separate ParamB/ParamC.
 
 	// Cubic Spline (emulates gaussian, but is faster)
 	//const double ParamB = 1.0;

@@ -655,7 +655,7 @@ Zoom to Selection	На ўвесь экран
 //! Set as default viewer...
 //! User commands
 
-// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-07T23:55:04.563179+00:00 //
+// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-09T22:21:29.743481+00:00 //
 //! Translation Progress: 62%
 //! * Total (Strings + Menu) = 431
 //! * Done = 268

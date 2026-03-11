@@ -70,7 +70,7 @@ Auto zoom mode	Auto-Zoom Modus
 Back mouse button	Zurück Maustaste
 Batch rename/copy of files	Bildserie umbenennen/kopieren
 Blend	Überblenden
-Book Mode	
+Book Mode	Buch-Modus
 Bottom	Unten
 Box	
 Brightness	Helligkeit
@@ -83,7 +83,7 @@ Cannot read from parameter DB file '%s'!	Von der Parameter-DB Datei '%s' kann ni
 Cannot read parameter DB file '%s' because it is too large!	Die Parameter-DB Datei '%s' kann nicht gelesen werden weil sie zu gross ist!
 Cannot write to parameter DB file '%s'!	In die Parameter-DB Datei '%s' kann nicht geschrieben werden!
 Click and drag the mouse vertically to correct image tilt.	Klicken und ziehen Sie die Maus vertikal um die Bildneigung zu ändern.
-Clipboard Image	
+Clipboard Image	Bild in Zwischenablage
 Close	Schliessen
 Close help text display / Close JPEGView	Hilfetextanzeige schliessen / JPEGView beenden
 Color Correction	Farbkorrektur
@@ -94,7 +94,7 @@ Conflicting entries in Param DB	Konflikt beim Importieren in Parameter-DB
 Continue rename/copy?	Umbenennen/Kopieren fortsetzen?
 Contrast	Kontrast
 Contrast Correction	Kontrastkorrektur
-Copy file path of the image to clipboard	
+Copy file path of the image to clipboard	Pfad des Bildes in Zwischenablage kopieren
 Copy screen to clipboard / Copy processed full size image to clipboard	Bildschirmbild in Zwischenablage kopieren/ Bearbeitetes Bild in Originalgrösse kopieren
 Copying parameter DB to file '%s' failed. Reason: %s	Kopieren der Parameter-DB in die Datei %s fehlgeschlagen! Grund: %s
 Correct converging lines (perspective correction)	Stürzende Linien korrigieren (Perspektiven-Korrektur)
@@ -108,7 +108,7 @@ Darken Highlights	Lichter abdunkeln
 Date	Datum
 Date placeholders use the modification date of the image.	Datumsplatzhalter verwenden das Änderungsdatum der Bilder.
 Day / Month / Year (as numbers)	Tag / Monat / Jahr (als Zahl)
-Decoding this format requires the Microsoft Visual C++ Redistributable.	
+Decoding this format requires the Microsoft Visual C++ Redistributable.	Dekodierung dieses Formats benötigt die Microsoft Visual C++ Redistributables.
 Deep Shadows	Tiefschatten
 Delete	Löschen
 Delete current file on disk permanently	Aktuelle Bilddatei endgültig löschen
@@ -133,7 +133,7 @@ Error saving file	Fehler beim Speichern
 Error while writing the following registry key	Fehler beim Schreiben des Registry-Schlüssels
 Error writing file to disk!	Die Datei kann nicht geschrieben werden!
 Example:	Beispiel:
-Exif Date Time:	
+Exif Date Time:	Exif Datum:
 Exposure bias (EV):	Belichtungskorrektur (EV):
 Exposure time (s):	Belichtungszeit (s):
 Extension	Erweiterung
@@ -159,7 +159,7 @@ Goto next image	Nächstes Bild anzeigen
 Goto previous image	Voriges Bild anzeigen
 Height	Höhe
 Hide histogram	Histogramm ausblenden
-High quality resampling	
+High quality resampling	Qualitativ hochwertiges resampling
 Home page of the original project	Home Page des ursprünglichen Projekts
 Home page of this fork	Home Page dieses Forks
 Hour / Minute (as numbers)	Stunde / Minute (als Zahl)
@@ -232,7 +232,7 @@ Number of JPEG files in folder: %d	Anzahl JPEG Bilder im Ordner: %d
 Number with N digits	Zahl mit N Stellen
 OK	
 Old name	Alter Name
-Open folder containing image and select in Windows Explorer	
+Open folder containing image and select in Windows Explorer	Enhaltenden Ordner im Datei Manager öffnen und Bild auswählen
 Open new image or slideshow file	Neues Bild, Ordner oder Bildliste für Diaschau öffnen
 Order files by	Dateien sortieren nach
 Orientation:	Format:
@@ -289,7 +289,7 @@ Rotate image and fit to screen	Bild drehen und an Bildschirm anpassen
 Rotate image by user-defined angle	Bild um benutzerdefinierten Winkel drehen
 Rotate the image by dragging with the mouse.	Drehen Sie das Bild durch Klicken und Ziehen mit der Maus.
 SIMD mode used	Verwendeter SIMD Modus
-Same as Image	
+Same as Image	Gleiches wie Bild
 Saturation	Sättigung
 Save	Speichern
 Save (%s) / delete (%s) image processing parameters into/from parameter DB	Speichern (%s) der Bildparameter in die Parameter-DB, bzw. Löschen (%s) der Parameter
@@ -345,9 +345,9 @@ Sort images by creation date, resp. modification date, resp. file name	Bilder na
 Source:	Quelle:
 Target folders that do not yet exist are created as needed.	Zielordner werden erstellt, falls sie noch nicht existieren.
 The directory '%s' does not contain any image files!	Der Ordner '%s' enthält keine Bilddateien!
-The file '%s' could not be copied!	
-The file '%s' could not be read!	Die Datei '%s' kann nicht gelesen werden!
-The file '%s' could not be renamed!	
+The file '%s' could not be copied!	Die Datei '%s' konnte nicht kopiert werden!
+The file '%s' could not be read!	Die Datei '%s' konnte nicht gelesen werden!
+The file '%s' could not be renamed!	Die Datei '%s' kann nicht umbenannt werden!
 The file '%s' does not contain a list of file names!	Die Datei '%s' enthält keine Liste von Dateinamen!
 The file is read-only!	Die Datei ist schreibgeschützt!
 The following file extensions cannot be unregistered because they have been registered in the 'local machine' registry area.	Die folgenden Dateierweiterungen können nicht de-registriert werden, da sie im 'local machine' Registryzweig registriert wurden.
@@ -362,8 +362,8 @@ These values will override the values from the INI file located in the program f
 Threshold	Schwellwert
 Title:	Titel:
 Toggle between screens (only for multi-monitor systems)	Umschalten zwischen Bildschirmen
-Toggle window always on top mode	
-Toggle window title bar hidden mode	
+Toggle window always on top mode	Fenster-im-Vordergrund-halten Modus umschalten
+Toggle window title bar hidden mode	Titelleiste-ausblenden Modus umschalten
 Top	Oben
 Transition Effect	Übergangseffekt
 Unregistering not possible	De-registrierung nicht möglich
@@ -374,7 +374,7 @@ Use the mouse to draw a line that shall be horizontal or vertical.	Benutzen Sie 
 Warning	Warnung
 Width	Breite
 Window mode	Fenstermodus
-Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	
+Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.	Windows 8 (und höher) gestatten nicht, dass JPEGView das Standardprogramm für diese Dateierweiterungen ändert.
 Writing the resulting JPEG file to disk failed	Resultierende JPEG-Datei konnte nicht geschrieben werden
 Y - B	
 Year short form (2 digits)	Jahr (Kurzform, 2 Ziffern)
@@ -386,11 +386,11 @@ Zoom mode (drag mouse to zoom)	Zoom-Modus (Zoomen mittels Maus ziehen)
 and image processing (brightness/contrast/sharpen) parameters between images	(Helligkeit/Kontrast/usw) beim Bildwechsel beibehalten/zurücksetzen.
 cm	
 in	
-new menu entry	
+new menu entry	neuer Menü-Eintrag
 no	nein
 off	aus
 on	ein
-user-defined	
+user-defined	benutzerdefiniert
 yes	ja
 
 // ::: Popup Menu Strings ::: (unsorted to preserve context) //
@@ -399,7 +399,7 @@ Open image...	Bilddatei öffnen...
 Open image with	Bilddatei öffnen mit
 Save processed image...	Bearbeitetes Bild speichern...
 Reload image	Bild neu laden
-Open containing folder in Explorer	
+Open containing folder in Explorer	Ordner in Datei Manager öffnen
 Print image...	Bild drucken...
 Batch rename/copy...	Bildserie umbenennen/kopieren...
 Set modification date	Änderungsdatum setzen
@@ -411,7 +411,7 @@ Use original image	Originalbild verwenden
 Use processed image as displayed	Bearbeitetes Bild wie angezeigt verwenden
 Copy to clipboard	In Zwischenablage kopieren
 Copy original size image	Bild in Originalgrösse kopieren
-Copy file path	
+Copy file path	Datei Pfad kopieren
 Display order	Bilder anzeigen sortiert nach
 Modification date	Änderungsdatum
 Creation date	Erstellungsdatum
@@ -432,7 +432,7 @@ Normal
 Slow	Langsam
 Very slow	Sehr langsam
 Movie	Film
-Playback speed	
+Playback speed	Wiedergabe-Geschwindigkeit
 5 fps	
 10 fps	
 25 fps	
@@ -454,8 +454,8 @@ Clear parameters from DB	Aus Parameter-DB löschen
 Zoom	
 Span all screens	Alle Bildschirme
 Fit window to image	Fenstergrösse an Bild anpassen
-Hide window title bar	
-Set window always on top	
+Hide window title bar	Titelleiste ausblenden
+Set window always on top	Fenster im Vordergrund halten
 Settings/Admin	Einstellungen/Administration
 Edit global settings...	Globale Einstellungen editieren...
 Edit user settings...	Benutzereinstellungen editieren...
@@ -475,52 +475,19 @@ Free	Frei
 Fixed size...	Feste Grösse...
 Zoom to Selection	Auf Auswahl einzoomen
 
-// ::: INFO: Out-of-date Translations [14] ::: (Not in use anymore, safe to delete) //
-//No file or folder name was provided as command line parameter!	Es wurde kein Datei- oder Ordnername als Kommandozeilenparameter angegeben!
-//PgDn or Right	PgDn oder Pfeil rechts
-//PgUp or Left	PgUp oder Pfeil links
-//Rename:	Umbenennen:
-//Rotate the following file lossless by 270 deg?\n%filename%	Folgende Datei verlustfrei um 270 Grad drehen?\n%filename%
-//Rotate the following file lossless by 90 deg?\n%filename%	Folgende Datei verlustfrei um 90 Grad drehen?\n%filename%
-//The file '%s' could not be %s.	Die Datei '%s' konnte nicht %s werden.
-//The file '%s' could not be read! (%d)	Die Datei '%s' kann nicht gelesen werden! (%d)
-//To use JPEGView, associate JPG, JPEG and BMP files with JPEGView.	Um JPEGView zu verwenden, müssen die Dateitypen JPG, JPEG und BMP mit JPEGView verknüpft werden.
-//Windows 8 blocks JPEGView from changing the default program for these file endings.	Windows 8 gestattet nicht, dass JPEGView das Standardprogramm für diese Dateierweiterungen ändert.
-//[new entry]	[neuer Eintrag]
-//copied	kopiert
-//renamed	umbenannt
-//up/down	Pfeil oben/unten
-
-// ::: INFO: Missing Translations [48] ::: (Summary to assist translators: All missing strings which require translation) - Auto-generated by script //
-//! Book Mode
+// ::: INFO: Missing Translations [28] ::: (Summary to assist translators: All missing strings which require translation) - Auto-generated by script //
 //! Box
 //! C - R
-//! Clipboard Image
-//! Copy file path of the image to clipboard
-//! Decoding this format requires the Microsoft Visual C++ Redistributable.
-//! Exif Date Time:
 //! Filter:
-//! High quality resampling
 //! M - G
 //! Navigation
 //! OK
-//! Open folder containing image and select in Windows Explorer
 //! Radius
-//! Same as Image
 //! Software:
-//! The file '%s' could not be copied!
-//! The file '%s' could not be renamed!
-//! Toggle window always on top mode
-//! Toggle window title bar hidden mode
-//! Windows 8 (and above) blocks JPEGView from changing the default program for these file extensions.
 //! Y - B
 //! Zoom 1:1 (100 %)
 //! cm
 //! in
-//! new menu entry
-//! user-defined
-//! Open containing folder in Explorer
-//! Copy file path
 //! 1 sec
 //! 2 sec
 //! 3 sec
@@ -530,7 +497,6 @@ Zoom to Selection	Auf Auswahl einzoomen
 //! 10 sec
 //! 20 sec
 //! Normal
-//! Playback speed
 //! 5 fps
 //! 10 fps
 //! 25 fps
@@ -538,11 +504,9 @@ Zoom to Selection	Auf Auswahl einzoomen
 //! 50 fps
 //! 100 fps
 //! Zoom
-//! Hide window title bar
-//! Set window always on top
 
-// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-07T23:55:04.634443+00:00 //
-//! Translation Progress: 89%
+// ::: STATUS: Last Checked/Updated by Script ::: 2026-03-09T22:21:29.819944+00:00 //
+//! Translation Progress: 94%
 //! * Total (Strings + Menu) = 431
-//! * Done = 383
-//! * Missing = 48 (11%)
+//! * Done = 403
+//! * Missing = 28 (6%)
