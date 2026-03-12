@@ -1,20 +1,23 @@
-# JPEGView_L
+# JPEGView (L-Fork)
+
+aka JPEGView Linear
 
 ## Core differences to the original version 
 
 * Up- and downsamples images in linear space. This is crucial for lineart, where lines and edges otherwise come out too dark and screentones can show moiree patterns not in the source material. While professional image editing tools like Photoshop and GIMP have been using linear light scaling for years, there currently seems to exist no plain image viewer giving correct output.
 More information: http://www.ericbrasseur.org/gamma.html
-* The available downsampling filters have been modified to offer the well known 'Hermite', 'Mitchell', 'Catrom' and 'Lanczos2' and give reference output identical to ImageMagick.
+* The selection of available downsampling filters have been extended to offer the well understood 'Hermite', 'Mitchell', 'Catrom' and give reference output identical to ImageMagick.
 More information on how resampling filters work: http://legacy.imagemagick.org/Usage/filter/
-* Dedicated functionality for manga/comic reading in display and controls as well as bookmark support for CBZ/CB7 files. Continue where you left.
-* Extended single instance mode: Now supports "PerFolder" additionaly to "Always" and "Never".
+* Support for viewing AVIF, HEIF, HEIC images as well as CBZ and CB7 comic book files.
+* Bookmark support for CBZ/CB7.
+* Extended single instance mode: Now supports launching one instance "PerFolder" additionaly to "Always" and "Never".
 * Smooth scrolling for pan keys.
 * Smart panning keys that combine scrolling and jumping to next/previous image based on zoom.
 
 ## System Requirements
 
-* 64-bit Windows OS
-* CPU with with at least SSE2 for linear light resampling to work. Anything lower will do regular resampling.
+* 64-bit Windows 7 or higher
+* CPU with with SSE2 or higher (support for AVX2 would be ideal)
 
 
 ## Additional Thanks
