@@ -648,6 +648,9 @@ SmartPanningKeys=true
 ; Show current file type's icon instead of JpegView application icon in title bar? [true/false. Default: true]
 TitleBarUseFileIcon=true
 
+; Defines which colours to fill the transparent parts of an image with.
+; "Blend" uses the color specified in the TransparencyColor setting,  "BlendInverse" uses the negative of that and "Checkerboard" uses gray squares. [Default: Checkerboard]
+TransparencyMode=Checkerboard
 
 
 ; *****************************************************************************

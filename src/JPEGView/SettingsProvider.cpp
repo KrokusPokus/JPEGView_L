@@ -194,6 +194,18 @@ CSettingsProvider::CSettingsProvider(void) {
 	}
 
 
+	CString sTransparencyMode = GetString(_T("TransparencyMode"), _T("Checkerboard"));
+	if (sTransparencyMode.CompareNoCase(_T("Blend")) == 0) {
+		m_eTransparencyMode = Helpers::TP_BLEND;
+	} else if (sTransparencyMode.CompareNoCase(_T("Checkerboard")) == 0) {
+		m_eTransparencyMode = Helpers::TP_CHECKERBOARD;
+	} else if (sTransparencyMode.CompareNoCase(_T("BlendInverse")) == 0) {
+		m_eTransparencyMode = Helpers::TP_BLEND_INVERSE;
+	} else {
+		m_eTransparencyMode = Helpers::TP_CHECKERBOARD;
+	}
+
+
 	m_bNavigateMouseWheel = GetBool(_T("NavigateWithMouseWheel"), false);
 	m_dMouseWheelZoomSpeed = GetDouble(_T("MouseWheelZoomSpeed"), 1.0, 0.1, 10);
 

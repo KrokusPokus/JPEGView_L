@@ -189,6 +189,7 @@ public:
 /*GF*/	bool SmartPanningKeys() { return m_bSmartPanningKeys; }
 /*GF*/	bool TitleBarUseFileIcon() { return m_bTitleBarUseFileIcon; }
 /*GF*/	int CacheRange() { return m_nCacheRange; }
+/*GF*/	Helpers::ETransparencyMode TransparencyMode() {return m_eTransparencyMode; }
 
 private:
 	static CSettingsProvider* sm_instance;
@@ -351,4 +352,5 @@ private:
 /*GF*/	bool m_bSmartPanningKeys;
 /*GF*/	bool m_bTitleBarUseFileIcon;
 /*GF*/	int m_nCacheRange;
+/*GF*/	Helpers::ETransparencyMode m_eTransparencyMode;
 };
