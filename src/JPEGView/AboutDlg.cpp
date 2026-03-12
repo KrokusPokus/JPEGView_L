@@ -71,12 +71,14 @@ LRESULT CAboutDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lPara
 	m_btnClose.Attach(GetDlgItem(IDC_CLOSE));
 	m_lblIcon.Attach(GetDlgItem(IDC_ICONJPEGVIEW));
 
-	m_lblVersion.SetWindowText(CString(_T("JPEGView ")) + JPEGVIEW_VERSION);
+	m_lblVersion.SetWindowText(CString(_T("JPEGView (L-Fork) ")) + JPEGVIEW_VERSION);
 
 	m_lblSIMD.SetWindowText(CString(CNLS::GetString(_T("SIMD mode used"))) + _T(": ") + GetSIMDModeString());
 	TCHAR sNumCores[16];
+	TCHAR sNumCoresTotal[16];
 	_sntprintf_s(sNumCores, 16, 16, _T("%d"), CSettingsProvider::This().NumberOfCoresToUse());
-	m_lblNumCores.SetWindowText(CString(CNLS::GetString(_T("Number of CPU cores used"))) + _T(": ") + sNumCores);
+	_sntprintf_s(sNumCoresTotal, 16, 16, _T("%d"), Helpers::NumConcurrentThreads());
+	m_lblNumCores.SetWindowText(CString(CNLS::GetString(_T("Number of CPU cores used"))) + _T(": ") + sNumCores + _T(" / ") + sNumCoresTotal);
 	m_btnClose.SetWindowText(CNLS::GetString(_T("Close")));
 
 	m_richEdit.SetBackgroundColor(::GetSysColor(COLOR_3DFACE));
