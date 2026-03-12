@@ -8,11 +8,12 @@ aka JPEGView Linear
 More information: http://www.ericbrasseur.org/gamma.html
 * The selection of available downsampling filters have been extended to offer the well understood 'Hermite', 'Mitchell', 'Catrom' and give reference output identical to ImageMagick.
 More information on how resampling filters work: http://legacy.imagemagick.org/Usage/filter/
-* Support for viewing AVIF, HEIF, HEIC images as well as CBZ and CB7 comic book files.
+* Support for CBZ and CB7 comic book format. Shoutout to [sdneon](https://github.com/sdneon/jpegview) who came up with the implementation.
 * Bookmark support for CBZ/CB7.
 * Extended single instance mode: Now supports launching one instance "PerFolder" additionaly to "Always" and "Never".
 * Smooth scrolling for pan keys.
 * Smart panning keys that combine scrolling and jumping to next/previous image based on zoom.
+
 
 ## System Requirements
 
@@ -23,7 +24,6 @@ More information on how resampling filters work: http://legacy.imagemagick.org/U
 ## Additional Thanks
 
 * To aviscaerulea for the optimized alpha blending code
-* To sdneon for the CBZ/CB7 implementation
 
 <br><br>
 
