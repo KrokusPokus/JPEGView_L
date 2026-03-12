@@ -142,11 +142,13 @@ CSettingsProvider::CSettingsProvider(void) {
 
 	m_nNumCores = GetInt(_T("CPUCoresUsed"), 0, 0, 128);
 	if (m_nNumCores == 0) {
-/*
-		m_nNumCores = Helpers::NumCoresPerPhysicalProc();
-		if (m_nNumCores > 4) m_nNumCores = 4;
-*/
+		//m_nNumCores = Helpers::NumCoresPerPhysicalProc();
 		m_nNumCores = Helpers::NumConcurrentThreads();
+		// Limiting to 8 cores, since benchmarks suggest performance improvements start to flatline around that point.
+		// Performance can even become worse: 16 threads on 16 thread CPU performing worse than running just 14 threads. Or 8 threads, for that matter.
+		// People can still try to use more cores by specifying a non-zero number for "CPUCoresUsed",
+		// but I advise to do some benchmarking in this case to make sure you aren't actually shooting yourself in the foot.		
+		if (m_nNumCores > 8) m_nNumCores = 8;
 	}
 
 

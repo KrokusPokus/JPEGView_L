@@ -59,8 +59,10 @@ DisplayMonitor=-1
 ;				Only slightly faster than SSE. Bottleneck might be memory bandwidth or latency.
 CPUType=AutoDetect
 
-; Number of CPU cores used. Must be 1 to 128, or 0 for auto detect.
-; There are diminishing returns in processing speed when going beyond 4. Memory bandwidth might be the limiting factor.
+; Number of threads to spawn during processing. Set to 0 for auto detecting what your CPU supports, or specify a value between 1 and 128.
+; On a 16 thread CPU, using more than 4 threads showed only slight improvement in processing speed, while using more than 8 threads showed no improvement at all.
+; Performance may even become worse: 16 threads on 16 thread CPU performed worse than just 8 threads.
+; Auto detection will therefore limit the threads to 8.
 CPUCoresUsed=0
 
 ; Distance in file list for which decoded images will be kept in cache to speed up access.
