@@ -74,7 +74,7 @@ CacheRange=2
 ; notepad : Use notepad.exe
 ; system : Use application registered for INI files
 ; other : Full path to application for editing INI files, %exepath% placeholder can be used
-IniEditor=notepad
+IniEditor=system
 
 ; When setting a processed image as desktop wallpaper, the processed image must be saved somewhere.
 ; This INI setting sets the path to save the file. Default is %temp%, the system TEMP directory. You must have write access to the specified directory!
@@ -160,7 +160,7 @@ AllowEditGlobalSettings=false
 ; Start in full screen or windowed mode
 ; 'true' or 'false' to always start in full screen, respectively windowed mode
 ; 'auto' to choose best mode depending on image size of first image - windowed when it is small, full screen when it is large
-ShowFullScreen=auto
+ShowFullScreen=false
 
 ; If set to true, only one single instance of JPEGView runs in full screen mode, if false multiple instances are allowed
 ; The value is ignored if SingleInstance=true
@@ -172,7 +172,7 @@ SingleFullScreenInstance=true
 ; 'image' to adjust the window size automatically to the image size
 ; 'sticky' to automatically restore the last used window size (when ShowFullScreen=auto only the upper,left position is restored)
 ; 'left top right bottom', space separated e.g: 100 100 900 700
-DefaultWindowRect=image
+DefaultWindowRect=sticky
 
 ; Contains the stored window rectangle in case of DefaultWindowRect=sticky
 StickyWindowRect=
@@ -194,13 +194,13 @@ WindowAlwaysOnTopOnStartup=false
 
 ; Set to true to show the bottom panel when moving the mouse to the bottom of the screen/window.
 ; The bottom panel provides basic image processing functionality
-ShowBottomPanel=true
+ShowBottomPanel=false
 
 ; Set to false if the navigation panel shall not be blended to the image
-ShowNavPanel=true
+ShowNavPanel=false
 
 ; Set to false to disable the thumbnail image blended in during zoom and pan
-ShowZoomNavigator=true
+ShowZoomNavigator=false
 
 ; Blending factor of the navigation panel when the mouse is not on that panel. Set to 0.0 to only
 ; show the panel when the mouse is over the panel
@@ -317,7 +317,7 @@ UseEmbeddedColorProfiles=false
 ; -----------------------------------------------
 
 ; Color used for transparent parts of images, R G B format as used by BackgroundColor
-TransparencyColor=0 0 0
+TransparencyColor=255 0 255
 
 ; -----------------------------------------------
 ; - IMAGE ZOOM OPTIONS
@@ -330,10 +330,10 @@ TransparencyColor=0 0 0
 ; Fit : Fit images to screen
 ; Fill : Fill screen with no black borders, crop if necessary
 ; BookMode: Size images for (comic, manga, etc.) book reading purposes
-AutoZoomMode=FitNoZoom
+AutoZoomMode=Fit
 
 ; Auto zoom mode for fullscreen mode. If empty, same value as 'AutoZoomMode' is used.
-AutoZoomModeFullscreen=
+AutoZoomModeFullscreen=Fit
 
 ; For convenience, when zooming continuously, it will pause at the set percent (default 100%) briefly before continuing in either direction
 ; This ensures that you can always zoom in or zoom out to the set percent reliably regardless of image size or zoom steps
@@ -409,7 +409,7 @@ UserCropAspectRatio=14 11
 ShowEXIFDateInTitle=true
 
 ; Show full file path and name in the window title (shows only file name by default)
-ShowFilePathInTitle=false
+ShowFilePathInTitle=true
 
 ; -----------------------------------------------
 ; - FILE NAME AREA
