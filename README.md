@@ -4,12 +4,12 @@ aka JPEGView Linear
 
 ## Core differences to the original version 
 
-* Up- and downsamples images in linear space. This is crucial for lineart, where lines and edges otherwise come out too dark and screentones can show moiree patterns not in the source material. While professional image editing tools like Photoshop and GIMP have been using linear light scaling for years, there currently seems to exist no plain image viewer giving correct output.
+* Up- and downsamples images in linear space. This is beneficial for lineart, where lines and edges otherwise come out too dark and screentones can show moiree patterns that don't exist in the actual image. This is of course also a problem with photographs, where image detail of the zoomed down on screen image will come out too dark, and while professional image editing tools like Photoshop and GIMP have been using linear light scaling for a long time, very few image viewers exist that actually give correct output, sticking to a incorrect but faster method of calculation instead. JPEGView_L uses multi-threading and SSE/AVX2 extensions to maintain a high resampling speed (~70% of IrfanView) while not cutting any corners quality-wise.
 More information: http://www.ericbrasseur.org/gamma.html
 * The selection of available downsampling filters have been extended to offer the well understood 'Hermite', 'Mitchell', 'Catrom' for INI setting "DownSamplingFilter".
 More information on how resampling filters work: http://legacy.imagemagick.org/Usage/filter/
 * Support for CBZ and CB7 comic book archive format. Shoutout to [sdneon](https://github.com/sdneon/jpegview) who came up with the implementation
-* Bookmark support for CBZ/CB7 files. The bookmark are stored in "%AppData%\JPEGView\Bookmarks.ini"
+* Bookmark support for CBZ/CB7 files. Those archives are automatically opened on the page you last closed them on. Bookmarks are stored in "%AppData%\JPEGView\Bookmarks.ini"
 * Custom zoom size for Book Mode as percentage of window height (new INI setting: BookModePageHeight)
 * One instance per folder mode (INI setting: SingleInstance=PerFolder)
 * Smooth scrolling with vsync for panning keys (new INI setting: SmoothPanning=true)
