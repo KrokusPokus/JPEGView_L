@@ -6,20 +6,23 @@ aka JPEGView Linear
 
 * Up- and downsamples images in linear space. This is crucial for lineart, where lines and edges otherwise come out too dark and screentones can show moiree patterns not in the source material. While professional image editing tools like Photoshop and GIMP have been using linear light scaling for years, there currently seems to exist no plain image viewer giving correct output.
 More information: http://www.ericbrasseur.org/gamma.html
-* The selection of available downsampling filters have been extended to offer the well understood 'Hermite', 'Mitchell', 'Catrom' and give reference output identical to ImageMagick.
+* The selection of available downsampling filters have been extended to offer the well understood 'Hermite', 'Mitchell', 'Catrom' for INI setting "DownSamplingFilter".
 More information on how resampling filters work: http://legacy.imagemagick.org/Usage/filter/
-* Support for CBZ and CB7 comic book format. Shoutout to [sdneon](https://github.com/sdneon/jpegview) who came up with the implementation.
-* Bookmark support for CBZ/CB7.
-* Extended single instance mode: Now supports launching one instance "PerFolder" additionaly to "Always" and "Never".
-* Smooth scrolling for pan keys.
-* Smart panning keys that combine scrolling and jumping to next/previous image based on zoom.
-
+* Support for CBZ and CB7 comic book archive format. Shoutout to [sdneon](https://github.com/sdneon/jpegview) who came up with the implementation
+* Bookmark support for CBZ/CB7 files. The bookmark are stored in "%AppData%\JPEGView\Bookmarks.ini"
+* Custom zoom size for Book Mode as percentage of window height (new INI setting: BookModePageHeight)
+* One instance per folder mode (INI setting: SingleInstance=PerFolder)
+* Smooth scrolling with vsync for panning keys (new INI setting: SmoothPanning=true)
+* Smart panning keys that combine scrolling and jumping to next/previous image based on zoom (new INI setting: SmartPanningKeys=true)
+* Allows using the default file type icons on your system as the JPEGView window icon (new INI setting: TitleBarUseFileIcon=true)
+* Checkerboard background (instead of solid color) mode for files with transparency channel (new INI setting: TransparencyMode=Checkerboard). Implementation again done by [sdneon](https://github.com/sdneon/jpegview) for his own fork.
+* Improved caching. Keeps the 2 images before and after the currently visible in cache. (new INI setting: CacheRange=2)
+* Settings default to a more viewer centric workflow. Just the image - no Bottom Panel, Navigation Panel or Zoom Navigator overlay by default. (Note: This fork uses the same settings file location as the upstream version, "%AppData%\JPEGView", so if an older setting file already exists there, it will use the older settings)
 
 ## System Requirements
 
 * 64-bit Windows 7 or higher
 * CPU with with SSE2 or higher (support for AVX2 would be ideal)
-
 
 ## Additional Thanks
 
