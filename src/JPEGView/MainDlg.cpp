@@ -4541,6 +4541,7 @@ void CMainDlg::StartAnimation() {
 	m_bLDC = false;
 	m_bLandscapeMode = false;
 	m_bIsAnimationPlaying = true;
+	::timeBeginPeriod(1);
 	int nNewFrameTime = max(10, m_pCurrentImage->FrameTimeMs());
 	::SetTimer(this->m_hWnd, ANIMATION_TIMER_EVENT_ID, nNewFrameTime, NULL);
 	m_pNavPanelCtl->EndNavPanelAnimation();
@@ -4576,6 +4577,7 @@ void CMainDlg::StopAnimation() {
 		m_bLandscapeMode = true;
 	}
 	::KillTimer(this->m_hWnd, ANIMATION_TIMER_EVENT_ID);
+	::timeEndPeriod(1);
 	m_bIsAnimationPlaying = false;
 }
 
