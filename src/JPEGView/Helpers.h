@@ -360,6 +360,7 @@ namespace Helpers {
 		CRITICAL_SECTION & m_cs;
 	};
 
-	int NumConcurrentThreads(void);		// [GF] Used in "SettingsProvider.cpp" to set "m_nNumCores"
-	CString FormatFileSize(__int64 filesize);
+/*GF*/	int NumConcurrentThreads(void);				// Used in "SettingsProvider.cpp" to set "m_nNumCores"
+/*GF*/	CString FormatFileSize(__int64 filesize);
+/*GF*/	bool CanReadAhead(CJPEGImage* pImage);		// Used in StartNewRequestBundle()
 }

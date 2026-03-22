@@ -1056,6 +1056,24 @@ CString FormatFileSize(__int64 nFileSize) {
 	return sFileSize;
 }
 
+bool CanReadAhead(CJPEGImage* pImage) {
+	bool isMultiFrame = pImage != NULL && pImage->NumberOfFrames() > 1;
+	bool isAnimation = pImage != NULL && pImage->IsAnimation();
+	bool isContainer = pImage != NULL && pImage->IsContainer();
+	int nFrameIndex = 0;
+	if (isMultiFrame) {
+		if (isAnimation) {
+			return false;
+		} else if (isContainer) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 // Based on: https://github.com/sdneon/jpegview.git
 	void BlendAlpha(uint32* pImage32, int nWidth, int nHeight, Helpers::ETransparencyMode nTransparencyMode)
 	{

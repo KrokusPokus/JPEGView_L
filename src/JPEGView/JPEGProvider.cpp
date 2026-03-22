@@ -233,8 +233,6 @@ void CJPEGProvider::StartNewRequestBundle(CFileList* pFileList, EReadAheadDirect
 		pLastReadyRequest->IsActive = true;	// Set current request back to active.
 	}
 
-	// Todo: Add way to keep animations comletely in cache
-
 
 	int iDistance = 0;
 
@@ -250,6 +248,17 @@ void CJPEGProvider::StartNewRequestBundle(CFileList* pFileList, EReadAheadDirect
 
 		bool bSwitchImage = true;
 		int nFrameIndex = (pLastReadyRequest != NULL) ? Helpers::GetFrameIndex(pLastReadyRequest->Image, iDistance, true, bSwitchImage) : 0;
+
+		// Note: Those readers do not support reading a specific frame
+		// They only work with sequential access, where each call reads one further frame, which causes issues with bidirectional read-ahead.
+		//		JxlReader::ReadImage()
+		//		PngReader::ReadImage()
+		//		WebpReaderWriter::ReadImage()
+		if (bSwitchImage == false && Helpers::CanReadAhead(pLastReadyRequest->Image) == false) {
+			bSwitchImage = true;
+			nFrameIndex = 0;
+		}
+
 		LPCTSTR sFileName = bSwitchImage ? pFileList->PeekNextPrev((iDistance>0) ? iDistance : -iDistance, eDirection == FORWARD, eDirection == TOGGLE) : pFileList->Current();
 		if (sFileName != NULL) {
 			CImageRequest* pRequest = FindRequest(sFileName, nFrameIndex);

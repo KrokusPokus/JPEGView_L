@@ -662,7 +662,11 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 			TCHAR infoText[4096];
     		LPCTSTR sFullPath = CurrentFileName(false);
     		if (sFullPath != NULL) {
-    			_stprintf_s(infoText,4096,_T("%s\nFile Size:   %s\nImage Size:  %d x %d\nZoomed Size: %d x %d   (Zoom Factor: %f)\nWindow Size: %d x %d\n\nCPU-Threads: %d\nCPU-Algorithm: %s\nDownsampling-Filter: %s\n\nLoading Image:  %.2f ms\nScaling Image:  %.2f ms"),sFullPath,Helpers::FormatFileSize(Helpers::GetFileSize(sFullPath)),m_pCurrentImage->OrigWidth(),m_pCurrentImage->OrigHeight(),iRealWidth,iRealHeight,m_dZoom,m_clientRect.Width(),m_clientRect.Height(),iNumThreads,sCPU,sFilter,m_pCurrentImage->GetLoadTickCount(), m_pCurrentImage->LastOpTickCount());
+				if (m_pCurrentImage->NumberOfFrames() > 1) {
+					_stprintf_s(infoText,4096,_T("%s\nFrame %d of %d\nFile Size:   %s\nImage Size:  %d x %d\nZoomed Size: %d x %d   (Zoom Factor: %f)\nWindow Size: %d x %d\n\nCPU-Threads: %d\nCPU-Algorithm: %s\nDownsampling-Filter: %s\n\nLoading Image:  %.2f ms\nScaling Image:  %.2f ms"),sFullPath, m_pCurrentImage->FrameIndex(), m_pCurrentImage->NumberOfFrames(), Helpers::FormatFileSize(Helpers::GetFileSize(sFullPath)),m_pCurrentImage->OrigWidth(),m_pCurrentImage->OrigHeight(),iRealWidth,iRealHeight,m_dZoom,m_clientRect.Width(),m_clientRect.Height(),iNumThreads,sCPU,sFilter,m_pCurrentImage->GetLoadTickCount(), m_pCurrentImage->LastOpTickCount());
+				} else {
+					_stprintf_s(infoText,4096,_T("%s\nFile Size:   %s\nImage Size:  %d x %d\nZoomed Size: %d x %d   (Zoom Factor: %f)\nWindow Size: %d x %d\n\nCPU-Threads: %d\nCPU-Algorithm: %s\nDownsampling-Filter: %s\n\nLoading Image:  %.2f ms\nScaling Image:  %.2f ms"),sFullPath,Helpers::FormatFileSize(Helpers::GetFileSize(sFullPath)),m_pCurrentImage->OrigWidth(),m_pCurrentImage->OrigHeight(),iRealWidth,iRealHeight,m_dZoom,m_clientRect.Width(),m_clientRect.Height(),iNumThreads,sCPU,sFilter,m_pCurrentImage->GetLoadTickCount(), m_pCurrentImage->LastOpTickCount());
+				}
     		} else {
     			_stprintf_s(infoText,4096,_T("\n\nImage Size:  %d  x%d\nZoomed Size: %d x %d   (Zoom Factor: %f)\nWindow Size: %d x %d\n\nCPU-Threads: %d\nCPU-Algorithm: %s\nDownsampling-Filter: %s\n\nLoading Image:  %.2f ms\nScaling Image:  %.2f ms"),m_pCurrentImage->OrigWidth(),m_pCurrentImage->OrigHeight(),iRealWidth,iRealHeight,m_dZoom,m_clientRect.Width(),m_clientRect.Height(),iNumThreads,sCPU,sFilter,m_pCurrentImage->GetLoadTickCount(), m_pCurrentImage->LastOpTickCount());
 			}
