@@ -1243,27 +1243,11 @@ LRESULT CMainDlg::OnKeyDown(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOOL& /
 		return 1; // a panel has handled the key
 	}
 	bool bHandled = false;
-	if (wParam == VK_ESCAPE) {
-		if (CloseHelpDlg()) {
-			bHandled = true;
-		} else if (m_pCropCtl->IsCropping()) {
-			bHandled = true;
-			m_pCropCtl->AbortCropping();
-		} else if (m_bMovieMode) {
-			SetToast(_T("Slideshow Paused"));
-			StopMovieMode(); // stop any running movie/slideshow
-		} else if (m_bIsAnimationPlaying) {
-			SetToast(_T("Animation Paused"));
-			StopAnimation(); // stop any running animation
-		} else if (m_bShowInfo == true) {
-			m_bShowInfo = false;
-			this->Invalidate(FALSE);
-		} else if (m_bFullScreenMode) {
-			ExecuteCommand(IDM_FULL_SCREEN_MODE);
-		} else {
-			SaveBookmark();
-			CleanupAndTerminate();
-		}
+	if (wParam == VK_ESCAPE && CloseHelpDlg()) {
+		bHandled = true;
+	} else if (wParam == VK_ESCAPE && m_pCropCtl->IsCropping()) {
+		bHandled = true;
+		m_pCropCtl->AbortCropping();
 	} else if (!bCtrl && wParam != VK_ESCAPE && m_nLastLoadError == HelpersGUI::FileLoad_NoFilesInDirectory && !m_sStartupFile.IsEmpty()) {
 		// search in subfolders if initial directory has no images
 		bHandled = true;
@@ -1388,7 +1372,7 @@ LRESULT CMainDlg::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL&
 					::SetTimer(this->m_hWnd, SLIDESHOW_TIMER_EVENT_ID, m_nCurrentTimeout, NULL);
 				}
 			}
-			GotoImage((wParam == ANIMATION_TIMER_EVENT_ID) ? POS_NextAnimation : POS_NextSlideShow, NO_REMOVE_KEY_MSG);
+			GotoImage((wParam == ANIMATION_TIMER_EVENT_ID) ? POS_NextFrame : POS_NextSlideShow, NO_REMOVE_KEY_MSG);
 			if (wParam == SLIDESHOW_TIMER_EVENT_ID && UseSlideShowTransitionEffect()) {
 				AnimateTransition();
 			}
@@ -1794,7 +1778,6 @@ LRESULT CMainDlg::OnOK(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /
 }
 
 LRESULT CMainDlg::OnCancel(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/) {
-	SaveBookmark();
 	CleanupAndTerminate();
 	return 0;
 }
@@ -1923,6 +1906,26 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_RENAME:
 			m_pImageProcPanelCtl->EnterRenameCurrentFile();
 			break;
+		case IDM_DELETE_FILE:
+			MouseOn();
+			if (m_pCurrentImage != NULL && m_pFileList != NULL && !m_pCurrentImage->IsClipboardImage() && sp.AllowFileDeletion()) {
+				LPCTSTR currentFileName = CurrentFileName(false);
+				if (IDYES == ::MessageBox(m_hWnd, CString(CNLS::GetString(_T("Do you really want to permanently delete this file?"))) + _T("\n\n") + currentFileName, CNLS::GetString(_T("Confirm")), MB_YESNOCANCEL | MB_ICONQUESTION)) {
+					CFileList* fileListOfDeletedImage = m_pFileList;
+					GotoImage(POS_AwayFromCurrent, NO_REQUEST);
+					if (::DeleteFile(currentFileName)) {
+						fileListOfDeletedImage->Reload(NULL, false);
+						m_pFileList->DeleteHistory(true);
+						Invalidate();
+						GotoImage(POS_Current);
+					} else {
+						Invalidate();
+						if (m_pFileList->Current() == NULL) GotoImage(POS_First);
+						else GotoImage(POS_Previous);
+					}
+				}
+			}
+			break;
 		case IDM_MOVE_TO_RECYCLE_BIN:
 		case IDM_MOVE_TO_RECYCLE_BIN_CONFIRM:
 		case IDM_MOVE_TO_RECYCLE_BIN_CONFIRM_PERMANENT_DELETE:
@@ -1959,6 +1962,12 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_SHOW_NAVPANEL:
 			m_pNavPanelCtl->SetActive(!m_pNavPanelCtl->IsActive());
 			break;
+		case IDM_NEXTFILE:
+			GotoImage(POS_NextFile);
+			break;
+		case IDM_PREVFILE:
+			GotoImage(POS_PreviousFile);
+			break;
 		case IDM_NEXT:
 			GotoImage(POS_Next);
 			break;
@@ -1972,6 +1981,17 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_LAST:
 			SetToast(_T("Jump: Last image"));
 			GotoImage(POS_Last);
+			break;
+		case IDM_PLAYPAUSENEXT:
+			if (m_bIsAnimationPlaying) {
+				SetToast(_T("Animation Paused"));
+				StopAnimation(); // stop any running animation
+			} else if (m_pCurrentImage != NULL && m_pCurrentImage->IsAnimation()) {
+				SetToast(_T("Animation Continued"));
+				StartAnimation();
+			} else {
+				GotoImage(POS_Next);
+			}
 			break;
 		case IDM_LOOP_FOLDER:
 		case IDM_LOOP_RECURSIVELY:
@@ -2524,22 +2544,28 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			}
 			break;
 		case IDM_EXIT:
-			SaveBookmark();
 			CleanupAndTerminate();
 			break;
 		case IDM_DEFAULT_ESC:
 			if (m_bMovieMode) {
-				if (m_bAutoExit)
+				if (m_bAutoExit) {
 					CleanupAndTerminate();
-				else {
-					SetToast(_T("Pause"));
+				} else {
+					SetToast(_T("Slideshow Paused"));
 					StopMovieMode(); // stop any running movie/slideshow
 				}
 			} else if (m_bIsAnimationPlaying) {
-				if (m_bAutoExit)
+				if (m_bAutoExit) {
 					CleanupAndTerminate();
-				else
+				} else {
+					SetToast(_T("Animation Paused"));
 					StopAnimation(); // stop any running animation
+				}
+			} else if (m_bShowInfo == true) {
+				m_bShowInfo = false;
+				this->Invalidate(FALSE);
+			} else if (m_bFullScreenMode) {
+				ExecuteCommand(IDM_FULL_SCREEN_MODE);
 			} else {
 				CleanupAndTerminate();
 			}
@@ -3364,7 +3390,7 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 			StartSlideShowTimer(m_nCurrentTimeout);
 		}
 		StopAnimation();
-	} else if (ePos != POS_NextAnimation) {
+	} else if (ePos != POS_NextFrame) {
 		StopMovieMode();
 		StopAnimation();
 	}
@@ -3402,18 +3428,59 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 			}
 			break;
 		case POS_Next:
-		case POS_NextAnimation:
+		case POS_NextFrame:
 			{
 				bool bGotoNextImage = true;
-				nFrameIndex = Helpers::GetFrameIndex(m_pCurrentImage, +1, ePos == POS_NextAnimation, bGotoNextImage);
+				nFrameIndex = Helpers::GetFrameIndex(m_pCurrentImage, +1, ePos == POS_NextFrame, bGotoNextImage);
 				if (bGotoNextImage)
 					m_pFileList = m_pFileList->Next();
 				else
 					bNoWrapAroundEdgeFrame = false; // the "next" operation didn't request going to the next image (next frame index is not current one)
 				break;
 			}
+		case POS_NextFile:
 		case POS_NextSlideShow:
-			m_pFileList = m_pFileList->Next();
+			{
+				if (m_pCurrentImage && m_pCurrentImage->ContainerHasMultipleImages()) {
+					SaveBookmark();
+				}
+
+				m_pFileList = m_pFileList->Next();
+
+				LPCTSTR sFileName = m_pFileList->Current();
+				if ((sFileName != NULL) && IsBookModeFile(sFileName)) {
+					CString sBookmark = LoadBookmark(sFileName);
+					if (!sBookmark.IsEmpty()) {
+						std::wregex regexNeedle(_T("^\\d+$"));
+						if (std::regex_match(sBookmark.GetString(), regexNeedle)) {
+							// Bookmark is a pure number, so wasn't derived from a file name but from a container's FrameIndex()
+							nFrameIndex = _wtoi(sBookmark) - 1;
+						}
+					}
+				}
+			}
+			break;
+		case POS_PreviousFile:
+			{
+				if (m_pCurrentImage && m_pCurrentImage->ContainerHasMultipleImages()) {
+					SaveBookmark();
+				}
+				
+				m_pFileList = m_pFileList->Prev();
+				eDirection = CJPEGProvider::BACKWARD;
+
+				LPCTSTR sFileName = m_pFileList->Current();
+				if ((sFileName != NULL) && IsBookModeFile(sFileName)) {
+					CString sBookmark = LoadBookmark(sFileName);
+					if (!sBookmark.IsEmpty()) {
+						std::wregex regexNeedle(_T("^\\d+$"));
+						if (std::regex_match(sBookmark.GetString(), regexNeedle)) {
+							// Bookmark is a pure number, so wasn't derived from a file name but from a container's FrameIndex()
+							nFrameIndex = _wtoi(sBookmark) - 1;
+						}
+					}
+				}
+			}
 			break;
 		case POS_Previous:
 			{
@@ -3456,7 +3523,7 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 		}
 	}
 
-	if (ePos != POS_Current && ePos != POS_NextAnimation && ePos != POS_Clipboard && ePos != POS_AwayFromCurrent) {
+	if (ePos != POS_Current && ePos != POS_NextFrame && ePos != POS_Clipboard && ePos != POS_AwayFromCurrent) {
 		MouseOff();
 	}
 
@@ -4525,6 +4592,7 @@ void CMainDlg::AnimateTransition() {
 }
 
 void CMainDlg::CleanupAndTerminate() {
+	SaveBookmark();
 	StopMovieMode();
 	StopAnimation();
 	delete m_pJPEGProvider; // delete this early to properly shut down the loading threads

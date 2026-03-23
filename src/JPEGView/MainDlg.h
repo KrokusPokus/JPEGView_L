@@ -46,20 +46,16 @@ public:
 		POS_Last,
 		POS_Next,
 		POS_NextSlideShow,
-		POS_NextAnimation,
+		POS_NextFrame,
 		POS_Previous,
 		POS_Current,
 		POS_Clipboard,
 		POS_Toggle,
 		POS_AwayFromCurrent,
-		POS_Next_100,
-		POS_Previous_100,
 		POS_Next_Folder,
 		POS_Previous_Folder,
-		//exit manga archive to next/previous image:
-		POS_Next_Image,
-		POS_Previous_Image,
-		POS_Goto_Image_Num
+		POS_NextFile,
+		POS_PreviousFile
 	};
 
 	CMainDlg(bool bForceFullScreen);

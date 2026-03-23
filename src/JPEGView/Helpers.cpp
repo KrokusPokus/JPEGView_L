@@ -904,7 +904,7 @@ __int64 GetFileSize(HANDLE hFile) {
 }
 
 // Gets the frame index of the next frame, depending on the index of the last image (relevant if the image is a multiframe image)
-int GetFrameIndex(CJPEGImage* pImage, int iOffset, bool bPlayAnimation, bool & switchImage) {
+int GetFrameIndex(CJPEGImage* pImage, int iOffset, bool bSwitchFrame, bool & switchImage) {
 	bool isMultiFrame = pImage != NULL && pImage->NumberOfFrames() > 1;
 	bool isAnimation = pImage != NULL && pImage->IsAnimation();
 	bool isContainer = pImage != NULL && pImage->IsContainer();
@@ -914,7 +914,7 @@ int GetFrameIndex(CJPEGImage* pImage, int iOffset, bool bPlayAnimation, bool & s
 		switchImage = false;
 		nFrameIndex = pImage->FrameIndex() + iOffset;
 		if (isAnimation) {
-			if (bPlayAnimation) {
+			if (bSwitchFrame) {
 				if (nFrameIndex < 0) {
 					nFrameIndex = nFrameIndex + pImage->NumberOfFrames();
 				} else if (nFrameIndex > pImage->NumberOfFrames() - 1) {
@@ -937,7 +937,7 @@ int GetFrameIndex(CJPEGImage* pImage, int iOffset, bool bPlayAnimation, bool & s
 			}
 		}
 	}
-	if (bPlayAnimation && pImage == NULL) {
+	if (bSwitchFrame && pImage == NULL) {
 		switchImage = false; // never switch image when error during animation playing
 	}
 

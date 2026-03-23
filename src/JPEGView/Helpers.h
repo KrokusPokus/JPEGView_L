@@ -316,7 +316,7 @@ namespace Helpers {
 	__int64 GetFileSize(HANDLE hFile);
 
 	// Gets the frame index of the next frame, depending on the index of the last image (relevant if the image is a multiframe image)
-	int GetFrameIndex(CJPEGImage* pImage, int iOffset, bool bPlayAnimation, bool & switchImage);
+	int GetFrameIndex(CJPEGImage* pImage, int iOffset, bool bSwitchFrame, bool & switchImage);
 
 	// Gets an index string of the form [a/b] for multiframe images, empty string for single frame images
 	CString GetMultiframeIndex(CJPEGImage* pImage);

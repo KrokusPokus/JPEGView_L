@@ -76,6 +76,10 @@
   content: "delete the current file on disk - confirmation when no recycle bin for this drive"
 }
 
+.IDM_DELETE_FILE:before {
+  content: "delete file completely"
+}
+
 .IDM_TOUCH_IMAGE:before {
   content: "set modification time to current time"
 }
@@ -122,6 +126,18 @@
 
 .IDM_LAST:before {
   content: "go to last image"
+}
+
+.IDM_NEXTFILE:before {
+  content: "go to next image file (leave multiframe container)"
+}
+
+.IDM_PREVFILE:before {
+  content: "go to previous image file (leave multiframe container)"
+}
+
+.IDM_PLAYPAUSENEXT:before {
+  content: "if current image is animation: play/pause, otherwise go to next image"
 }
 
 .IDM_LOOP_FOLDER:before {
@@ -636,7 +652,7 @@ but not with other keys or other mouse buttons.
     </b>
     <br />
     <i>
-        -- Last Updated: 2026-03-04T01:22:05.429309+00:00
+        -- Last Updated: 2026-03-23T22:28:08.241125+00:00
     </i>
 </p>
 
@@ -769,6 +785,12 @@ but not with other keys or other mouse buttons.
     </td>
   </tr>
 
+  <tr><td>IDM_DELETE_FILE</td>
+    <td>
+      <span class="IDM_DELETE_FILE" />
+    </td>
+  </tr>
+
   <tr><td>IDM_TOUCH_IMAGE</td>
     <td>
       <span class="IDM_TOUCH_IMAGE" />
@@ -838,6 +860,24 @@ but not with other keys or other mouse buttons.
   <tr><td>IDM_LAST</td>
     <td>
       <span class="IDM_LAST" />
+    </td>
+  </tr>
+
+  <tr><td>IDM_NEXTFILE</td>
+    <td>
+      <span class="IDM_NEXTFILE" />
+    </td>
+  </tr>
+
+  <tr><td>IDM_PREVFILE</td>
+    <td>
+      <span class="IDM_PREVFILE" />
+    </td>
+  </tr>
+
+  <tr><td>IDM_PLAYPAUSENEXT</td>
+    <td>
+      <span class="IDM_PLAYPAUSENEXT" />
     </td>
   </tr>
 

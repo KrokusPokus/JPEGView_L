@@ -157,6 +157,7 @@
 #define IDM_MOVE_TO_RECYCLE_BIN 2620		// :KeyMap: delete the current file on disk - no confirmation (by moving it to the recycle bin)
 #define IDM_MOVE_TO_RECYCLE_BIN_CONFIRM 2621		// :KeyMap: delete the current file on disk - with user confirmation (by moving it to the recycle bin)
 #define IDM_MOVE_TO_RECYCLE_BIN_CONFIRM_PERMANENT_DELETE 2622		// :KeyMap: delete the current file on disk - confirmation when no recycle bin for this drive
+#define IDM_DELETE_FILE		2623		// :KeyMap: delete file completely
 #define IDM_TOUCH_IMAGE		2700		// :KeyMap: set modification time to current time
 #define IDM_TOUCH_IMAGE_EXIF 2710		// :KeyMap: set modification time to EXIF time
 #define IDM_TOUCH_IMAGE_EXIF_FOLDER 2720		// :KeyMap: set modification time to EXIF time for all images in folder
@@ -169,6 +170,9 @@
 #define IDM_PREV			5000		// :KeyMap: go to previous image
 #define IDM_FIRST			5100		// :KeyMap: go to first image
 #define IDM_LAST			5200		// :KeyMap: go to last image
+#define IDM_NEXTFILE		5300		// :KeyMap: go to next image file (leave multiframe container)
+#define IDM_PREVFILE		5301		// :KeyMap: go to previous image file (leave multiframe container)
+#define IDM_PLAYPAUSENEXT	5302		// :KeyMap: if current image is animation: play/pause, otherwise go to next image
 #define IDM_LOOP_FOLDER		6000		// :KeyMap: set navigation mode loop through folder
 #define IDM_LOOP_RECURSIVELY 6010		// :KeyMap: set navigation mode loop through folder and subfolders
 #define IDM_LOOP_SIBLINGS	6020		// :KeyMap: set navigation mode loop through folders on same level

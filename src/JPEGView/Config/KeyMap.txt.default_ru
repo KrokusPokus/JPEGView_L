@@ -10,8 +10,8 @@
 
 // Раскомментируйте (удалите // в начале) следующую строку, чтобы немедленно прекращать работу JPEGView по Esc при анимации или слайдшоу
 //Esc                     IDM_EXIT
-PgUp                    IDM_PREV
-PgDn                    IDM_NEXT
+PgUp                    IDM_PREVFILE
+PgDn                    IDM_NEXTFILE
 Up                      IDM_PAN_UP
 Down                    IDM_PAN_DOWN
 Left                    IDM_PAN_LEFT
