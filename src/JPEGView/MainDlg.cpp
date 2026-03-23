@@ -663,7 +663,11 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
     		LPCTSTR sFullPath = CurrentFileName(false);
     		if (sFullPath != NULL) {
 				if (m_pCurrentImage->NumberOfFrames() > 1) {
-					_stprintf_s(infoText,4096,_T("%s\nFrame %d of %d\nFile Size:   %s\nImage Size:  %d x %d\nZoomed Size: %d x %d   (Zoom Factor: %f)\nWindow Size: %d x %d\n\nCPU-Threads: %d\nCPU-Algorithm: %s\nDownsampling-Filter: %s\n\nLoading Image:  %.2f ms\nScaling Image:  %.2f ms"),sFullPath, m_pCurrentImage->FrameIndex(), m_pCurrentImage->NumberOfFrames(), Helpers::FormatFileSize(Helpers::GetFileSize(sFullPath)),m_pCurrentImage->OrigWidth(),m_pCurrentImage->OrigHeight(),iRealWidth,iRealHeight,m_dZoom,m_clientRect.Width(),m_clientRect.Height(),iNumThreads,sCPU,sFilter,m_pCurrentImage->GetLoadTickCount(), m_pCurrentImage->LastOpTickCount());
+					if (m_bIsAnimationPlaying) {
+						_stprintf_s(infoText,4096,_T("%s\nFrame %d of %d (%d ms)\nFile Size:   %s\nImage Size:  %d x %d\nZoomed Size: %d x %d   (Zoom Factor: %f)\nWindow Size: %d x %d\n\nCPU-Threads: %d\nCPU-Algorithm: %s\nDownsampling-Filter: %s\n\nLoading Image:  %.2f ms\nScaling Image:  %.2f ms"),sFullPath, m_pCurrentImage->FrameIndex()+1, m_pCurrentImage->NumberOfFrames(), m_pCurrentImage->FrameTimeMs(), Helpers::FormatFileSize(Helpers::GetFileSize(sFullPath)),m_pCurrentImage->OrigWidth(),m_pCurrentImage->OrigHeight(),iRealWidth,iRealHeight,m_dZoom,m_clientRect.Width(),m_clientRect.Height(),iNumThreads,sCPU,sFilter,m_pCurrentImage->GetLoadTickCount(), m_pCurrentImage->LastOpTickCount());
+					} else {
+						_stprintf_s(infoText,4096,_T("%s\nFrame %d of %d\nFile Size:   %s\nImage Size:  %d x %d\nZoomed Size: %d x %d   (Zoom Factor: %f)\nWindow Size: %d x %d\n\nCPU-Threads: %d\nCPU-Algorithm: %s\nDownsampling-Filter: %s\n\nLoading Image:  %.2f ms\nScaling Image:  %.2f ms"),sFullPath, m_pCurrentImage->FrameIndex()+1, m_pCurrentImage->NumberOfFrames(), Helpers::FormatFileSize(Helpers::GetFileSize(sFullPath)),m_pCurrentImage->OrigWidth(),m_pCurrentImage->OrigHeight(),iRealWidth,iRealHeight,m_dZoom,m_clientRect.Width(),m_clientRect.Height(),iNumThreads,sCPU,sFilter,m_pCurrentImage->GetLoadTickCount(), m_pCurrentImage->LastOpTickCount());
+					}
 				} else {
 					_stprintf_s(infoText,4096,_T("%s\nFile Size:   %s\nImage Size:  %d x %d\nZoomed Size: %d x %d   (Zoom Factor: %f)\nWindow Size: %d x %d\n\nCPU-Threads: %d\nCPU-Algorithm: %s\nDownsampling-Filter: %s\n\nLoading Image:  %.2f ms\nScaling Image:  %.2f ms"),sFullPath,Helpers::FormatFileSize(Helpers::GetFileSize(sFullPath)),m_pCurrentImage->OrigWidth(),m_pCurrentImage->OrigHeight(),iRealWidth,iRealHeight,m_dZoom,m_clientRect.Width(),m_clientRect.Height(),iNumThreads,sCPU,sFilter,m_pCurrentImage->GetLoadTickCount(), m_pCurrentImage->LastOpTickCount());
 				}
@@ -860,10 +864,11 @@ LRESULT CMainDlg::OnSize(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& 
 
 	// keep fit to screen
 	if (bKeepFitToScreen) {
+		dZoomForFit = GetZoomFactorForFitToScreen(bFillCrop, bAllowZoomIn);	// Calling again, since now m_clientRect is up to date.
 		if (MaxRatio(m_dZoom, dZoomForFit) >= 1.00001) {
 			StartLowQTimer(ZOOM_TIMEOUT);
-		}
 		ResetZoomToFitScreen(bFillCrop, bAllowZoomIn, bAdjustWindowSize);
+		}
 	}
 	return 0;
 }
