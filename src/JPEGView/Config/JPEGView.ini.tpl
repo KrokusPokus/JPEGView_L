@@ -250,7 +250,7 @@ BeepSoundAlert=false
 
 ; If true, the mouse wheel can be used to navigate forward and backward and zoom must be done with Ctrl-MouseWheel
 ; If false, zoom is done with the mousewheel (no Ctrl required)
-NavigateWithMouseWheel=false
+NavigateWithMouseWheel=true
 
 ; If true, the extended mouse buttons (Forward and backward) are reversed compared to Internet explorer
 ; This is useful to put the 'go to next image' functionality to the button that is better reachable

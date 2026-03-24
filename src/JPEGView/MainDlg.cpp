@@ -1157,14 +1157,8 @@ LRESULT CMainDlg::OnMouseWheel(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, 
 	bool bShift = (::GetKeyState(VK_SHIFT) & 0x8000) != 0;
 	int nDelta = GET_WHEEL_DELTA_WPARAM(wParam);
 
-	if (!bCtrl && !bShift) {
-		if (CSettingsProvider::This().NavigateWithMouseWheel() && !m_pPanelMgr->IsModalPanelShown()) {
-			if (nDelta < 0) {
-				GotoImage(POS_Next);
-			} else if (nDelta > 0) {
-				GotoImage(POS_Previous);
-			}
-		} else {
+	if (CSettingsProvider::This().NavigateWithMouseWheel() && !m_pPanelMgr->IsModalPanelShown()) {
+		if (!bCtrl && !bShift) {
 			// [GF] Smart handling:
 			// Pan vertically (if image is higher than window)
 			// OR go to previous/next image (if image smaller)
@@ -1202,35 +1196,37 @@ LRESULT CMainDlg::OnMouseWheel(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, 
 					}
 				}
 			}
-		}
-	} else if (bCtrl && bShift) {	// Zoom
-		if (m_dZoom > 0 && !m_pUnsharpMaskPanelCtl->IsVisible()) {
-			PerformZoom(CSettingsProvider::This().MouseWheelZoomSpeed() * double(nDelta) / WHEEL_DELTA, true, m_bMouseOn, true);
-		}
-	} else if (bShift) {	// Pan horizontally
-		if (m_pCurrentImage != NULL) {
-			if (nDelta < 0) {
-				if (PerformPan(-PAN_STEP, 0, false) == true) {
-					this->Invalidate(FALSE);
+		} else if (bCtrl && bShift) {	// Zoom
+			if (m_dZoom > 0 && !m_pUnsharpMaskPanelCtl->IsVisible()) {
+				PerformZoom(CSettingsProvider::This().MouseWheelZoomSpeed() * double(nDelta) / WHEEL_DELTA, true, m_bMouseOn, true);
+			}
+		} else if (bShift) {	// Pan horizontally
+			if (m_pCurrentImage != NULL) {
+				if (nDelta < 0) {
+					if (PerformPan(-PAN_STEP, 0, false) == true) {
+						this->Invalidate(FALSE);
+					}
+				} else if (nDelta > 0) {
+					if (PerformPan(PAN_STEP, 0, false) == true) {
+						this->Invalidate(FALSE);
+					}
 				}
-			} else if (nDelta > 0) {
-				if (PerformPan(PAN_STEP, 0, false) == true) {
-					this->Invalidate(FALSE);
+			}
+		} else if (bCtrl) {		// Pan vertically
+			if (m_pCurrentImage != NULL) {
+				if (nDelta < 0) {
+					if (PerformPan(0, -PAN_STEP, false) == true) {
+						this->Invalidate(FALSE);
+					}
+				} else if (nDelta > 0) {
+					if (PerformPan(0, PAN_STEP, false) == true) {
+						this->Invalidate(FALSE);
+					}
 				}
 			}
 		}
-	} else if (bCtrl) {		// Pan vertically
-		if (m_pCurrentImage != NULL) {
-			if (nDelta < 0) {
-				if (PerformPan(0, -PAN_STEP, false) == true) {
-					this->Invalidate(FALSE);
-				}
-			} else if (nDelta > 0) {
-				if (PerformPan(0, PAN_STEP, false) == true) {
-					this->Invalidate(FALSE);
-				}
-			}
-		}
+	} else if (m_dZoom > 0 && !m_pUnsharpMaskPanelCtl->IsVisible()) {
+		PerformZoom(CSettingsProvider::This().MouseWheelZoomSpeed() * double(nDelta) / WHEEL_DELTA, true, m_bMouseOn, true);
 	}
 	return 0;
 }
