@@ -42,7 +42,8 @@ CJPEGImage* CJPEGProvider::RequestImage(CFileList* pFileList, EReadAheadDirectio
 
 	/*
 	Outline on how this is supposed to work:
-		1. Process and finish current request, assuming the default m_nNumThread=1.
+		0. We assue m_nNumThread=1, since the ImageLoaders aren't thread save and JxlReader/PngReaderer/WebpReaderWriter can't do out of order frame access
+		1. Process and finish current request, assuming the default 
 		2. Start read-ahead requests 50/50 in forward and backward direction.
 		3. Remove anything from cache that's not
 			a.) the currently requested image
@@ -233,6 +234,9 @@ void CJPEGProvider::StartNewRequestBundle(CFileList* pFileList, EReadAheadDirect
 		pLastReadyRequest->IsActive = true;	// Set current request back to active.
 	}
 
+	// Stop here if pLastReadyRequest is an animation. We won't bother reading ahead since it might interfere with playback.
+	if (Helpers::CanReadAhead(pLastReadyRequest->Image) == false)
+		return;
 
 	int iDistance = 0;
 

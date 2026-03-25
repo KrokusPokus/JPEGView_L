@@ -866,8 +866,7 @@ LRESULT CMainDlg::OnSize(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL& 
 	if (bKeepFitToScreen) {
 		dZoomForFit = GetZoomFactorForFitToScreen(bFillCrop, bAllowZoomIn);	// Calling again, since now m_clientRect is up to date.
 		if (MaxRatio(m_dZoom, dZoomForFit) >= 1.00001) {
-			StartLowQTimer(ZOOM_TIMEOUT);
-		ResetZoomToFitScreen(bFillCrop, bAllowZoomIn, bAdjustWindowSize);
+			ResetZoomToFitScreen(bFillCrop, bAllowZoomIn, bAdjustWindowSize);
 		}
 	}
 	return 0;
@@ -1357,24 +1356,22 @@ LRESULT CMainDlg::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL&
 				wParam = SLIDESHOW_TIMER_EVENT_ID;
 			}
 		}
-		// Goto next image if no other messages to process are pending
-		if (!::PeekMessage(&msg, this->m_hWnd, 0, 0, PM_NOREMOVE)) {
-			int nRealDisplayTimeMs = ::GetTickCount() - m_nLastSlideShowImageTickCount;
-			if (m_nCurrentTimeout > 250 && wParam == SLIDESHOW_TIMER_EVENT_ID) {
-				if (m_nCurrentTimeout - nRealDisplayTimeMs > 100) {
-					// restart timer
-					::Sleep(m_nCurrentTimeout - nRealDisplayTimeMs);
-					::KillTimer(this->m_hWnd, SLIDESHOW_TIMER_EVENT_ID);
-					::SetTimer(this->m_hWnd, SLIDESHOW_TIMER_EVENT_ID, m_nCurrentTimeout, NULL);
-				}
+
+		int nRealDisplayTimeMs = ::GetTickCount() - m_nLastSlideShowImageTickCount;
+		if (m_nCurrentTimeout > 250 && wParam == SLIDESHOW_TIMER_EVENT_ID) {
+			if (m_nCurrentTimeout - nRealDisplayTimeMs > 100) {
+				// restart timer
+				::Sleep(m_nCurrentTimeout - nRealDisplayTimeMs);
+				::KillTimer(this->m_hWnd, SLIDESHOW_TIMER_EVENT_ID);
+				::SetTimer(this->m_hWnd, SLIDESHOW_TIMER_EVENT_ID, m_nCurrentTimeout, NULL);
 			}
-			GotoImage((wParam == ANIMATION_TIMER_EVENT_ID) ? POS_NextFrame : POS_NextSlideShow, NO_REMOVE_KEY_MSG);
-			if (wParam == SLIDESHOW_TIMER_EVENT_ID && UseSlideShowTransitionEffect()) {
-				AnimateTransition();
-			}
-			if (wParam != ANIMATION_TIMER_EVENT_ID) {
-				m_nLastSlideShowImageTickCount = ::GetTickCount();
-			}
+		}
+		GotoImage((wParam == ANIMATION_TIMER_EVENT_ID) ? POS_NextFrame : POS_NextSlideShow, NO_REMOVE_KEY_MSG);
+		if (wParam == SLIDESHOW_TIMER_EVENT_ID && UseSlideShowTransitionEffect()) {
+			AnimateTransition();
+		}
+		if (wParam != ANIMATION_TIMER_EVENT_ID) {
+			m_nLastSlideShowImageTickCount = ::GetTickCount();
 		}
 	} else if (wParam == ZOOM_TIMER_EVENT_ID) {
 		::KillTimer(this->m_hWnd, ZOOM_TIMER_EVENT_ID);
@@ -3492,6 +3489,11 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 			eDirection = CJPEGProvider::TOGGLE;
 			break;
 		case POS_Current:
+			if (m_pCurrentImage && m_pCurrentImage->ContainerHasMultipleImages()) {
+				nFrameIndex = m_pCurrentImage->FrameIndex();
+			}
+			bCheckIfSameImage = false; // do something even when not moving iterator on filelist
+			break;
 		case POS_Clipboard:
 			bCheckIfSameImage = false; // do something even when not moving iterator on filelist
 			break;
@@ -3563,7 +3565,7 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 	bool bSynchronize = (nFlags & KEEP_PARAMETERS) == 0;
 	AfterNewImageLoaded(bSynchronize, false, minimalDisplayTime > 0, ePos == POS_Previous);
 
-	// if it is an animation (currently only animated GIF) start movie automatically
+	// If current image is animated, start playback
 	if (m_pCurrentImage != NULL && m_pCurrentImage->IsAnimation()) {
 		if (m_bIsAnimationPlaying) {
 			AdjustAnimationFrameTime();
@@ -3576,7 +3578,9 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 	double currentTime = Helpers::GetExactTickCount();
 	if (ePos == POS_Next || ePos == POS_Previous) {
 		double imageTime = currentTime - m_dLastImageDisplayTime;
-		if (minimalDisplayTime > 0 && (imageTime < minimalDisplayTime)) ::Sleep((int)(minimalDisplayTime - imageTime));
+		if (minimalDisplayTime > 0 && (imageTime < minimalDisplayTime)) {
+			::Sleep((int)(minimalDisplayTime - imageTime));
+		}
 	}
 	m_dLastImageDisplayTime = Helpers::GetExactTickCount();
 
@@ -3793,7 +3797,7 @@ double CMainDlg::GetZoomFactorForFitToScreen(bool bFillWithCrop, bool bAllowEnla
 	if (m_pCurrentImage != NULL) {
 		double dZoom;
 		Helpers::GetImageRect(m_pCurrentImage->OrigWidth(), m_pCurrentImage->OrigHeight(), 
-			m_clientRect.Width(), m_clientRect.Height(), true, bFillWithCrop, false, GetAutoZoomMode(), dZoom);
+			m_clientRect.Width(), m_clientRect.Height(), bAllowEnlarge, bFillWithCrop, false, GetAutoZoomMode(), dZoom);
 		double dZoomMax = bAllowEnlarge ? Helpers::ZoomMax : max(1.0, m_dZoomAtResizeStart);
 		return max(0.0001, min(dZoomMax, dZoom));
 	} else {
@@ -4007,7 +4011,9 @@ void CMainDlg::MouseOn() {
 
 void CMainDlg::InitParametersForNewImage() {
 	if (!m_bKeepParams) {
+		bool bAutoContrastBefore = m_bAutoContrast;	// [GF] Make AutoContrast stick without m_bKeepParams
 		ResetParamsToDefault();
+		m_bAutoContrast = bAutoContrastBefore;		// [GF] Make AutoContrast stick without m_bKeepParams
 	} else if (!(m_bUserZoom || IsAdjustWindowToImage())) {
 		m_dZoom = -1;
 	}
@@ -4055,7 +4061,7 @@ void CMainDlg::AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool n
 			m_bCurrentImageIsSpecialProcessing = m_pCurrentImage->GetLightenShadowFactor() != 1.0f;
 			if (!m_bKeepParams) {
 				m_bHQResampling = GetProcessingFlag(m_pCurrentImage->GetInitialProcessFlags(), PFLAG_HighQualityResampling);
-				m_bAutoContrast = GetProcessingFlag(m_pCurrentImage->GetInitialProcessFlags(), PFLAG_AutoContrast);
+//				m_bAutoContrast = GetProcessingFlag(m_pCurrentImage->GetInitialProcessFlags(), PFLAG_AutoContrast);		// [GF] Make AutoContrast stick without m_bKeepParams
 				m_bLDC = GetProcessingFlag(m_pCurrentImage->GetInitialProcessFlags(), PFLAG_LDC);
 
 				m_nRotation = m_pCurrentImage->GetInitialRotation();
@@ -4610,23 +4616,34 @@ void CMainDlg::StartAnimation() {
 	m_bLDC = false;
 	m_bLandscapeMode = false;
 	m_bIsAnimationPlaying = true;
-	::timeBeginPeriod(1);
-	int nNewFrameTime = max(10, m_pCurrentImage->FrameTimeMs());
-	::SetTimer(this->m_hWnd, ANIMATION_TIMER_EVENT_ID, nNewFrameTime, NULL);
-	m_pNavPanelCtl->EndNavPanelAnimation();
 	m_nLastSlideShowImageTickCount = ::GetTickCount();
+	m_pNavPanelCtl->EndNavPanelAnimation();
+
 	m_nLastAnimationOffset = 0;
-	m_nExpectedNextAnimationTickCount = ::GetTickCount() + nNewFrameTime;
+	int nTimerDelay = max(10, m_pCurrentImage->FrameTimeMs());
+	m_nExpectedNextAnimationTickCount = ::GetTickCount() + nTimerDelay;
+	::SetTimer(this->m_hWnd, ANIMATION_TIMER_EVENT_ID, nTimerDelay, NULL);
 }
 
 void CMainDlg::AdjustAnimationFrameTime() {
 	// restart timer with new frame time
 	::KillTimer(this->m_hWnd, ANIMATION_TIMER_EVENT_ID);
-	m_nLastAnimationOffset += ::GetTickCount() - m_nExpectedNextAnimationTickCount;
-	m_nLastAnimationOffset = min(m_nLastAnimationOffset, max(100, m_pCurrentImage->FrameTimeMs())); // prevent offset from getting too big
-	int nNewFrameTime = max(1, m_pCurrentImage->FrameTimeMs() - max(0, m_nLastAnimationOffset));
-	m_nExpectedNextAnimationTickCount = ::GetTickCount() + max(10, m_pCurrentImage->FrameTimeMs());
-	::SetTimer(this->m_hWnd, ANIMATION_TIMER_EVENT_ID, nNewFrameTime, NULL);
+
+	m_nLastAnimationOffset = ::GetTickCount() - m_nExpectedNextAnimationTickCount;
+	int nTimerDelay = max(10, m_pCurrentImage->FrameTimeMs() - m_nLastAnimationOffset);
+	m_nExpectedNextAnimationTickCount += max(10, m_pCurrentImage->FrameTimeMs());
+
+	// If we can't process and display frames fast enough, m_nLastAnimationOffset will build up more and more.
+	// SetTimer() allows for a minimum delay of 10 ms, but be still can't keep up.
+	// At this point, there are only two things we can do:
+	//	  1) Don't drop frames by sticking to the timer and accepting that the animation is playing back slower than intended.
+	//    2) Drop frames by sidestepping the timer and calling GotoImage() directly with "NO_UPDATE_WINDOW".
+	// Todo: Add INI setting for keep speed vs keep frames
+	if (m_nLastAnimationOffset > 2 * m_pCurrentImage->FrameTimeMs()) {
+		GotoImage(POS_NextFrame, NO_REMOVE_KEY_MSG | NO_UPDATE_WINDOW);
+	} else {
+		::SetTimer(this->m_hWnd, ANIMATION_TIMER_EVENT_ID, nTimerDelay, NULL);
+	}
 }
 
 void CMainDlg::StopAnimation() {
@@ -4646,7 +4663,6 @@ void CMainDlg::StopAnimation() {
 		m_bLandscapeMode = true;
 	}
 	::KillTimer(this->m_hWnd, ANIMATION_TIMER_EVENT_ID);
-	::timeEndPeriod(1);
 	m_bIsAnimationPlaying = false;
 }
 

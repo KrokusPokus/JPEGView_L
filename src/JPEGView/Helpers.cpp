@@ -41,9 +41,6 @@ void SetJPEGViewAppDataPath(LPCTSTR sPath) {
 
 CSize GetImageRect(int nWidth, int nHeight, int nScreenWidth, int nScreenHeight, 
 					bool bAllowZoomIn, bool bFillCrop, bool bLimitAR, EAutoZoomMode eAutoZoomMode, double & dZoom) {
-	bAllowZoomIn = (eAutoZoomMode == ZM_FitToScreen || eAutoZoomMode == ZM_FillScreen);
-	bFillCrop = (eAutoZoomMode == ZM_FillScreenNoZoom || eAutoZoomMode == ZM_FillScreen);
-	bLimitAR = (eAutoZoomMode == ZM_FillScreenNoZoom);
 	CSettingsProvider& sp = CSettingsProvider::This();
 	int nBookModePageHeight = sp.BookModePageHeight();
 
