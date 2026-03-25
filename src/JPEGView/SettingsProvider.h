@@ -190,6 +190,8 @@ public:
 /*GF*/	bool TitleBarUseFileIcon() { return m_bTitleBarUseFileIcon; }
 /*GF*/	int CacheRange() { return m_nCacheRange; }
 /*GF*/	Helpers::ETransparencyMode TransparencyMode() {return m_eTransparencyMode; }
+/*GF*/	void SetBookModePageHeight(int nBookModePageHeight) { m_nBookModePageHeight = nBookModePageHeight; }
+/*GF*/	void SaveCustomSettings();
 
 private:
 	static CSettingsProvider* sm_instance;

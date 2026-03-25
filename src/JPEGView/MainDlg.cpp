@@ -2022,7 +2022,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			}
 			break;
 		case IDM_STOP_MOVIE:
-			SetToast(_T("Pause"));
+			SetToast(_T("Slideshow Paused"));
 			StopMovieMode();
 			break;
 		case IDM_SLIDESHOW_RESUME:
@@ -3752,9 +3752,15 @@ bool CMainDlg::PerformZoom(double dValue, bool bExponent, bool bZoomToMouse, boo
 
 
 			if (dImageAR < 1.0) {		// single page
-				if (((nImageW * m_dZoom) <= nWinW) && ((nImageH * m_dZoom) >= nWinH)) {
-					m_nBookModePageHeight = (int)((nWinH / (nImageH * m_dZoom)) * 100);
+				if (nImageW * m_dZoom > nWinW) {		// wider than window
+					m_nBookModePageHeight = 9999;
+				} else if (nImageH * m_dZoom < nWinH) { // shorter then window height -> limit to 100
+					m_nBookModePageHeight = 100;
+				} else {
+					m_nBookModePageHeight = (int)((nImageH * m_dZoom * 100) / nWinH);
 				}
+
+				CSettingsProvider::This().SetBookModePageHeight(m_nBookModePageHeight);
 			}
 		}
 	}
@@ -3902,7 +3908,8 @@ void CMainDlg::ResetParamsToDefault() {
 	m_bUserZoom = false;
 	m_bUserPan = false;
 	*m_pImageProcParams = GetDefaultProcessingParams();
-	InitFromProcessingFlags(GetDefaultProcessingFlags(m_bLandscapeMode), m_bHQResampling, m_bAutoContrast, m_bAutoContrastSection, m_bLDC, m_bLandscapeMode);
+	// [GF] Do not reset these back to their INI defaults. If the user has intentionally changed these in the current instance, these values should be respected and used instead.
+	//InitFromProcessingFlags(GetDefaultProcessingFlags(m_bLandscapeMode), m_bHQResampling, m_bAutoContrast, m_bAutoContrastSection, m_bLDC, m_bLandscapeMode);
 }
 
 void CMainDlg::StartSlideShowTimer(int nMilliSeconds) {
@@ -4011,9 +4018,7 @@ void CMainDlg::MouseOn() {
 
 void CMainDlg::InitParametersForNewImage() {
 	if (!m_bKeepParams) {
-		bool bAutoContrastBefore = m_bAutoContrast;	// [GF] Make AutoContrast stick without m_bKeepParams
 		ResetParamsToDefault();
-		m_bAutoContrast = bAutoContrastBefore;		// [GF] Make AutoContrast stick without m_bKeepParams
 	} else if (!(m_bUserZoom || IsAdjustWindowToImage())) {
 		m_dZoom = -1;
 	}
@@ -4060,9 +4065,10 @@ void CMainDlg::AfterNewImageLoaded(bool bSynchronize, bool bAfterStartup, bool n
 			m_bCurrentImageInParamDB = m_pCurrentImage->IsInParamDB();
 			m_bCurrentImageIsSpecialProcessing = m_pCurrentImage->GetLightenShadowFactor() != 1.0f;
 			if (!m_bKeepParams) {
-				m_bHQResampling = GetProcessingFlag(m_pCurrentImage->GetInitialProcessFlags(), PFLAG_HighQualityResampling);
-//				m_bAutoContrast = GetProcessingFlag(m_pCurrentImage->GetInitialProcessFlags(), PFLAG_AutoContrast);		// [GF] Make AutoContrast stick without m_bKeepParams
-				m_bLDC = GetProcessingFlag(m_pCurrentImage->GetInitialProcessFlags(), PFLAG_LDC);
+				// [GF] Do not restore these to how they were when the image was loaded before. If the user has intentionally changed these settings since that time, the current settings should be respected.
+				//m_bHQResampling = GetProcessingFlag(m_pCurrentImage->GetInitialProcessFlags(), PFLAG_HighQualityResampling);
+				//m_bAutoContrast = GetProcessingFlag(m_pCurrentImage->GetInitialProcessFlags(), PFLAG_AutoContrast);
+				//m_bLDC = GetProcessingFlag(m_pCurrentImage->GetInitialProcessFlags(), PFLAG_LDC);
 
 				m_nRotation = m_pCurrentImage->GetInitialRotation();
 				m_dZoom = m_pCurrentImage->GetInititialZoom();
@@ -4595,6 +4601,7 @@ void CMainDlg::AnimateTransition() {
 
 void CMainDlg::CleanupAndTerminate() {
 	SaveBookmark();
+	CSettingsProvider::This().SaveCustomSettings();
 	StopMovieMode();
 	StopAnimation();
 	delete m_pJPEGProvider; // delete this early to properly shut down the loading threads

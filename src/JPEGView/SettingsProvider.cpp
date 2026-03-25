@@ -519,6 +519,14 @@ void CSettingsProvider::ReadWriteableINISettings() {
 // -------------------------------------------------------------------------------------------
 }
 
+void CSettingsProvider::SaveCustomSettings() {
+	MakeSureUserINIExists();
+
+	WriteInt(_T("BookModePageHeight"), m_nBookModePageHeight);
+
+	m_bUserINIExists = true;
+}
+
 void CSettingsProvider::SaveSettings(const CImageProcessingParams& procParams, 
 									 EProcessingFlags eProcFlags,
 									 Helpers::ENavigationMode eNavigationMode, Helpers::ESorting eFileSorting, bool isSortedAscending,
