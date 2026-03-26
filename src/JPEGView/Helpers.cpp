@@ -48,7 +48,7 @@ CSize GetImageRect(int nWidth, int nHeight, int nScreenWidth, int nScreenHeight,
 		double dImageAR = (double)nWidth/nHeight;
 		if (dImageAR >= 1.0) {						// If it's wider than high, assume a double page
 			dZoom = (double)nScreenWidth/nWidth;	//    ... and Fit to screen width
-		} else {									// Else, assume a single page
+		} else {									// else, assume a single page
 			double dAR1 = ((double)(nHeight*100) / (nBookModePageHeight * nScreenHeight));	// Zoom to user specified height
 			double dAR2 = (double)nWidth/nScreenWidth;										//    ...but limit maximum image width to window width
 			double dAR = max(dAR1, dAR2);

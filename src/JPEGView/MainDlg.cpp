@@ -4645,12 +4645,15 @@ void CMainDlg::AdjustAnimationFrameTime() {
 	// At this point, there are only two things we can do:
 	//	  1) Don't drop frames by sticking to the timer and accepting that the animation is playing back slower than intended.
 	//    2) Drop frames by sidestepping the timer and calling GotoImage() directly with "NO_UPDATE_WINDOW".
-	// Todo: Add INI setting for keep speed vs keep frames
-	if (m_nLastAnimationOffset > 2 * m_pCurrentImage->FrameTimeMs()) {
-		GotoImage(POS_NextFrame, NO_REMOVE_KEY_MSG | NO_UPDATE_WINDOW);
-	} else {
+	//		 The latter only works if the dLoadTickCount on average is smaller than our intended display FrameTimeMs.
+	//		 (We need to load each image because we need to access them in order for the readers that only support sequential access: JxlReader, PngReader, WebpReaderWriter)
+	//		 (We can only save time on not displaying (NO_UPDATE_WINDOW). And by using a direct call of GotoImage() instead of a timer.)
+	//		 (But if load time is already too long, we are out of look and just better stick to the timer and accept the slower animation.)
+//	if (m_nLastAnimationOffset > 2 * m_pCurrentImage->FrameTimeMs()) {
+//		GotoImage(POS_NextFrame, NO_REMOVE_KEY_MSG | NO_UPDATE_WINDOW);
+//	} else {
 		::SetTimer(this->m_hWnd, ANIMATION_TIMER_EVENT_ID, nTimerDelay, NULL);
-	}
+//	}
 }
 
 void CMainDlg::StopAnimation() {
