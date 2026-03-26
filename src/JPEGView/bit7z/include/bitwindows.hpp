@@ -106,6 +106,11 @@ constexpr auto ERROR_NO_MORE_FILES = 0x100018;
 constexpr auto ERROR_DIRECTORY = 267;
 #endif
 
+#ifndef CP_UTF8
+// Win32 codepages
+constexpr auto CP_UTF8 = 65001u;
+#endif
+
 // Win32 structs.
 struct FILETIME {
     DWORD dwLowDateTime;
@@ -126,7 +131,11 @@ struct PROPVARIANT {
     WORD wReserved2;
     WORD wReserved3;
     union {
+#if defined( __arm__ ) || defined( __aarch64__ )
+        signed char cVal;
+#else
         char cVal;
+#endif
         unsigned char bVal;
         short iVal;
         unsigned short uiVal;

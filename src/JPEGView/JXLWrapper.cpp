@@ -117,7 +117,7 @@ bool JxlReader::DecodeJpegXlOneShot(const uint8_t* jxl, size_t size, std::vector
 				return false;
 			}
 			pixels->resize(cache.info.xsize * cache.info.ysize * 4);
-			void* pixels_buffer = (void*)pixels->data();
+			void* pixels_buffer = static_cast<void*>(pixels->data());
 			size_t pixels_buffer_size = pixels->size() * sizeof(uint8_t);
 			if (JXL_DEC_SUCCESS != JxlDecoderSetImageOutBuffer(cache.decoder.get(), &format,
 				pixels_buffer,
@@ -167,6 +167,12 @@ bool JxlReader::DecodeJpegXlOneShot(const uint8_t* jxl, size_t size, std::vector
 			output_pos += kChunkSize - remaining;
 			cache.exif.resize(cache.exif.size() + kChunkSize);
 			JxlDecoderSetBoxBuffer(cache.decoder.get(), cache.exif.data() + output_pos, cache.exif.size() - output_pos);
+		} else if (status == JXL_DEC_BOX_COMPLETE) {
+			if (!cache.exif.empty()) {
+				size_t remaining = JxlDecoderReleaseBoxBuffer(cache.decoder.get());
+				cache.exif.resize(cache.exif.size() - remaining);
+				return true;
+			}
 		} else {
 			return false;
 		}

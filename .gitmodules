@@ -38,3 +38,6 @@
 [submodule "extras/third_party/LibRaw"]
 	path = extras/third_party/LibRaw
 	url = https://github.com/LibRaw/LibRaw/
+[submodule "extras/third_party/bit7z"]
+	path = extras/third_party/bit7z
+	url = https://github.com/rikyoz/bit7z.git
