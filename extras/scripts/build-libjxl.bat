@@ -26,9 +26,8 @@ IF ERRORLEVEL 1 exit /b 1
 
 echo === HEADER FILES NOT MAINTAINED BY SCRIPT ===
 echo NOTE: as for the header files, copy/replace files AS NEEDED
-echo TO: src\JPEGView\libjxl\include\jxl
-echo FROM: extras\third_party\libjxl\lib\include\jxl
 echo FROM: %XOUT_DIR%\[arch]\lib\include\jxl
+echo TO: src\JPEGView\libjxl\include\jxl
 
 exit /b 0
 
@@ -55,18 +54,28 @@ pushd "%XBUILD_DIR%"
 
 cmake.exe -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -A %XPLATFORM% "%XLIB_DIR%"
 IF ERRORLEVEL 1 exit /b 1
-msbuild.exe /p:Platform=%XPLATFORM% /p:configuration="Release" LIBJXL.sln /t:jxl_dec /t:jxl_threads
+msbuild.exe -p:Platform=%XPLATFORM% -p:configuration="Release" LIBJXL.sln -t:brotlicommon;brotlidec;brotlienc;jxl;jxl_cms;jxl_dec;jxl_threads
 IF ERRORLEVEL 1 exit /b 1
 
 popd
 
 REM copy the libs over
-copy /y "%XBUILD_DIR%\Release\jxl*.dll" "%XSRC_DIR%\JPEGView\libjxl\bin%XJPV_ARCH_PATH%\"
+copy /y "%XBUILD_DIR%\third_party\brotli\Release\brotlicommon.dll" "%XSRC_DIR%\JPEGView\libjxl\bin%XJPV_ARCH_PATH%\"
 IF ERRORLEVEL 1 exit /b 1
-copy /y "%XBUILD_DIR%\third_party\brotli\Release\brotli*.dll" "%XSRC_DIR%\JPEGView\libjxl\bin%XJPV_ARCH_PATH%\"
+copy /y "%XBUILD_DIR%\third_party\brotli\Release\brotlidec.dll" "%XSRC_DIR%\JPEGView\libjxl\bin%XJPV_ARCH_PATH%\"
 IF ERRORLEVEL 1 exit /b 1
-copy /y "%XBUILD_DIR%\lib\Release\jxl*.lib" "%XSRC_DIR%\JPEGView\libjxl\lib%XJPV_ARCH_PATH%\"
+
+copy /y "%XBUILD_DIR%\lib\Release\jxl_dec.dll" "%XSRC_DIR%\JPEGView\libjxl\bin%XJPV_ARCH_PATH%\"
 IF ERRORLEVEL 1 exit /b 1
+copy /y "%XBUILD_DIR%\lib\Release\jxl_threads.dll" "%XSRC_DIR%\JPEGView\libjxl\bin%XJPV_ARCH_PATH%\"
+IF ERRORLEVEL 1 exit /b 1
+
+copy /y "%XBUILD_DIR%\lib\Release\jxl_dec.lib" "%XSRC_DIR%\JPEGView\libjxl\lib%XJPV_ARCH_PATH%\"
+IF ERRORLEVEL 1 exit /b 1
+copy /y "%XBUILD_DIR%\lib\Release\jxl_threads.lib" "%XSRC_DIR%\JPEGView\libjxl\lib%XJPV_ARCH_PATH%\"
+IF ERRORLEVEL 1 exit /b 1
+
+
 
 
 

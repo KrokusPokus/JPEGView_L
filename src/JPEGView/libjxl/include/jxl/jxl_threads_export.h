@@ -33,6 +33,7 @@
 #  define JXL_THREADS_DEPRECATED_NO_EXPORT JXL_THREADS_NO_EXPORT JXL_THREADS_DEPRECATED
 #endif
 
+/* NOLINTNEXTLINE(readability-avoid-unconditional-preprocessor-if) */
 #if 0 /* DEFINE_NO_DEPRECATED */
 #  ifndef JXL_THREADS_NO_DEPRECATED
 #    define JXL_THREADS_NO_DEPRECATED

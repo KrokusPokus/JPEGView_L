@@ -61,12 +61,12 @@ IF /I "%PROJECT_NAME%" EQU "JPEGView_VS2017" (
 )
 
 REM all other projects files get DLLs...
-call :COPY_DLLS libjxl
-call :COPY_DLLS libheif
-call :COPY_DLLS libavif
-call :COPY_DLLS lcms2
-call :COPY_DLLS libraw
 call :COPY_DLLS bit7z
+call :COPY_DLLS lcms2
+call :COPY_DLLS libavif
+call :COPY_DLLS libheif
+call :COPY_DLLS libjxl
+call :COPY_DLLS libraw
 
 exit /b 0
 

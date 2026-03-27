@@ -10,7 +10,7 @@ IF /I "%~1" EQU "" (
 	exit /b 1
 )
 
-SET XVS_BASE_COMMON=%ProgramFiles(x86)%\Microsoft Visual Studio
+SET XVS_BASE_COMMON=%ProgramFiles%\Microsoft Visual Studio
 
 IF /I "%XVS_INIT_VER%" EQU "" GOTO SKIP_VER
 	REM need to do it this way so that () chars don't cause a syntax error
