@@ -6,7 +6,7 @@ REM this builds LibRaw and replaces the dlls/libs in the JPEGView src folder
 SET XSRC_DIR=%~dp0..\..\src\JPEGView\libraw
 SET XLIB_DIR=%~dp0..\third_party\LibRaw
 
-SET XVS_VER=2019
+SET XVS_VER=2022
 IF /I "%XVS_INIT_VER%" NEQ "" (
 	REM override the build version for the solutions provided
 	SET XVS_VER=%XVS_INIT_VER%
@@ -35,11 +35,9 @@ REM cleanup
 del "%XMAKEFILE%"
 
 
-echo === HEADER FILES NOT MAINTAINED BY SCRIPT ===
-echo NOTE: as for the header files, copy/replace files AS NEEDED
-echo;
-echo TO:   src\JPEGView\libraw\include
-echo FROM: extras\third_party\LibRaw\libraw
+echo === HEADER FILES ===
+echo Copying 'extras\third_party\LibRaw\libraw\*' -to- 'src\JPEGView\libraw\include\libraw\'
+copy /y "%XLIB_DIR%\libraw\*" "%XSRC_DIR%\include\libraw\"
 
 exit /b 0
 

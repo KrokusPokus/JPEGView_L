@@ -13,8 +13,8 @@ SET XOUT_DIR=%~dp0libheif_libavif
 SET XVENV_DIR=%~dp0venv-meson
 
 IF EXIST "%XOUT_DIR%" (
-	echo libheif output exists, please delete folder before trying to build
-	exit /b 1
+	rmdir /s/q "%XOUT_DIR%"
+	IF ERRORLEVEL 1 exit /b 1
 )
 
 echo + Looking up NASM
@@ -25,22 +25,22 @@ IF ERRORLEVEL 1 (
 )
 
 echo + Looking up Python
-where python.exe
-python -V
+where py.exe
+py -V
 IF ERRORLEVEL 1 (
 	echo Python isn't found on path!
 	exit /b 1
 )
 
 echo + Create VENV
-python.exe -m venv "%XVENV_DIR%"
+py.exe -m venv "%XVENV_DIR%"
 
 echo + Activate VENV
 call "%XVENV_DIR%\Scripts\activate.bat"
 
 echo + Install Meson and Ninja inside VENV
-python.exe -m pip install -U pip
-python.exe -m pip install -U meson ninja
+py.exe -m pip install -U pip
+py.exe -m pip install -U meson ninja
 
 
 REM libavif only depends on dav1d

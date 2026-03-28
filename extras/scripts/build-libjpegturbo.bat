@@ -8,8 +8,8 @@ SET XLIB_DIR=%~dp0..\third_party\libjpeg-turbo
 SET XOUT_DIR=%~dp0libjpeg-turbo
 
 IF EXIST "%XOUT_DIR%" (
-	echo libjpeg-turbo output exists, please delete folder before trying to build
-	exit /b 1
+	rmdir /s/q "%XOUT_DIR%"
+	IF ERRORLEVEL 1 exit /b 1
 )
 
 echo + Looking up NASM
@@ -25,18 +25,17 @@ IF ERRORLEVEL 1 (
 
 call :BUILD_COPY_JPEGT x86 lib
 IF ERRORLEVEL 1 exit /b 1
+
 call :BUILD_COPY_JPEGT x64 lib64
 IF ERRORLEVEL 1 exit /b 1
 
 
-
-
-echo === HEADER FILES NOT MAINTAINED BY SCRIPT ===
-echo NOTE: as for the header files, copy/replace files AS NEEDED
-echo TO: src\JPEGView\libjpeg-turbo\include
-echo FROM: extras\third_party\libjpeg-turbo
-echo FROM: jconfig.h is in output directory
-
+echo === HEADER FILES ===
+echo Copying 'extras\third_party\libjpeg-turbo\' to 'src\JPEGView\libjpeg-turbo\include\'
+copy /y "%XLIB_DIR%\src\jerror.h" "%XSRC_DIR%\JPEGView\libjpeg-turbo\include\"
+copy /y "%XLIB_DIR%\src\jmorecfg.h" "%XSRC_DIR%\JPEGView\libjpeg-turbo\include\"
+copy /y "%XLIB_DIR%\src\jpeglib.h" "%XSRC_DIR%\JPEGView\libjpeg-turbo\include\"
+copy /y "%XLIB_DIR%\src\turbojpeg.h" "%XSRC_DIR%\JPEGView\libjpeg-turbo\include\"
 
 exit /b 0
 
@@ -68,6 +67,7 @@ REM error checking if a copy fails... throws error to caller
 copy /y "%XBUILD_DIR%\turbojpeg-static.lib" "%XSRC_DIR%\JPEGView\libjpeg-turbo\%~2\"
 IF ERRORLEVEL 1 exit /b 1
 
-
+copy /y "%XBUILD_DIR%\jconfig.h" "%XSRC_DIR%\JPEGView\libjpeg-turbo\include\"
+IF ERRORLEVEL 1 exit /b 1
 
 exit /b 0

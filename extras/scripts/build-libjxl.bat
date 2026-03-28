@@ -3,31 +3,25 @@
 setlocal
 REM this builds libjxl and replaces the libs in the JPEGView src folder
 
-REM for me it takes like 15min to build
-echo NOTE: this takes a LONG time to build, don't be alarmed...
-echo       if it looks like the build process hung... it didn't, it's just WAY SLOW!
-
 SET XSRC_DIR=%~dp0..\..\src
 SET XLIB_DIR=%~dp0..\third_party\libjxl
 SET XOUT_DIR=%~dp0libjxl
 
 IF EXIST "%XOUT_DIR%" (
-	echo libjxl output exists, please delete folder before trying to build
-	exit /b 1
+	rmdir /s/q "%XOUT_DIR%"
+	IF ERRORLEVEL 1 exit /b 1
 )
 
 call :BUILD_COPY_JXL x86 Win32 ""
 IF ERRORLEVEL 1 exit /b 1
+
 call :BUILD_COPY_JXL x64 x64 "64"
 IF ERRORLEVEL 1 exit /b 1
 
 
-
-
-echo === HEADER FILES NOT MAINTAINED BY SCRIPT ===
-echo NOTE: as for the header files, copy/replace files AS NEEDED
-echo FROM: %XOUT_DIR%\[arch]\lib\include\jxl
-echo TO: src\JPEGView\libjxl\include\jxl
+echo === HEADER FILES ===
+echo Copying 'extras\scripts\libjxl\x64\lib\include\jxl\*' -to- 'src\JPEGView\libjxl\include\jxl'
+copy /y "%XOUT_DIR%\x64\lib\include\jxl\*" "%XSRC_DIR%\JPEGView\libjxl\include\jxl\"
 
 exit /b 0
 

@@ -8,19 +8,20 @@ SET XLIB_DIR=%~dp0..\third_party\libwebp
 SET XOUT_DIR=%~dp0libwebp
 
 IF EXIST "%XOUT_DIR%" (
-	echo libwebp output exists, please delete folder before trying to build
-	exit /b 1
+	rmdir /s/q "%XOUT_DIR%"
+	IF ERRORLEVEL 1 exit /b 1
 )
 
 call :BUILD_COPY_WEBP x86 lib
 IF ERRORLEVEL 1 exit /b 1
+
 call :BUILD_COPY_WEBP x64 lib64
 IF ERRORLEVEL 1 exit /b 1
 
 
-echo === HEADER FILES NOT MAINTAINED BY SCRIPT ===
-echo NOTE: as for the header files, copy/replace files AS NEEDED
-echo extras\third_party\libwebp\src\webp -to- src\JPEGView\libwebp\include
+echo === HEADER FILES ===
+echo Copying 'extras\third_party\libwebp\src\webp\*' -to- 'src\JPEGView\libwebp\include\webp\'
+copy /y "%XLIB_DIR%\src\webp\*" "%XSRC_DIR%\include\webp\"
 
 exit /b 0
 
@@ -47,9 +48,9 @@ IF ERRORLEVEL 1 exit /b 1
 popd
 
 REM copy the libs over
-REM error checking if a copy fails... throws error to caller
 copy /y "%XOUT_DIR%\release-static\%1\lib\libwebp.lib" "%XSRC_DIR%\%2\"
 IF ERRORLEVEL 1 exit /b 1
+
 copy /y "%XOUT_DIR%\release-static\%1\lib\libwebpdemux.lib" "%XSRC_DIR%\%2\"
 IF ERRORLEVEL 1 exit /b 1
 
