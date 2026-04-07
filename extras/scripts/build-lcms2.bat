@@ -24,9 +24,10 @@ echo === HEADER FILES ===
 echo Copying 'extras\third_party\Little-CMS\include\lcms2.h' -to- 'src\JPEGView\lcms2\include\'
 copy /y "%XLIB_DIR%\include\lcms2.h" "%XSRC_DIR%\include\"
 
+REM cleanup
+call :CLEANUP
+
 exit /b 0
-
-
 
 
 REM ===============================================================================================
@@ -50,5 +51,42 @@ copy /y "bin\lcms2.lib" "%XSRC_DIR%\lib%~3"
 IF ERRORLEVEL 1 exit /b 1
 copy /y "bin\lcms2.dll" "%XSRC_DIR%\bin%~3"
 IF ERRORLEVEL 1 exit /b 1
+
+exit /b 0
+
+
+REM ===============================================================================================
+
+:CLEANUP
+
+IF EXIST "%XLIB_DIR%\Projects\VC2019\lcms2_DLL\Release_Win32" (
+	rmdir /s/q "%XLIB_DIR%\Projects\VC2019\lcms2_DLL\Release_Win32"
+	IF ERRORLEVEL 1 exit /b 1
+)
+
+IF EXIST "%XLIB_DIR%\Projects\VC2019\lcms2_DLL\Release_x64" (
+	rmdir /s/q "%XLIB_DIR%\Projects\VC2019\lcms2_DLL\Release_x64"
+	IF ERRORLEVEL 1 exit /b 1
+)
+
+IF EXIST "%XLIB_DIR%\Projects\VC2022\lcms2_DLL\Release_Win32" (
+	rmdir /s/q "%XLIB_DIR%\Projects\VC2022\lcms2_DLL\Release_Win32"
+	IF ERRORLEVEL 1 exit /b 1
+)
+
+IF EXIST "%XLIB_DIR%\Projects\VC2022\lcms2_DLL\Release_x64" (
+	rmdir /s/q "%XLIB_DIR%\Projects\VC2022\lcms2_DLL\Release_x64"
+	IF ERRORLEVEL 1 exit /b 1
+)
+
+IF EXIST "%XLIB_DIR%\Projects\VC2026\lcms2_DLL\Release_Win32" (
+	rmdir /s/q "%XLIB_DIR%\Projects\VC2026\lcms2_DLL\Release_Win32"
+	IF ERRORLEVEL 1 exit /b 1
+)
+
+IF EXIST "%XLIB_DIR%\Projects\VC2026\lcms2_DLL\Release_x64" (
+	rmdir /s/q "%XLIB_DIR%\Projects\VC2026\lcms2_DLL\Release_x64"
+	IF ERRORLEVEL 1 exit /b 1
+)
 
 exit /b 0

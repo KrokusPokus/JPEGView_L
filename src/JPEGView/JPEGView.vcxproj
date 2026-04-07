@@ -70,14 +70,14 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">obj\x86\$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\deps\WTL-sf\Include;$(ProjectDir)libpng-apng\include;$(ProjectDir)libjxl\include;$(ProjectDir)\libheif\include;$(ProjectDir)\libwebp\include;$(ProjectDir)\libavif\include;$(ProjectDir)\lcms2\include;$(ProjectDir)\libraw\include;$(ProjectDir)bit7z\include;$(IncludePath)</IncludePath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)..\..\deps\WTL-sf\Include;$(ProjectDir)libpng-apng\include;$(ProjectDir)libjxl\include;$(ProjectDir)\libheif\include;$(ProjectDir)\libwebp\include;$(ProjectDir)\libavif\include;$(ProjectDir)\lcms2\include;$(ProjectDir)\libraw\include;$(ProjectDir)bit7z\include;$(IncludePath)</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)libjpeg-turbo\lib;$(ProjectDir)libpng-apng\lib;$(ProjectDir)libjxl\lib;$(ProjectDir)libheif\lib;$(ProjectDir)libwebp\lib;$(ProjectDir)libavif\lib;$(ProjectDir)lcms2\lib;$(ProjectDir)libraw\lib;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)libjpeg-turbo\lib64;$(ProjectDir)libpng-apng\lib64;$(ProjectDir)libjxl\lib64;$(ProjectDir)libheif\lib64;$(ProjectDir)libwebp\lib64;$(ProjectDir)libavif\lib64;$(ProjectDir)lcms2\lib64;$(ProjectDir)libraw\lib64;$(ProjectDir)bit7z\lib64;$(LibraryPath)</LibraryPath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\deps\WTL-sf\Include;$(ProjectDir)libpng-apng\include;$(ProjectDir)libjxl\include;$(ProjectDir)\libheif\include;$(ProjectDir)\libwebp\include;$(ProjectDir)\libavif\include;$(ProjectDir)\lcms2\include;$(ProjectDir)\libraw\include;$(ProjectDir)bit7z\include;$(ProjectDir)zip;$(IncludePath)</IncludePath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)..\..\deps\WTL-sf\Include;$(ProjectDir)libpng-apng\include;$(ProjectDir)libjxl\include;$(ProjectDir)\libheif\include;$(ProjectDir)\libwebp\include;$(ProjectDir)\libavif\include;$(ProjectDir)\lcms2\include;$(ProjectDir)\libraw\include;$(ProjectDir)bit7z\include;$(IncludePath)</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)libjpeg-turbo\lib;$(ProjectDir)libpng-apng\lib;$(ProjectDir)libjxl\lib;$(ProjectDir)libheif\lib;$(ProjectDir)libwebp\lib;$(ProjectDir)libavif\lib;$(ProjectDir)lcms2\lib;$(ProjectDir)libraw\lib;$(LibraryPath)</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)libjpeg-turbo\lib64;$(ProjectDir)libpng-apng\lib64;$(ProjectDir)libjxl\lib64;$(ProjectDir)libheif\lib64;$(ProjectDir)libwebp\lib64;$(ProjectDir)libavif\lib64;$(ProjectDir)lcms2\lib64;$(ProjectDir)libraw\lib64;$(ProjectDir)bit7z\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)..\..\deps\WTL-sf\Include;$(ProjectDir)libpng\include;$(ProjectDir)libjxl\include;$(ProjectDir)\libheif\include;$(ProjectDir)\libwebp\include;$(ProjectDir)\libavif\include;$(ProjectDir)\lcms2\include;$(ProjectDir)\libraw\include;$(ProjectDir)bit7z\include;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)..\..\deps\WTL-sf\Include;$(ProjectDir)libpng\include;$(ProjectDir)libjxl\include;$(ProjectDir)\libheif\include;$(ProjectDir)\libwebp\include;$(ProjectDir)\libavif\include;$(ProjectDir)\lcms2\include;$(ProjectDir)\libraw\include;$(ProjectDir)bit7z\include;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(ProjectDir)libjpeg-turbo\lib;$(ProjectDir)libpng\lib;$(ProjectDir)libjxl\lib;$(ProjectDir)libheif\lib;$(ProjectDir)libwebp\lib;$(ProjectDir)libavif\lib;$(ProjectDir)lcms2\lib;$(ProjectDir)libraw\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(ProjectDir)libjpeg-turbo\lib64;$(ProjectDir)libpng\lib64;$(ProjectDir)libjxl\lib64;$(ProjectDir)libheif\lib64;$(ProjectDir)libwebp\lib64;$(ProjectDir)libavif\lib64;$(ProjectDir)lcms2\lib64;$(ProjectDir)libraw\lib64;$(ProjectDir)bit7z\lib64;$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)..\..\deps\WTL-sf\Include;$(ProjectDir)libpng\include;$(ProjectDir)libjxl\include;$(ProjectDir)\libheif\include;$(ProjectDir)\libwebp\include;$(ProjectDir)\libavif\include;$(ProjectDir)\lcms2\include;$(ProjectDir)\libraw\include;$(ProjectDir)bit7z\include;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)..\..\deps\WTL-sf\Include;$(ProjectDir)libpng\include;$(ProjectDir)libjxl\include;$(ProjectDir)\libheif\include;$(ProjectDir)\libwebp\include;$(ProjectDir)\libavif\include;$(ProjectDir)\lcms2\include;$(ProjectDir)\libraw\include;$(ProjectDir)bit7z\include;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)libjpeg-turbo\lib;$(ProjectDir)libpng\lib;$(ProjectDir)libjxl\lib;$(ProjectDir)libheif\lib;$(ProjectDir)libwebp\lib;$(ProjectDir)libavif\lib;$(ProjectDir)lcms2\lib;$(ProjectDir)libraw\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(ProjectDir)libjpeg-turbo\lib64;$(ProjectDir)libpng\lib64;$(ProjectDir)libjxl\lib64;$(ProjectDir)libheif\lib64;$(ProjectDir)libwebp\lib64;$(ProjectDir)libavif\lib64;$(ProjectDir)lcms2\lib64;$(ProjectDir)libraw\lib64;$(ProjectDir)bit7z\lib64;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>bin\x64\$(Configuration)\</OutDir>
@@ -121,7 +121,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>Dbghelp.lib;gdiplus.lib;WICLoader.lib;turbojpeg-static.lib;winmm.lib;libpng16.lib;zlib.lib;jxl.lib;jxl_threads.lib;heif.lib;libwebp.lib;libwebpdemux.lib;avif.lib;lcms2.lib;libraw.lib;bit7z.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Dbghelp.lib;gdiplus.lib;WICLoader.lib;turbojpeg-static.lib;winmm.lib;libpng18_static.lib;zlib.lib;jxl_dec.lib;jxl_threads.lib;heif.lib;libwebp.lib;libwebpdemux.lib;avif.lib;lcms2.lib;libraw.lib;bit7z.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>bin\x86\$(Configuration);$(ProjectDir)..\WICLoader\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
@@ -173,7 +173,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>dbghelp.lib;gdiplus.lib;WICLoader.lib;turbojpeg-static.lib;winmm.lib;libpng16.lib;zlib.lib;jxl.lib;jxl_threads.lib;heif.lib;libwebp.lib;libwebpdemux.lib;avif.lib;lcms2.lib;libraw.lib;bit7z.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dbghelp.lib;gdiplus.lib;WICLoader.lib;turbojpeg-static.lib;winmm.lib;libpng18_static.lib;zlib.lib;jxl_dec.lib;jxl_threads.lib;heif.lib;libwebp.lib;libwebpdemux.lib;avif.lib;lcms2.lib;libraw.lib;bit7z.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>bin\x64\$(Configuration);$(ProjectDir)..\WICLoader\lib64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>
       </ModuleDefinitionFile>
@@ -231,7 +231,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>gdiplus.lib;WICLoader.lib;turbojpeg-static.lib;winmm.lib;libpng16.lib;zlib.lib;jxl.lib;jxl_threads.lib;heif.lib;libwebp.lib;libwebpdemux.lib;avif.lib;lcms2.lib;libraw.lib;bit7z.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gdiplus.lib;WICLoader.lib;turbojpeg-static.lib;winmm.lib;libpng18_static.lib;zlib.lib;jxl_dec.lib;jxl_threads.lib;heif.lib;libwebp.lib;libwebpdemux.lib;avif.lib;lcms2.lib;libraw.lib;bit7z.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>bin\x86\$(Configuration);$(ProjectDir)..\WICLoader\lib\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -288,7 +288,7 @@
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>gdiplus.lib;WICLoader.lib;turbojpeg-static.lib;winmm.lib;libpng16.lib;zlib.lib;jxl.lib;jxl_threads.lib;heif.lib;libwebp.lib;libwebpdemux.lib;avif.lib;lcms2.lib;libraw.lib;bit7z.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>gdiplus.lib;WICLoader.lib;turbojpeg-static.lib;winmm.lib;libpng18_static.lib;zlib.lib;jxl_dec.lib;jxl_threads.lib;heif.lib;libwebp.lib;libwebpdemux.lib;avif.lib;lcms2.lib;libraw.lib;bit7z.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>bin\x64\$(Configuration);$(ProjectDir)..\WICLoader\lib64\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>

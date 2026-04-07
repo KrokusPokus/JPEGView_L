@@ -30,14 +30,12 @@ IF ERRORLEVEL 1 exit /b 1
 call :BUILD_COPY_LIBRAW x64 "64"
 IF ERRORLEVEL 1 exit /b 1
 
-
-REM cleanup
-del "%XMAKEFILE%"
-
-
 echo === HEADER FILES ===
 echo Copying 'extras\third_party\LibRaw\libraw\*' -to- 'src\JPEGView\libraw\include\libraw\'
 copy /y "%XLIB_DIR%\libraw\*" "%XSRC_DIR%\include\libraw\"
+
+REM cleanup
+call :CLEANUP
 
 exit /b 0
 
@@ -104,5 +102,20 @@ copy /y "lib\libraw.lib" "%XSRC_DIR%\lib%~2"
 IF ERRORLEVEL 1 exit /b 1
 copy /y "bin\libraw.dll" "%XSRC_DIR%\bin%~2"
 IF ERRORLEVEL 1 exit /b 1
+
+exit /b 0
+
+
+REM ===============================================================================================
+
+:CLEANUP
+
+del "%XMF_PATH%"
+
+del /s /q "%XLIB_DIR%\bin\*.exe"
+del /s /q "%XLIB_DIR%\bin\*.dll"
+del /s /q "%XLIB_DIR%\lib\*.exp"
+del /s /q "%XLIB_DIR%\lib\*.lib"
+del /s /q "%XLIB_DIR%\object\*.obj"
 
 exit /b 0

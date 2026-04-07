@@ -152,9 +152,9 @@ IF EXIST "%LIBPNG_BUILD_DIR%" (
 	IF ERRORLEVEL 1 exit /b 1
 )
 
-IF EXIST "%EXPORT_DIR%" (
-	rmdir /s/q "%EXPORT_DIR%"
-	IF ERRORLEVEL 1 exit /b 1
-)
+REM IF EXIST "%EXPORT_DIR%" (
+REM		rmdir /s/q "%EXPORT_DIR%"
+REM 	IF ERRORLEVEL 1 exit /b 1
+REM )
 
 exit /b 0
