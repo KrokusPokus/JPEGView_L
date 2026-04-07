@@ -122,18 +122,18 @@ void* PngReader::ReadNextFrame(void** exif_chunk, png_uint_32* exif_size)
 	}
 	if (cache.frame_index == cache.first)
 	{
-		cache.bop = PNG_BLEND_OP_SOURCE;
-		if (cache.dop == PNG_DISPOSE_OP_PREVIOUS)
-			cache.dop = PNG_DISPOSE_OP_BACKGROUND;
+		cache.bop = PNG_fcTL_BLEND_OP_SOURCE;
+		if (cache.dop == PNG_fcTL_DISPOSE_OP_PREVIOUS)
+			cache.dop = PNG_fcTL_DISPOSE_OP_BACKGROUND;
 	}
 #endif
 	png_read_image(cache.png_ptr, cache.rows_frame);
 
 #ifdef PNG_APNG_SUPPORTED
-	if (cache.dop == PNG_DISPOSE_OP_PREVIOUS)
+	if (cache.dop == PNG_fcTL_DISPOSE_OP_PREVIOUS)
 		memcpy(cache.p_temp, cache.p_image, cache.size);
 
-	if (cache.bop == PNG_BLEND_OP_OVER)
+	if (cache.bop == PNG_fcTL_BLEND_OP_OVER)
 		BlendOver(cache.rows_image, cache.rows_frame, cache.x0, cache.y0, cache.w0, cache.h0);
 	else
 #endif
@@ -147,10 +147,10 @@ void* PngReader::ReadNextFrame(void** exif_chunk, png_uint_32* exif_size)
 		memcpy((char*)pixels + j * cache.width * cache.channels, cache.rows_image[j], cache.width * cache.channels);
 
 #ifdef PNG_APNG_SUPPORTED
-	if (cache.dop == PNG_DISPOSE_OP_PREVIOUS)
+	if (cache.dop == PNG_fcTL_DISPOSE_OP_PREVIOUS)
 		memcpy(cache.p_image, cache.p_temp, cache.size);
 	else
-		if (cache.dop == PNG_DISPOSE_OP_BACKGROUND)
+		if (cache.dop == PNG_fcTL_DISPOSE_OP_BACKGROUND)
 			for (j = 0; j < cache.h0; j++)
 				memset(cache.rows_image[j + cache.y0] + cache.x0 * 4, 0, cache.w0 * 4);
 #endif
