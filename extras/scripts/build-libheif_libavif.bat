@@ -247,7 +247,7 @@ pushd "%XBUILD_DIR%"
 REM not sure if there's any diff using nmake vs ninja
 REM derived from https://github.com/AOMediaCodec/libavif/blob/main/.github/workflows/ci-windows.yml
 ::cmake.exe -G"NMake Makefiles" -DCMAKE_BUILD_TYPE=Release -DAVIF_LIBYUV=LOCAL -DBUILD_SHARED_LIBS=ON -DAVIF_CODEC_DAV1D=ON -DDAV1D_LIBRARY="%XDAV1D_DIST%\lib\dav1d.lib" -DDAV1D_INCLUDE_DIR="%XDAV1D_DIST%\include" "%XLIBAVIF_DIR%"
-cmake.exe -G Ninja -DCMAKE_BUILD_TYPE=Release -DAVIF_LIBYUV=LOCAL -DAVIF_CODEC_DAV1D=LOCAL -DDAV1D_LIBRARY="%XDAV1D_DIST%\lib\dav1d.lib" -DDAV1D_INCLUDE_DIR="%XDAV1D_DIST%\include" "%XLIBAVIF_DIR%"
+cmake.exe -G Ninja -DCMAKE_BUILD_TYPE=Release -DAVIF_LIBYUV=LOCAL -DAVIF_CODEC_DAV1D=SYSTEM -DDAV1D_LIBRARY="%XDAV1D_DIST%\lib\dav1d.lib" -DDAV1D_INCLUDE_DIR="%XDAV1D_DIST%\include" "%XLIBAVIF_DIR%"
 IF ERRORLEVEL 1 exit /b 1
 ::nmake.exe
 ninja.exe
