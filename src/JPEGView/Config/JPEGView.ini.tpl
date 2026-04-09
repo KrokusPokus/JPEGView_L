@@ -307,9 +307,9 @@ MinimalDisplayTime=0
 ; (Setting to true automatically disables Animated PNG support)
 ForceGDIPlus=false
 
-; If true, embedded ICC color profiles are used for JPEG, PNG and TIFF. This forces using GDI+ and therefore
-; results in much slower loading of images! Only set to true if you really need this.
-; (ICC color profiles are not supported for Animated PNG)
+; If true, an image's embedded ICC color profile will be applied during decoding.
+; For PNG only, this additionally forces loading via GDI+ instead of libpng, which is slower.
+; (For Animated PNG, ICC color profiles will not be used)
 UseEmbeddedColorProfiles=false
 
 ; -----------------------------------------------

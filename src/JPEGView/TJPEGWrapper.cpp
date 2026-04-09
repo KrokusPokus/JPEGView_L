@@ -3,6 +3,7 @@
 #include "TJPEGWrapper.h"
 #include "libjpeg-turbo\include\turbojpeg.h"
 #include "MaxImageDef.h"
+#include "ICCProfileTransform.h"
 
 void * TurboJpeg::ReadImage(int &width,
 					   int &height,
@@ -37,6 +38,18 @@ void * TurboJpeg::ReadImage(int &width,
 				if (nResult != 0) {
 					delete[] pPixelData;
 					pPixelData = NULL;
+				} else {
+					unsigned char *iccBuf = NULL;
+					size_t iccSize = 0;
+					nResult = tj3GetICCProfile(hDecoder, &iccBuf, &iccSize);
+					if (nResult == 0) {
+						void* transform = ICCProfileTransform::CreateTransform(iccBuf, iccSize, ICCProfileTransform::FORMAT_BGR);
+						if (transform != NULL) {
+							ICCProfileTransform::DoTransform(transform, pPixelData, pPixelData, width, height);
+							ICCProfileTransform::DeleteTransform(transform);
+						}
+					tj3Free(iccBuf);
+					}
 				}
 			} else {
 				outOfMemory = true;
