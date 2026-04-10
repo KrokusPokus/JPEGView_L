@@ -1975,6 +1975,15 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			SetToast(_T("Jump: Last image"));
 			GotoImage(POS_Last);
 			break;
+		case IDM_PLAYPAUSE:
+			if (m_bIsAnimationPlaying) {
+				SetToast(_T("Animation Paused"));
+				StopAnimation(); // stop any running animation
+			} else if (m_pCurrentImage != NULL && m_pCurrentImage->IsAnimation()) {
+				SetToast(_T("Animation Continued"));
+				StartAnimation();
+			}
+			break;
 		case IDM_PLAYPAUSENEXT:
 			if (m_bIsAnimationPlaying) {
 				SetToast(_T("Animation Paused"));

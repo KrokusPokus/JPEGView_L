@@ -173,6 +173,7 @@
 #define IDM_NEXTFILE		5300		// :KeyMap: go to next image file (leave multiframe container)
 #define IDM_PREVFILE		5301		// :KeyMap: go to previous image file (leave multiframe container)
 #define IDM_PLAYPAUSENEXT	5302		// :KeyMap: if current image is animation: play/pause, otherwise go to next image
+#define IDM_PLAYPAUSE		5303		// :KeyMap: if current image is animation: play/pause
 #define IDM_LOOP_FOLDER		6000		// :KeyMap: set navigation mode loop through folder
 #define IDM_LOOP_RECURSIVELY 6010		// :KeyMap: set navigation mode loop through folder and subfolders
 #define IDM_LOOP_SIBLINGS	6020		// :KeyMap: set navigation mode loop through folders on same level
