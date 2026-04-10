@@ -122,7 +122,7 @@ static EImageFormat GetBitmapFormat(Gdiplus::Bitmap * pBitmap) {
 }
 
 static CJPEGImage* ConvertGDIPlusBitmapToJPEGImage(Gdiplus::Bitmap* pBitmap, int nFrameIndex, void* pEXIFData, 
-	__int64 nJPEGHash, bool &isOutOfMemory, bool &isAnimatedGIF, Helpers::ETransparencyMode nTransparencyMode = Helpers::TP_BLEND) {
+	__int64 nJPEGHash, bool &isOutOfMemory, bool &isAnimatedGIF, Helpers::ETransparencyMode nTransparencyMode) {
 
 	isOutOfMemory = false;
 	isAnimatedGIF = false;
@@ -174,35 +174,18 @@ static CJPEGImage* ConvertGDIPlusBitmapToJPEGImage(Gdiplus::Bitmap* pBitmap, int
 	bool bHasAlphaChannel = (pixelFormat & (PixelFormatAlpha | PixelFormatPAlpha));
 	Gdiplus::Bitmap* pBmTarget = NULL;
 	Gdiplus::Graphics* pBmGraphics = NULL;
-	Gdiplus::Bitmap* pBitmapToUse;
-	if (bHasAlphaChannel) {
-		pBmTarget = new Gdiplus::Bitmap(pBitmap->GetWidth(), pBitmap->GetHeight(), PixelFormat32bppRGB);
-		pBmGraphics = new Gdiplus::Graphics(pBmTarget);
-		COLORREF bkColor = CSettingsProvider::This().ColorTransparency();
-		Gdiplus::SolidBrush bkBrush(Gdiplus::Color(GetRValue(bkColor), GetGValue(bkColor), GetBValue(bkColor)));
-		pBmGraphics->FillRectangle(&bkBrush, 0, 0, pBmTarget->GetWidth(), pBmTarget->GetHeight());
-		pBmGraphics->DrawImage(pBitmap, 0, 0, pBmTarget->GetWidth(), pBmTarget->GetHeight());
-		pBitmapToUse = pBmTarget;
-		if (pBmGraphics->GetLastStatus() == Gdiplus::OutOfMemory) {
-			isOutOfMemory = true;
-			delete pBmGraphics; delete pBmTarget;
-			return NULL;
-		}
-	} else {
-		pBitmapToUse = pBitmap;
-	}
 
 	Gdiplus::Rect bmRect(0, 0, pBitmap->GetWidth(), pBitmap->GetHeight());
 	Gdiplus::BitmapData bmData;
-	lastStatus = pBitmapToUse->LockBits(&bmRect, Gdiplus::ImageLockModeRead, PixelFormat32bppRGB, &bmData);
+	lastStatus = pBitmap->LockBits(&bmRect, Gdiplus::ImageLockModeRead, PixelFormat32bppRGB, &bmData);
 	if (lastStatus == Gdiplus::Ok) {
 		assert(bmData.PixelFormat == PixelFormat32bppRGB);
-		void* pDIB = CBasicProcessing::ConvertGdiplus32bppRGB(bmRect.Width, bmRect.Height, bmData.Stride, bmData.Scan0);
+		void* pDIB = CBasicProcessing::ConvertGdiplus32bppRGB(bmRect.Width, bmRect.Height, bmData.Stride, bmData.Scan0, nTransparencyMode);
 		if (pDIB != NULL) {
 			pJPEGImage = new CJPEGImage(bmRect.Width, bmRect.Height, pDIB, pEXIFData, 4, nJPEGHash, eImageFormat,
 				eImageFormat == IF_GIF && nFrameCount > 1, nFrameIndex, nFrameCount, nFrameTimeMs);
 		}
-		pBitmapToUse->UnlockBits(&bmData);
+		pBitmap->UnlockBits(&bmData);
 	} else if (lastStatus == Gdiplus::ValueOverflow) {
 		isOutOfMemory = true;
 	}
@@ -740,7 +723,7 @@ void CImageLoadThread::ProcessReadPNGRequest(CRequest* request) {
 					Gdiplus::Bitmap* pBitmap = Gdiplus::Bitmap::FromStream(pStream, CSettingsProvider::This().UseEmbeddedColorProfiles());
 					bool isOutOfMemory, isAnimatedGIF;
 					pEXIFData = PngReader::GetEXIFBlock(pBuffer, nFileSize);
-					request->Image = ConvertGDIPlusBitmapToJPEGImage(pBitmap, 0, pEXIFData, 0, isOutOfMemory, isAnimatedGIF);
+					request->Image = ConvertGDIPlusBitmapToJPEGImage(pBitmap, 0, pEXIFData, 0, isOutOfMemory, isAnimatedGIF, request->ProcessParams.TransparencyMode);
 					request->OutOfMemory = request->Image == NULL && isOutOfMemory;
 					pStream->Release();
 					delete pBitmap;

@@ -2,6 +2,7 @@
 #include "Clipboard.h"
 #include "JPEGImage.h"
 #include "Helpers.h"
+#include "SettingsProvider.h"
 #include "BasicProcessing.h"
 #include "MaxImageDef.h"
 #include <gdiplus.h>
@@ -99,7 +100,7 @@ CJPEGImage* CClipboard::PasteImageFromClipboard(HWND hWnd, const CImageProcessin
 					Gdiplus::BitmapData bmData;
 					if (pBitmap->LockBits(&bmRect, Gdiplus::ImageLockModeRead, PixelFormat32bppRGB, &bmData) == Gdiplus::Ok) {
 						assert(bmData.PixelFormat == PixelFormat32bppRGB);
-						void* pDIB = CBasicProcessing::ConvertGdiplus32bppRGB(bmRect.Width, bmRect.Height, bmData.Stride, bmData.Scan0);
+						void* pDIB = CBasicProcessing::ConvertGdiplus32bppRGB(bmRect.Width, bmRect.Height, bmData.Stride, bmData.Scan0, CSettingsProvider::This().TransparencyMode());
 						pImage = (pDIB == NULL) ? NULL : new CJPEGImage(bmRect.Width, bmRect.Height, pDIB, NULL, 4, 0, IF_CLIPBOARD, false, 0, 1, 0);
 						pBitmap->UnlockBits(&bmData);
 					}

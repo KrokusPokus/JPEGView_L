@@ -813,7 +813,7 @@ void* CBasicProcessing::Convert3To4Channels(int nWidth, int nHeight, const void*
 	return pNewDIB;
 }
 
-void* CBasicProcessing::ConvertGdiplus32bppRGB(int nWidth, int nHeight, int nStride, const void* pGdiplusPixels) {
+void* CBasicProcessing::ConvertGdiplus32bppRGB(int nWidth, int nHeight, int nStride, const void* pGdiplusPixels, Helpers::ETransparencyMode nTransparencyMode) {
 	if (pGdiplusPixels == NULL || nWidth*4 > abs(nStride)) {
 		return NULL;
 	}
@@ -823,10 +823,11 @@ void* CBasicProcessing::ConvertGdiplus32bppRGB(int nWidth, int nHeight, int nStr
 	const uint8* pSrc = (const uint8*)pGdiplusPixels;
 	for (int j = 0; j < nHeight; j++) {
 		for (int i = 0; i < nWidth; i++)
-			pTgt[i] = ((uint32*)pSrc)[i] | ALPHA_OPAQUE;
+			pTgt[i] = ((uint32*)pSrc)[i];
 		pTgt += nWidth;
 		pSrc += nStride;
 	}
+	Helpers::BlendAlpha((uint32*)pNewDIB, nWidth, nHeight, nTransparencyMode);
 	return pNewDIB;
 }
 
