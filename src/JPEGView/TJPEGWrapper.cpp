@@ -45,7 +45,7 @@ void * TurboJpeg::ReadImage(int &width,
 					if (nResult == 0) {
 						void* transform = ICCProfileTransform::CreateTransform(iccBuf, iccSize, ICCProfileTransform::FORMAT_BGR);
 						if (transform != NULL) {
-							ICCProfileTransform::DoTransform(transform, pPixelData, pPixelData, width, height);
+							ICCProfileTransform::DoTransform(transform, pPixelData, pPixelData, width, height, TJPAD(width * 3));
 							ICCProfileTransform::DeleteTransform(transform);
 						}
 					tj3Free(iccBuf);
