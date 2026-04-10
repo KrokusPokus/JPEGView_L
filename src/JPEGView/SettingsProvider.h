@@ -191,6 +191,7 @@ public:
 /*GF*/	int CacheRange() { return m_nCacheRange; }
 /*GF*/	Helpers::ETransparencyMode TransparencyMode() {return m_eTransparencyMode; }
 /*GF*/	void SetBookModePageHeight(int nBookModePageHeight) { m_nBookModePageHeight = nBookModePageHeight; }
+/*GF*/	void SetUseEmbeddedColorProfiles(int bUseEmbeddedColorProfiles) { m_bUseEmbeddedColorProfiles = bUseEmbeddedColorProfiles; }
 /*GF*/	void SaveCustomSettings();
 
 private:

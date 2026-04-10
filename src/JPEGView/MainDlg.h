@@ -339,6 +339,7 @@ private:
 	bool m_isBeforeFileSelected;
 	double m_dLastImageDisplayTime;
 	Helpers::ETransparencyMode m_eTransparencyMode; //for transparent background
+	bool m_bUseEmbeddedColorProfiles;
 	bool m_bWindowBorderless;
 	bool m_bAlwaysOnTop;
 	bool m_bSelectZoom;  // keeps track of select-to-zoom mode when CTRL+SHIFT+LMouse

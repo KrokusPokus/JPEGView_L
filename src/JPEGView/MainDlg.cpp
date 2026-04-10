@@ -285,6 +285,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_pHelpDlg = NULL;
 
 	m_eTransparencyMode = sp.TransparencyMode();
+	m_bUseEmbeddedColorProfiles = sp.UseEmbeddedColorProfiles();
 	m_strToast = _T("");
 
 /*############################################*/
@@ -2703,6 +2704,22 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 				m_eTransparencyMode = Helpers::TP_BLEND;
 				SetToast(_T("Transparency: Blend"));
 			}
+			m_pJPEGProvider->NotifyNotUsed(m_pCurrentImage);
+			m_pJPEGProvider->ClearAllRequests();
+			m_pCurrentImage = NULL;
+			ReloadImage(true);
+			break;
+		case IDM_TOGGLE_USE_EMBEDDED_COLOR_PROFILES:
+			m_bUseEmbeddedColorProfiles = !m_bUseEmbeddedColorProfiles;
+			CSettingsProvider::This().SetUseEmbeddedColorProfiles(m_bUseEmbeddedColorProfiles);
+			if (m_bUseEmbeddedColorProfiles == false) {
+				SetToast(_T("Embedded Color Profiles: ignored"));
+			} else {
+				SetToast(_T("Embedded Color Profiles: used"));
+			}
+			m_pJPEGProvider->NotifyNotUsed(m_pCurrentImage);
+			m_pJPEGProvider->ClearAllRequests();
+			m_pCurrentImage = NULL;
 			ReloadImage(true);
 			break;
 		case IDM_GAMMA_INC:

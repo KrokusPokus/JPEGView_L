@@ -268,6 +268,7 @@
 #define IDM_CHANGE_FOLDER_LANGUAGE	12453	// :KeyMap: jump between different language folders (varying in endings like " [en]", " [de]", " [ko]")
 #define IDM_OPEN_DEFAULT_EDITOR		12454	// :KeyMap: open image with default registry edit action of this file type
 #define IDM_TOGGLE_AUTO_ZOOM_FIT	12455	// :KeyMap: toggle auto zoom mode "BookMode (Default) <-> Fit " and "Fit (Default) <-> None"
+#define IDM_TOGGLE_USE_EMBEDDED_COLOR_PROFILES	12456	// :KeyMap: toggle INI setting "UseEmbeddedColorProfiles"
 
 #define IDM_AUTO_ZOOM_NONE	12500		// :KeyMap: set auto zoom mode disabled
 #define IDM_AUTO_ZOOM_FIT_NO_ZOOM	12510		// :KeyMap: set auto zoom mode fit to screen, never zoom
