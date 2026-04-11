@@ -1,5 +1,4 @@
 #pragma once
-#include "Helpers.h"
 
 // Basic image processing methods processing the image pixel data
 class CBasicProcessing
@@ -46,7 +45,7 @@ public:
 	static void* Convert3To4Channels(int nWidth, int nHeight, const void* pIJLPixels);
 
 	// Convert from GDI+ 32 bpp RGBA format to 32 bpp BGRA DIB format
-	static void* ConvertGdiplus32bppRGB(int nWidth, int nHeight, int nStride, const void* pGdiplusPixels, Helpers::ETransparencyMode nTransparencyMode);
+	static void* ConvertGdiplus32bppRGB(int nWidth, int nHeight, int nStride, const void* pGdiplusPixels, bool bPurgeAlpha);
 
 	// Copy rectangular pixel block from source to target 32 bpp bitmap. The target bitmap is allocated
 	// if the 'pTarget' parameter is NULL. Note that size of source and target rect must match.

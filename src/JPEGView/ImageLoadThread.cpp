@@ -180,7 +180,9 @@ static CJPEGImage* ConvertGDIPlusBitmapToJPEGImage(Gdiplus::Bitmap* pBitmap, int
 	lastStatus = pBitmap->LockBits(&bmRect, Gdiplus::ImageLockModeRead, PixelFormat32bppRGB, &bmData);
 	if (lastStatus == Gdiplus::Ok) {
 		assert(bmData.PixelFormat == PixelFormat32bppRGB);
-		void* pDIB = CBasicProcessing::ConvertGdiplus32bppRGB(bmRect.Width, bmRect.Height, bmData.Stride, bmData.Scan0, nTransparencyMode);
+		void* pDIB = CBasicProcessing::ConvertGdiplus32bppRGB(bmRect.Width, bmRect.Height, bmData.Stride, bmData.Scan0, !bHasAlphaChannel);
+		if (bHasAlphaChannel == true)
+			Helpers::BlendAlpha((uint32*)pDIB, bmRect.Width, bmRect.Height, nTransparencyMode);
 		if (pDIB != NULL) {
 			pJPEGImage = new CJPEGImage(bmRect.Width, bmRect.Height, pDIB, pEXIFData, 4, nJPEGHash, eImageFormat,
 				eImageFormat == IF_GIF && nFrameCount > 1, nFrameIndex, nFrameCount, nFrameTimeMs);
