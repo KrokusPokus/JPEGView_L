@@ -940,7 +940,13 @@ LPCTSTR CSettingsProvider::GetAutoZoomModeString(Helpers::EAutoZoomMode autoZoom
 }
 
 void CSettingsProvider::WriteString(LPCTSTR sKey, LPCTSTR sString) {
-	::WritePrivateProfileString(SECTION_NAME, sKey, sString, m_sIniNameUser);
+	TCHAR sValueOld[1024];
+	sValueOld[1023] = 0;
+	::GetPrivateProfileString(SECTION_NAME, sKey, _T(""), sValueOld, 1023, m_sIniNameUser);
+
+	if ((sValueOld[0] == 0) || (lstrcmp(sValueOld,sString) != 0)) {
+		::WritePrivateProfileString(SECTION_NAME, sKey, sString, m_sIniNameUser);
+		}
 }
 
 void CSettingsProvider::WriteDouble(LPCTSTR sKey, double dValue) {
