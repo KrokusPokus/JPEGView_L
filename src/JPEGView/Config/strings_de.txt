@@ -117,7 +117,7 @@ Descending	Absteigend
 Display image (EXIF) information	Bildinfo (EXIF) anzeigen
 Do you really want to delete the current image file on disk?	Soll die aktuelle Bilddatei wirklich gelöscht werden?
 Do you really want to permanently delete the file %filename%?	Soll die Datei %filename% wirklich permanent gelöscht werden?
-Do you really want to permanently delete this file?	Soll diese Datei wirklich permanent gelöscht werden?
+Do you really want to permanently delete this file?	Soll diese Datei wirklich unwiderruflich gelöscht werden?
 Do you really want to save the following parameters as default to the INI file	Sollen diese Parameter wirklich als Standardparameter in der INI-Datei gespeichert werden
 Drag at the left or right border for asymmetric correction.	Ziehen Sie am rechten oder linken Rand für asymmetrische Korrektur.
 EXIF date successfully set on %d images, failed on %d images	EXIF-Datum erfolgreich gesetzt auf %d Bildern, fehlgeschlagen auf %d Bildern
