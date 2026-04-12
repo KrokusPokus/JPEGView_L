@@ -334,7 +334,7 @@ Show/hide file name	Dateiname anzeigen / nicht anzeigen
 Show/hide navigation panel	Navigationsleiste anzeigen/nicht anzeigen
 Show/hide picture information (EXIF data)	Bild-Informationen anzeigen (EXIF Daten)
 Show/hide this help text	Hilfetext anzeigen / schliessen
-Size:	Grösse:
+Size:	Größe:
 Slide from bottom	Rutschen von unten
 Slide from left	Rutschen von links
 Slide from right	Rutschen von rechts

@@ -1904,7 +1904,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			MouseOn();
 			if (m_pCurrentImage != NULL && m_pFileList != NULL && !m_pCurrentImage->IsClipboardImage() && sp.AllowFileDeletion()) {
 				LPCTSTR currentFileName = CurrentFileName(false);
-				if (IDYES == ::MessageBox(m_hWnd, CString(CNLS::GetString(_T("Do you really want to permanently delete this file?"))) + _T("\n\n") + currentFileName, CNLS::GetString(_T("Confirm")), MB_YESNOCANCEL | MB_ICONQUESTION)) {
+				if (IDYES == ::MessageBox(m_hWnd, CString(CNLS::GetString(_T("Do you really want to permanently delete this file?"))) + _T("\n\n") + currentFileName + _T("\n\n") + CString(CNLS::GetString(_T("Size:"))) + " " + Helpers::FormatFileSize(Helpers::GetFileSize(currentFileName)), CNLS::GetString(_T("Confirm")), MB_YESNOCANCEL | MB_ICONQUESTION)) {
 					CFileList* fileListOfDeletedImage = m_pFileList;
 					GotoImage(POS_AwayFromCurrent, NO_REQUEST);
 					if (::DeleteFile(currentFileName)) {
