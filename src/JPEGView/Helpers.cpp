@@ -1046,7 +1046,15 @@ CString FormatFileSize(__int64 nFileSize) {
 				value /= 1024.0;
 				exponent++;
 			}
-			sFileSize.Format(_T("%.1f %s"), value, units[exponent]);
+
+			if (value < 10.0) {
+				sFileSize.Format(_T("%.2f %s"), value, units[exponent]); // e.g. 1,23 MiB
+			} else if (value < 100.0) {
+				sFileSize.Format(_T("%.1f %s"), value, units[exponent]); // e.g. 12,3 MiB
+			} else {
+				sFileSize.Format(_T("%.0f %s"), value, units[exponent]); // e.g. 123 MiB
+    }
+			
 		}
 	}
 	
