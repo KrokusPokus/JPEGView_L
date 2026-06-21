@@ -4909,6 +4909,6 @@ void CMainDlg::ToastSortingMode(Helpers::ESorting nSortMode, bool bUpCounting)
 		_T("Sorting: Size")
 	};
 	CString sSortMode = sSortModes[(int)nSortMode];
-	sSortMode += (bUpCounting ? _T(" ^") : _T(" v"));
+	//sSortMode += (bUpCounting ? _T(" ^") : _T(" v"));
 	SetToast(sSortMode);
 }
