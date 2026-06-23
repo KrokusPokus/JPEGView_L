@@ -371,9 +371,12 @@ BEGIN
             MENUITEM "Movie",                           IDM_MOVIE_START_FPS
             MENUITEM "Playback speed\t5 fps",           IDM_MOVIE_5_FPS
             MENUITEM "Playback speed\t10 fps",          IDM_MOVIE_10_FPS
+			MENUITEM "Playback speed\t15 fps",          IDM_MOVIE_15_FPS
+			MENUITEM "Playback speed\t20 fps",          IDM_MOVIE_20_FPS
             MENUITEM "Playback speed\t25 fps",          IDM_MOVIE_25_FPS
             MENUITEM "Playback speed\t30 fps",          IDM_MOVIE_30_FPS
             MENUITEM "Playback speed\t50 fps",          IDM_MOVIE_50_FPS
+			MENUITEM "Playback speed\t60 fps",          IDM_MOVIE_60_FPS
             MENUITEM "Playback speed\t100 fps",         IDM_MOVIE_100_FPS
         END
         MENUITEM SEPARATOR

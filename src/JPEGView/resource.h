@@ -174,6 +174,7 @@
 #define IDM_PREVFILE		5301		// :KeyMap: go to previous image file (leave multiframe container)
 #define IDM_PLAYPAUSENEXT	5302		// :KeyMap: if current image is animation: play/pause, otherwise go to next image
 #define IDM_PLAYPAUSE		5303		// :KeyMap: if current image is animation: play/pause
+#define IDM_NEXTFRAME       5304		// :KeyMap: go to next frame (in multiframe container)
 #define IDM_LOOP_FOLDER		6000		// :KeyMap: set navigation mode loop through folder
 #define IDM_LOOP_RECURSIVELY 6010		// :KeyMap: set navigation mode loop through folder and subfolders
 #define IDM_LOOP_SIBLINGS	6020		// :KeyMap: set navigation mode loop through folders on same level
@@ -217,12 +218,15 @@
 #define IDM_EFFECTTIME_SLOW  7473
 #define IDM_EFFECTTIME_VERY_SLOW  7474
 #define IDM_MOVIE_START_FPS 7500 // Pseudo entry (diff of the rest of the IDM_MOVIE_* values used to calculate actual FPS)
-#define IDM_MOVIE_5_FPS		7505
-#define IDM_MOVIE_10_FPS	7510
-#define IDM_MOVIE_25_FPS	7525
-#define IDM_MOVIE_30_FPS	7530
-#define IDM_MOVIE_50_FPS	7550
-#define IDM_MOVIE_100_FPS	7600
+#define IDM_MOVIE_5_FPS		7505		// :KeyMap: Start animating at 5 fps
+#define IDM_MOVIE_10_FPS	7510		// :KeyMap: Start animating at 10 fps
+#define IDM_MOVIE_15_FPS	7515		// :KeyMap: Start animating at 15 fps
+#define IDM_MOVIE_20_FPS	7520		// :KeyMap: Start animating at 20 fps
+#define IDM_MOVIE_25_FPS	7525		// :KeyMap: Start animating at 25 fps
+#define IDM_MOVIE_30_FPS	7530		// :KeyMap: Start animating at 30 fps
+#define IDM_MOVIE_50_FPS	7550		// :KeyMap: Start animating at 50 fps
+#define IDM_MOVIE_60_FPS	7560		// :KeyMap: Start animating at 60 fps
+#define IDM_MOVIE_100_FPS	7600		// :KeyMap: Start animating at 100 fps
 #define IDM_ROTATE_90		8000		// :KeyMap: rotate image 90 deg
 #define IDM_ROTATE_270		9000		// :KeyMap: rotate image 270 deg
 #define IDM_ROTATE          9100		// :KeyMap: show free rotation dialog

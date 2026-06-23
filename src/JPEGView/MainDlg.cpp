@@ -303,6 +303,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_nBookModePageHeight = sp.BookModePageHeight();
 	m_bAllowSmoothPanning = sp.AllowSmoothPanning();
 	m_offsets_custom = CPoint(0, 0);
+	m_customAnimationFrameTime = 1000;
 }
 
 CMainDlg::~CMainDlg() {
@@ -1956,6 +1957,9 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_SHOW_NAVPANEL:
 			m_pNavPanelCtl->SetActive(!m_pNavPanelCtl->IsActive());
 			break;
+		case IDM_NEXTFRAME:
+			GotoImage(POS_NextFrame);
+			break;
 		case IDM_NEXTFILE:
 			GotoImage(POS_NextFile);
 			break;
@@ -2098,12 +2102,30 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			break;
 		case IDM_MOVIE_5_FPS:
 		case IDM_MOVIE_10_FPS:
+		case IDM_MOVIE_15_FPS:
+		case IDM_MOVIE_20_FPS:
 		case IDM_MOVIE_25_FPS:
 		case IDM_MOVIE_30_FPS:
 		case IDM_MOVIE_50_FPS:
+		case IDM_MOVIE_60_FPS:
 		case IDM_MOVIE_100_FPS:
-			SetToast(_T("Play"));
-			StartMovieMode(nCommand - IDM_MOVIE_START_FPS);
+			{
+				TCHAR sToastText[1024];
+				int nValue = nCommand - IDM_MOVIE_START_FPS;
+
+				if (m_pCurrentImage != NULL && m_pCurrentImage->IsAnimation()) {
+					swprintf(sToastText,1024,TEXT("Custom Playback Speed: %d fps"), nValue);
+					if (m_customAnimationFrameTime == 1000/nValue) {
+						m_customAnimationFrameTime = 1000;
+					} else {
+						m_customAnimationFrameTime = 1000/nValue;
+					}
+				} else {
+					swprintf(sToastText,1024,TEXT("Starting Playback (%d fps)"), nValue);
+					SetToast(sToastText);
+					StartMovieMode(nCommand - IDM_MOVIE_START_FPS);
+				}
+			}
 			break;
 		case IDM_SAVE_PARAM_DB:
 			if (m_pCurrentImage != NULL && !m_bMovieMode && !m_bKeepParams) {
@@ -3409,9 +3431,11 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 			StartSlideShowTimer(m_nCurrentTimeout);
 		}
 		StopAnimation();
+		m_customAnimationFrameTime = 1000;
 	} else if (ePos != POS_NextFrame) {
 		StopMovieMode();
 		StopAnimation();
+		m_customAnimationFrameTime = 1000;
 	}
 
 	m_pCropCtl->CancelCropping(); // cancel any running crop
@@ -4653,6 +4677,14 @@ void CMainDlg::StartAnimation() {
 	m_pNavPanelCtl->EndNavPanelAnimation();
 
 	m_nLastAnimationOffset = 0;
+	
+	int usedFrameTime;
+	if (m_customAnimationFrameTime < 250) {
+		usedFrameTime = m_customAnimationFrameTime;
+	} else {
+		usedFrameTime = m_pCurrentImage->FrameTimeMs();
+	}
+	
 	int nTimerDelay = max(10, m_pCurrentImage->FrameTimeMs());
 	m_nExpectedNextAnimationTickCount = ::GetTickCount() + nTimerDelay;
 	::SetTimer(this->m_hWnd, ANIMATION_TIMER_EVENT_ID, nTimerDelay, NULL);
@@ -4661,10 +4693,18 @@ void CMainDlg::StartAnimation() {
 void CMainDlg::AdjustAnimationFrameTime() {
 	// restart timer with new frame time
 	::KillTimer(this->m_hWnd, ANIMATION_TIMER_EVENT_ID);
+	
+	int usedFrameTime;
+	if (m_customAnimationFrameTime < 250) {
+		usedFrameTime = m_customAnimationFrameTime;
+	} else {
+		usedFrameTime = m_pCurrentImage->FrameTimeMs();
+	}
+	
 
 	m_nLastAnimationOffset = ::GetTickCount() - m_nExpectedNextAnimationTickCount;
-	int nTimerDelay = max(10, m_pCurrentImage->FrameTimeMs() - m_nLastAnimationOffset);
-	m_nExpectedNextAnimationTickCount += max(10, m_pCurrentImage->FrameTimeMs());
+	int nTimerDelay = max(10, usedFrameTime - m_nLastAnimationOffset);
+	m_nExpectedNextAnimationTickCount += max(10, usedFrameTime);
 
 	// If we can't process and display frames fast enough, m_nLastAnimationOffset will build up more and more.
 	// SetTimer() allows for a minimum delay of 10 ms, but be still can't keep up.
@@ -4675,7 +4715,7 @@ void CMainDlg::AdjustAnimationFrameTime() {
 	//		 (We need to load each image because we need to access them in order for the readers that only support sequential access: JxlReader, PngReader, WebpReaderWriter)
 	//		 (We can only save time on not displaying (NO_UPDATE_WINDOW). And by using a direct call of GotoImage() instead of a timer.)
 	//		 (But if load time is already too long, we are out of look and just better stick to the timer and accept the slower animation.)
-//	if (m_nLastAnimationOffset > 2 * m_pCurrentImage->FrameTimeMs()) {
+//	if (m_nLastAnimationOffset > 2 * usedFrameTime) {
 //		GotoImage(POS_NextFrame, NO_REMOVE_KEY_MSG | NO_UPDATE_WINDOW);
 //	} else {
 		::SetTimer(this->m_hWnd, ANIMATION_TIMER_EVENT_ID, nTimerDelay, NULL);
