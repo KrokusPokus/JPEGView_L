@@ -126,6 +126,9 @@ static CJPEGImage* ConvertGDIPlusBitmapToJPEGImage(Gdiplus::Bitmap* pBitmap, int
 
 	isOutOfMemory = false;
 	isAnimatedGIF = false;
+	if (pBitmap == NULL) {
+		return NULL;
+	}
 	Gdiplus::Status lastStatus = pBitmap->GetLastStatus();
 	if (lastStatus != Gdiplus::Ok) {
 		isOutOfMemory = lastStatus == Gdiplus::OutOfMemory;
@@ -812,6 +815,11 @@ void CImageLoadThread::ProcessReadJXLRequest(CRequest* request) {
 	SetErrorMode(nPrevErrorMode);
 	if (!bUseCachedDecoder) {
 		::CloseHandle(hFile);
+		// pBuffer is held as a shared resource within JxlReader's static cache.data. 
+		// Calling delete[] here would result in a dangling pointer reference when the next frame
+		// of an animated JXL is requested, or a double-free error during free(cache.data)
+		// inside DeleteCachedJxlDecoder(). 
+		// Memory deallocation is centralized within DeleteCachedJxlDecoder().
 		// delete[] pBuffer;
 	}
 }

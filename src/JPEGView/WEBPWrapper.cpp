@@ -77,7 +77,7 @@ void* WebpReaderWriter::ReadImage(int& width,
 		has_animation = features.has_animation;
 		if (!has_animation) {
 			int nStride = width * nchannels;
-			int size = height * nStride;
+			size_t size = (size_t)height * nStride;
 			pPixelData = new(std::nothrow) unsigned char[size];
 			if (pPixelData == NULL) {
 				outOfMemory = true;
@@ -97,7 +97,11 @@ void* WebpReaderWriter::ReadImage(int& width,
 		WebPAnimDecoderOptions anim_config;
 		WebPAnimDecoderOptionsInit(&anim_config);
 		anim_config.color_mode = MODE_BGRA;
-		uint8_t* cached_webp_bytes = new uint8_t[sizebytes];
+		uint8_t* cached_webp_bytes = new(std::nothrow) uint8_t[sizebytes];
+		if (cached_webp_bytes == NULL) {
+			outOfMemory = true;
+			return NULL;
+		}
 		memcpy(cached_webp_bytes, buffer, sizebytes);
 		cache.data.bytes = cached_webp_bytes;
 		cache.data.size = sizebytes;
@@ -132,7 +136,7 @@ void* WebpReaderWriter::ReadImage(int& width,
 	frame_time = timestamp - cache.prev_frame_timestamp;
 	cache.prev_frame_timestamp = timestamp;
 
-	pPixelData = new(std::nothrow) unsigned char[width * height * nchannels];
+	pPixelData = new(std::nothrow) unsigned char[(size_t)width * height * nchannels];
 	if (pPixelData == NULL) {
 		outOfMemory = true;
 		return NULL;
@@ -141,7 +145,7 @@ void* WebpReaderWriter::ReadImage(int& width,
 	// Try copying with ICCP transform
 	if (!ICCProfileTransform::DoTransform(cache.transform, buf, pPixelData, width, height)) {
 		// Copy frame to output buffer directly otherwise
-		memcpy(pPixelData, buf, width * height * nchannels);
+		memcpy(pPixelData, buf, (size_t)width * height * nchannels);
 	}
 
 	return pPixelData;

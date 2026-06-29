@@ -214,7 +214,7 @@ bool CTextCtrl::OnMouseMove(int nX, int nY) {
 void CTextCtrl::CreateBoldFont(CDC & dc) {
 	if (m_hBoldFont == NULL) {
 		HelpersGUI::SelectDefaultGUIFont(dc);
-		m_hBoldFont = HelpersGUI::CreateBoldFontOfSelectedFont(dc);
+		m_hBoldFont = HelpersGUI::CreateBoldFontOfSelectedFont(dc.m_hDC);
 	}
 }
 

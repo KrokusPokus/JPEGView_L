@@ -68,6 +68,7 @@ void CProcessingThreadPool::StopAllThreads() {
 		m_threads[i]->Terminate();
 		delete m_threads[i];
 	}
+	delete[] m_threads;
 	m_nNumThreads = 0;
 	m_threads = NULL;
 }

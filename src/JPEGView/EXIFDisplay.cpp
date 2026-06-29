@@ -157,7 +157,13 @@ void CEXIFDisplay::AddLine(LPCTSTR sDescription, const Rational &number) {
 
 CRect CEXIFDisplay::PanelRect() {
 	if (m_nLineHeight == 0) {
-		CDC dc(::GetDC(m_hWnd));
+	
+		HDC hWndDC = ::GetDC(m_hWnd);
+		if (hWndDC == NULL) {
+			return CRect(m_pos, m_size);
+		}
+		CDCHandle dc(hWndDC);
+		
 		HelpersGUI::SelectDefaultGUIFont(dc);
 		if (m_hTitleFont == 0)
 			m_hTitleFont = HelpersGUI::CreateBoldFontOfSelectedFont(dc);
@@ -238,6 +244,8 @@ CRect CEXIFDisplay::PanelRect() {
 
 		m_nNoHistogramSize = CSize(m_size.cx - nExpansionX, m_size.cy - nExpansionY);
 		m_nTab1 = nMaxLength1 + m_nGap;
+		
+		::ReleaseDC(m_hWnd, hWndDC);
 	}
 	return CRect(m_pos, m_size);
 }

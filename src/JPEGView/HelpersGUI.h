@@ -31,7 +31,7 @@ namespace HelpersGUI {
 
 	// Creates a bold version of the font that is currently selected in the given DC.
 	// The caller is responsible for deleting the returned font when no longer used.
-	HFONT CreateBoldFontOfSelectedFont(CDC & dc);
+	HFONT CreateBoldFontOfSelectedFont(CDCHandle dc);
 
 	// Selects the default GUI font into the given DC.
 	void SelectDefaultGUIFont(HDC dc);

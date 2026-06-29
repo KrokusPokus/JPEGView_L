@@ -43,7 +43,7 @@ void * HeifReader::ReadImage(int &width,
 	if (width < 1 || height < 1 || width * nchannels > stride)
 		return NULL;
 
-	int size = width * nchannels * height;
+	size_t size = (size_t)width * nchannels * height;
 	pPixelData = new(std::nothrow) unsigned char[size];
 	if (pPixelData == NULL) {
 		outOfMemory = true;

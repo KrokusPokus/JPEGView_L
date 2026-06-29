@@ -122,6 +122,7 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, Helpers::ETransparency
 	// Now we move the file pointer to the pixel data
 	if (fseek(pFile, length, SEEK_CUR) != 0)
 	{
+		delete[] pImageData;
 		fclose(pFile);
 		return NULL;
 	}
@@ -354,7 +355,8 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, Helpers::ETransparency
 			// no valid alpha channel - set all A to 255
 			for (int i = 0; i < width*height; i++)
 			{
-				*pImage32++ = *pImage32 | ALPHA_OPAQUE;
+				*pImage32 = *pImage32 | ALPHA_OPAQUE;
+				pImage32++;
 			}
 		}
 	}

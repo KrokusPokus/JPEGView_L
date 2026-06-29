@@ -19,6 +19,8 @@ public:
 		Deleted = false;
 		Type = 0;
 	}
+	
+	virtual ~CRequestBase() = default;
 
 	int Type; // Can be used to set the type of the request, default is 0
 	HANDLE EventFinished; // Event signaled when processing is finished

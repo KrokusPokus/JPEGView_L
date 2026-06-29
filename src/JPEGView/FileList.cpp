@@ -349,7 +349,7 @@ void CFileList::ModificationTimeChanged() {
 	if (m_iter != m_fileList.end()) {
 		LPCTSTR sName = m_iter->GetName();
 		HANDLE hFile = ::CreateFile(sName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-		if (hFile != NULL) {
+		if (hFile != INVALID_HANDLE_VALUE) {
 			FILETIME lastModTime;
 			if (::GetFileTime(hFile, NULL, NULL, &lastModTime)) {
 				m_iter->SetModificationDate(lastModTime);
@@ -586,7 +586,7 @@ bool CFileList::CanOpenCurrentFileForReading() const
 	LPCTSTR sCurrentFile = Current();
 	if (sCurrentFile != NULL && sCurrentFile[0] != 0) {
 		HANDLE hFile = ::CreateFile(Current(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-		if (hFile != NULL) {
+		if (hFile != INVALID_HANDLE_VALUE) {
 			::CloseHandle(hFile);
 			return true;
 		}
@@ -830,13 +830,13 @@ void CFileList::FindFiles() {
 }
 
 void CFileList::VerifyFiles() {
-	std::list<CFileDesc>::iterator iter;
-	for (iter = m_fileList.begin( ); iter != m_fileList.end( ); iter++ ) {
+	std::list<CFileDesc>::iterator iter = m_fileList.begin();
+	while (iter != m_fileList.end()) {
 		if (::GetFileAttributes(iter->GetName()) == INVALID_FILE_ATTRIBUTES) {
 			iter = m_fileList.erase(iter);
-			if (iter == m_fileList.end()) {
-				break;
-			}
+		}
+		else {
+			++iter;
 		}
 	}
 }

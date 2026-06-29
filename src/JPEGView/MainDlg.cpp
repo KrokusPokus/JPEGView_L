@@ -4523,7 +4523,13 @@ void CMainDlg::AnimateTransition() {
 
 	// paint to memory DC
 	int nW = m_clientRect.Width(), nH = m_clientRect.Height();
-	CDC paintDC(::GetDC(m_hWnd));
+
+	HDC hWndDC = ::GetDC(m_hWnd);
+	if (hWndDC == NULL) {
+		return;
+	}
+	CDCHandle paintDC(hWndDC);
+	
 	CDC memDC;
 	memDC.CreateCompatibleDC(paintDC);
 	CBitmap memDCBitmap;
@@ -4647,6 +4653,7 @@ void CMainDlg::AnimateTransition() {
 		if (::PeekMessage(&msg, m_hWnd, WM_KEYFIRST, WM_KEYLAST, PM_NOREMOVE)) break;
 		if (::PeekMessage(&msg, m_hWnd, WM_CONTEXTMENU, WM_CONTEXTMENU, PM_NOREMOVE)) break;
 	}
+	::ReleaseDC(m_hWnd, hWndDC);
 }
 
 void CMainDlg::CleanupAndTerminate() {

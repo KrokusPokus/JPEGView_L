@@ -22,6 +22,16 @@ CWorkThread::~CWorkThread(void) {
 	if (!m_bTerminate) {
 		Terminate();
 	}
+	
+	// キュー残留リクエストの解放
+	// Terminate 完了後はワーカースレッドが動いていないため m_csList は不要だが、安全のため取得する
+	::EnterCriticalSection(&m_csList);
+	for (std::list<CRequestBase*>::iterator iter = m_requestList.begin(); iter != m_requestList.end(); ++iter) {
+		delete *iter;
+	}
+	m_requestList.clear();
+	::LeaveCriticalSection(&m_csList);
+	
 	::DeleteCriticalSection(&m_csList);
 	::CloseHandle(m_wakeUp);
 }

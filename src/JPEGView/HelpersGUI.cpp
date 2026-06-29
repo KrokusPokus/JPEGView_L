@@ -107,7 +107,7 @@ namespace HelpersGUI {
 		return (int)(value * ScreenScaling + 0.5f);
 	}
 
-	HFONT CreateBoldFontOfSelectedFont(CDC & dc) {
+	HFONT CreateBoldFontOfSelectedFont(CDCHandle dc) {
 		TCHAR buff[LF_FACESIZE];
 		if (::GetTextFace(dc, LF_FACESIZE, buff) != 0) {
 			TEXTMETRIC textMetrics;

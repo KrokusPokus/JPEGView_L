@@ -203,7 +203,7 @@ static int ReadRationalTag(Rational & rational, uint8* ptr, uint8* pTIFFHeader, 
 }
 
 static bool ReadSignedRationalTag(SignedRational & rational, uint8* ptr, uint8* pTIFFHeader, bool bLittleEndian) {
-	ReadRationalTag((Rational &)rational, ptr, pTIFFHeader, bLittleEndian);
+	return ReadRationalTag((Rational &)rational, ptr, pTIFFHeader, bLittleEndian);
 }
 
 static double ReadDoubleTag(uint8* ptr, uint8* pTIFFHeader, int index, bool bLittleEndian) {

@@ -1087,12 +1087,17 @@ bool CanReadAhead(CJPEGImage* pImage) {
 			if (nTransparencyMode == Helpers::TP_BLEND_INVERSE) {
 				nTransparency = ~(nTransparency & 0xffffff);
 			}
-			for (int i = 0; i < nWidth * nHeight; ++i)
-				*pImage32++ = AlphaBlendBackground(*pImage32, nTransparency);
+			for (int i = 0; i < nWidth * nHeight; ++i) {
+				*pImage32 = AlphaBlendBackground(*pImage32, nTransparency);
+				pImage32++;
+			}
 		} else {
-			for (int y = 0; y < nHeight; ++y)
-				for (int x = 0; x < nWidth; ++x)
-					*pImage32++ = AlphaBlendBackground(*pImage32, nTransparency, true, x, y);
+			for (int y = 0; y < nHeight; ++y) {
+				for (int x = 0; x < nWidth; ++x) {
+					*pImage32 = AlphaBlendBackground(*pImage32, nTransparency, true, x, y);
+					pImage32++;
+				}
+			}
 		}
 	}
 }

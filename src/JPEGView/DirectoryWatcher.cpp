@@ -10,7 +10,7 @@
 static BOOL GetLastModificationTime(LPCTSTR fileName, FILETIME & lastModificationTime)
 {
 	HANDLE hFile = ::CreateFile(fileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-	if (hFile != NULL) {
+	if (hFile != INVALID_HANDLE_VALUE) {
 		BOOL bSuccess;
 		bSuccess = ::GetFileTime(hFile, NULL, NULL, &lastModificationTime);
 		::CloseHandle(hFile);

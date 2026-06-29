@@ -46,6 +46,11 @@ void* AvifReader::ReadImage(int& width,
 		}
 		memcpy(cache.data, buffer, sizebytes);
 		cache.decoder = avifDecoderCreate();
+		if (cache.decoder == NULL) {
+			DeleteCache();
+			outOfMemory = true;
+			return NULL;
+		}
 		cache.decoder->maxThreads = nthreads;
 		cache.decoder->strictFlags = AVIF_STRICT_DISABLED;
 		result = avifDecoderSetIOMemory(cache.decoder, cache.data, sizebytes);
@@ -80,7 +85,7 @@ void* AvifReader::ReadImage(int& width,
 	frame_count = cache.decoder->imageCount;
 	frame_time = (int)(cache.decoder->imageTiming.duration * 1000.0);
 
-	size_t size = width * nchannels * height;
+	size_t size = (size_t)width * nchannels * height;
 	cache.rgb.pixels = new(std::nothrow) unsigned char[size];
 	if (cache.rgb.pixels == NULL) {
 		outOfMemory = true;

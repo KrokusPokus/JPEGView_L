@@ -140,11 +140,11 @@ void* PngReader::ReadNextFrame(void** exif_chunk, png_uint_32* exif_size)
 		for (j = 0; j < cache.h0; j++)
 			memcpy(cache.rows_image[j + cache.y0] + cache.x0 * 4, cache.rows_frame[j], cache.w0 * 4);
 
-	void* pixels = malloc(cache.width * cache.height * cache.channels);
+	void* pixels = malloc((size_t)cache.width * cache.height * cache.channels);
 	if (pixels == NULL)
 		return NULL;
 	for (j = 0; j < cache.height; j++)
-		memcpy((char*)pixels + j * cache.width * cache.channels, cache.rows_image[j], cache.width * cache.channels);
+		memcpy((char*)pixels + (size_t)j * cache.width * cache.channels, cache.rows_image[j], cache.width * cache.channels);
 
 #ifdef PNG_APNG_SUPPORTED
 	if (cache.dop == PNG_fcTL_DISPOSE_OP_PREVIOUS)
