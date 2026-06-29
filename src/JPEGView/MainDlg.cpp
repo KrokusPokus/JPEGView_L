@@ -304,6 +304,8 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_bAllowSmoothPanning = sp.AllowSmoothPanning();
 	m_offsets_custom = CPoint(0, 0);
 	m_customAnimationFrameTime = 1000;
+	
+	m_eSortModeBeforeRandom = Helpers::FS_FileName;
 }
 
 CMainDlg::~CMainDlg() {
@@ -2014,12 +2016,19 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 		case IDM_SORT_RANDOM:
 		case IDM_SORT_SIZE:
 			{
-				Helpers::ESorting nSortMode = (nCommand == IDM_SORT_CREATION_DATE) ? Helpers::FS_CreationTime :
-					(nCommand == IDM_SORT_MOD_DATE) ? Helpers::FS_LastModTime :
-					(nCommand == IDM_SORT_RANDOM) ? Helpers::FS_Random :
-					(nCommand == IDM_SORT_SIZE) ? Helpers::FS_FileSize : Helpers::FS_FileName;
+				Helpers::ESorting nSortMode = m_pFileList->GetSorting();
 				bool bSortedAscending = m_pFileList->IsSortedAscending();
-
+				
+				if (nCommand != IDM_SORT_RANDOM) {
+					m_eSortModeBeforeRandom = nSortMode;
+					nSortMode = Helpers::FS_Random;
+				} else {
+					nSortMode = (nCommand == IDM_SORT_CREATION_DATE) ? Helpers::FS_CreationTime :
+								(nCommand == IDM_SORT_MOD_DATE) ? Helpers::FS_LastModTime :
+								// (nCommand == IDM_SORT_RANDOM) ? Helpers::FS_Random :
+								(nCommand == IDM_SORT_SIZE) ? Helpers::FS_FileSize : Helpers::FS_FileName;
+				}
+				
 				ToastSortingMode(nSortMode, bSortedAscending);
 				m_pFileList->SetSorting(nSortMode, bSortedAscending);
 
@@ -2880,20 +2889,22 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			break;
 		case IDM_TOGGLE_SORT_RANDOM:
 			if (m_pFileList != NULL) {
-				Helpers::ESorting nSortMode;
+				Helpers::ESorting nSortMode = m_pFileList->GetSorting();
 				bool bSortedAscending = m_pFileList->IsSortedAscending();
 				
-				if (m_pFileList->GetSorting() == Helpers::FS_FileName) {
+				if (nSortMode != Helpers::FS_Random) {
+					m_eSortModeBeforeRandom = nSortMode;
 					nSortMode = Helpers::FS_Random;
-				} else if (m_pFileList->GetSorting() == Helpers::FS_Random) {
-					nSortMode = Helpers::FS_FileName;
+				} else if (nSortMode == Helpers::FS_Random) {
+					nSortMode = m_eSortModeBeforeRandom;
 				}
 
 				ToastSortingMode(nSortMode, bSortedAscending);
 				m_pFileList->SetSorting(nSortMode, bSortedAscending);
-			}
-			if (m_pEXIFDisplayCtl->IsActive() || m_bShowFileName) {
-				this->Invalidate(FALSE);
+				
+				if (m_pEXIFDisplayCtl->IsActive() || m_bShowFileName) {
+					this->Invalidate(FALSE);
+				}
 			}
 			break;
 		case IDM_TOGGLE_INFO_OVERLAY:

@@ -259,6 +259,7 @@ private:
 	Helpers::EAutoZoomMode m_eAutoZoomModeWindowed;
 	Helpers::EAutoZoomMode m_eAutoZoomModeFullscreen;
 	Helpers::EAutoZoomMode m_autoZoomFitToScreen;
+	Helpers::ESorting m_eSortModeBeforeRandom;
 	bool m_isUserFitToScreen;
 
 	CImageProcessingParams* m_pImageProcParams;
