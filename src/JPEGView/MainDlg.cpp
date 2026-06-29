@@ -2021,13 +2021,12 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 				
 				if (nCommand != IDM_SORT_RANDOM) {
 					m_eSortModeBeforeRandom = nSortMode;
-					nSortMode = Helpers::FS_Random;
-				} else {
-					nSortMode = (nCommand == IDM_SORT_CREATION_DATE) ? Helpers::FS_CreationTime :
-								(nCommand == IDM_SORT_MOD_DATE) ? Helpers::FS_LastModTime :
-								// (nCommand == IDM_SORT_RANDOM) ? Helpers::FS_Random :
-								(nCommand == IDM_SORT_SIZE) ? Helpers::FS_FileSize : Helpers::FS_FileName;
 				}
+
+				nSortMode = (nCommand == IDM_SORT_CREATION_DATE) ? Helpers::FS_CreationTime :
+							(nCommand == IDM_SORT_MOD_DATE) ? Helpers::FS_LastModTime :
+							(nCommand == IDM_SORT_RANDOM) ? Helpers::FS_Random :
+							(nCommand == IDM_SORT_SIZE) ? Helpers::FS_FileSize : Helpers::FS_FileName;
 				
 				ToastSortingMode(nSortMode, bSortedAscending);
 				m_pFileList->SetSorting(nSortMode, bSortedAscending);
