@@ -2122,12 +2122,15 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 				int nValue = nCommand - IDM_MOVIE_START_FPS;
 
 				if (m_pCurrentImage != NULL && m_pCurrentImage->IsAnimation()) {
-					swprintf(sToastText,1024,TEXT("Custom Playback Speed: %d fps"), nValue);
+					
 					if (m_customAnimationFrameTime == 1000/nValue) {
 						m_customAnimationFrameTime = 1000;
+						swprintf(sToastText,1024,TEXT("Default Playback Speed: %d fps"), 1000 / m_pCurrentImage->FrameTimeMs());
 					} else {
 						m_customAnimationFrameTime = 1000/nValue;
+						swprintf(sToastText,1024,TEXT("Custom Playback Speed: %d fps"), nValue);
 					}
+					SetToast(sToastText);
 				} else {
 					swprintf(sToastText,1024,TEXT("Starting Playback (%d fps)"), nValue);
 					SetToast(sToastText);
