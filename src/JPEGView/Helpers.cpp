@@ -1100,4 +1100,91 @@ bool CanReadAhead(CJPEGImage* pImage) {
 			}
 		}
 	}
+
+	// Funktionszeiger-Typ für wine_get_version definieren
+	typedef const char* (__cdecl* pwine_get_version)(void);
+
+	bool isRunningUnderWine() {
+		// ntdll.dll ist in jedem Windows-Prozess bereits geladen
+		HMODULE hNtDll = GetModuleHandleA("ntdll.dll");
+		if (!hNtDll) {
+			return false;
+		}
+
+		// Prüfen, ob die Wine-spezifische Funktion existiert
+		pwine_get_version wine_get_version =
+			(pwine_get_version)GetProcAddress(hNtDll, "wine_get_version");
+
+		if (wine_get_version) {
+			// Optional: Version auslesen (z.B. "9.0")
+			// const char* version = wine_get_version();
+			return true;
+		}
+
+		return false;
+	}
+
+	// Konvertiert einen Windows-Pfad (z.B. Z:\home\...) in einen Unix-Pfad (/home/...)
+	CString GetUnixPathFromWine(LPCTSTR szDosPath) {
+		HMODULE hKernel32 = GetModuleHandle(_T("kernel32.dll"));
+		if (!hKernel32) return _T("");
+
+		// Wine-Signatur: Nimmt LPCWSTR (UTF-16), liefert char* (UTF-8 POSIX-Pfad)
+		typedef char* (__cdecl* pwine_get_unix_file_name)(LPCWSTR);
+		pwine_get_unix_file_name wine_get_unix_file_name =
+			(pwine_get_unix_file_name)GetProcAddress(hKernel32, "wine_get_unix_file_name");
+
+		if (wine_get_unix_file_name) {
+			// Wine nimmt direkt den Unicode-Pfad entgegen (szDosPath)
+			char* unixPathUtf8 = wine_get_unix_file_name(szDosPath);
+			if (unixPathUtf8) {
+				// Konvertiert den UTF-8 char* Stream von Linux direkt in einen Unicode-CString
+				CString sResult(CA2W(unixPathUtf8, CP_UTF8));
+
+				// Den von Wine auf dem Prozess-Heap allokierten Speicher freigeben
+				HeapFree(GetProcessHeap(), 0, unixPathUtf8);
+
+				return sResult;
+			}
+		}
+		return _T("");
+	}
+
+	// Prüft, ob eine Linux-Datei auf dem Host existiert
+	bool IsLinuxBinaryAvailable(LPCTSTR szUnixPath) {
+		if (szUnixPath == NULL || szUnixPath[0] == _T('\0')) return false;
+
+		CString sDosPath;
+
+		if (szUnixPath[0] == _T('~')) {
+			// Unter Wine enthält %USERNAME% den Linux-Benutzernamen (z. B. "gernotf")
+			TCHAR szUser[256] = { 0 };
+			DWORD dwLen = ::GetEnvironmentVariable(_T("USERNAME"), szUser, 256);
+			if (dwLen == 0) {
+				dwLen = ::GetEnvironmentVariable(_T("USER"), szUser, 256);
+			}
+
+			if (dwLen > 0) {
+				// '~' zu 'Z:\home\<username>\...' auflösen
+				sDosPath.Format(_T("Z:\\home\\%s%s"), szUser, szUnixPath + 1);
+			}
+			else {
+				return false;
+			}
+		}
+		else if (szUnixPath[0] == _T('/')) {
+			// Absolute Unix-Pfade wie /usr/bin/... auf Z:\ mappen
+			sDosPath.Format(_T("Z:%s"), szUnixPath);
+		}
+		else {
+			sDosPath = szUnixPath;
+		}
+
+		// Vorwärts-Slashes in Windows-Backslashes umwandeln
+		sDosPath.Replace(_T('/'), _T('\\'));
+
+		// Existenz der Datei auf Laufwerk Z:\ prüfen
+		DWORD dwAttr = ::GetFileAttributes(sDosPath);
+		return (dwAttr != INVALID_FILE_ATTRIBUTES && !(dwAttr & FILE_ATTRIBUTE_DIRECTORY));
+	}
 }

@@ -363,4 +363,8 @@ namespace Helpers {
 /*GF*/	int NumConcurrentThreads(void);				// Used in "SettingsProvider.cpp" to set "m_nNumCores"
 /*GF*/	CString FormatFileSize(__int64 filesize);
 /*GF*/	bool CanReadAhead(CJPEGImage* pImage);		// Used in StartNewRequestBundle()
+/*GF*/
+/*GF*/	bool isRunningUnderWine();
+/*GF*/	CString GetUnixPathFromWine(LPCTSTR szDosPath);
+/*GF*/  bool IsLinuxBinaryAvailable(LPCTSTR szUnixPath);
 }

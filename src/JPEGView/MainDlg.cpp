@@ -208,6 +208,8 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	CHistogramCorr::SetContrastCorrectionStrength((float)sp.AutoContrastAmount());
 	CHistogramCorr::SetBrightnessCorrectionStrength((float)sp.AutoBrightnessAmount());
 
+
+
 	m_pFileList = NULL;
 	m_pJPEGProvider = NULL;
 	m_pCurrentImage = NULL;
@@ -215,6 +217,8 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_bExceptionErrorLastImage = false;
 	m_nLastLoadError = HelpersGUI::FileLoad_Ok;
 
+	m_bAutoExit = false;
+	m_nLastSlideShowImageTickCount = 0;
 	m_dMovieFPS = 1.0;
 	m_nAutoStartSlideShow = false;
 	m_eForcedSorting = Helpers::FS_Undefined;
@@ -232,6 +236,7 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_bInTrackPopupMenu = false;
 	m_bResizeForNewImage = false;
 	m_dZoom = -1.0;
+	m_dStartZoom = -1.0;
 	m_dRealizedZoom = -1.0;
 	m_dZoomMult = -1.0;
 	m_bDragging = false;
@@ -295,6 +300,8 @@ CMainDlg::CMainDlg(bool bForceFullScreen) {
 	m_hmodDwmapi = NULL;
 	m_bDWMenabled = FALSE;
 	m_DynDwmFlush = 0;
+
+	m_bIsRunningUnderWine = Helpers::isRunningUnderWine();
 	
 	m_storedWindowPlacement2.length = sizeof(WINDOWPLACEMENT);
 	memset(&m_storedWindowPlacement2, 0, sizeof(WINDOWPLACEMENT));
@@ -3098,7 +3105,20 @@ void CMainDlg::OpenDefaultEditor() {
 			StartLowQTimer(ZOOM_TIMEOUT);
 			this->SetWindowPos(NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOCOPYBITS | SWP_FRAMECHANGED);
 		}
-		::ShellExecute(m_hWnd,_T("edit"),sCurrentFileName,NULL,NULL,SW_SHOW);
+
+		if (m_bIsRunningUnderWine) {
+			CString sUnixPath = Helpers::GetUnixPathFromWine(sCurrentFileName);
+
+			if (!sUnixPath.IsEmpty()) {
+				CString sParams;
+				sParams.Format(_T("/unix /usr/bin/gimp \"%s\""), (LPCTSTR)sUnixPath);
+
+				::ShellExecute(m_hWnd, NULL, _T("start.exe"), sParams, NULL, SW_SHOW);
+			}
+		}
+		else {
+			::ShellExecute(m_hWnd, _T("edit"), sCurrentFileName, NULL, NULL, SW_SHOW);
+		}
 	}
 }
 
@@ -3113,13 +3133,40 @@ LONG CMainDlg::SetCurrentWindowStyle() {
 	}
 }
 
-
 void CMainDlg::ExploreFile() {
-	ITEMIDLIST* pidl = ILCreateFromPath(CurrentFileName(false));
-	if (pidl) {
-		// https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shopenfolderandselectitems
-		SHOpenFolderAndSelectItems(pidl, 0, 0, 0);
-		ILFree(pidl);
+	LPCTSTR sCurrentFileName = CurrentFileName(false);
+	if (sCurrentFileName != NULL) {
+		if (m_bIsRunningUnderWine) {
+			CString sUnixPath = Helpers::GetUnixPathFromWine(sCurrentFileName);
+			if (!sUnixPath.IsEmpty()) {
+				CString sParams;
+
+				if (Helpers::IsLinuxBinaryAvailable(_T("~/.local/bin/mkFolderWidget"))) {
+					sParams.Format(_T("/unix /bin/sh -c \"mkFolderWidget -f \\\"%s\\\"\""), (LPCTSTR)sUnixPath);
+					::ShellExecute(m_hWnd, NULL, _T("start.exe"), sParams, NULL, SW_SHOW);
+				}
+				else if (Helpers::IsLinuxBinaryAvailable(_T("/usr/bin/dolphin"))) {
+					sParams.Format(_T("/unix /usr/bin/dolphin --new-window --select \"%s\""), (LPCTSTR)sUnixPath);
+					::ShellExecute(m_hWnd, NULL, _T("start.exe"), sParams, NULL, SW_SHOW);
+				}
+				else {
+					CString sFolderPath = sCurrentFileName;
+					int nPos = sFolderPath.ReverseFind(_T('\\'));
+					if (nPos != -1) {
+						sFolderPath = sFolderPath.Left(nPos);
+					}
+					::ShellExecute(m_hWnd, NULL, _T("winebrowser.exe"), sFolderPath, NULL, SW_SHOW);
+				}
+			}
+		}
+		else {
+			ITEMIDLIST* pidl = ILCreateFromPath(CurrentFileName(false));
+			if (pidl) {
+				// https://docs.microsoft.com/en-us/windows/win32/api/shlobj_core/nf-shlobj_core-shopenfolderandselectitems
+				SHOpenFolderAndSelectItems(pidl, 0, 0, 0);
+				ILFree(pidl);
+			}
+		}
 	}
 }
 
