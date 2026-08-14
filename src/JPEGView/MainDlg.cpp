@@ -1591,12 +1591,13 @@ LRESULT CMainDlg::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL&
 					}
 				}
 			}
-    	} else {
-    		if (!m_pCropCtl->OnTimer((int)wParam)) {
-    			m_pPanelMgr->OnTimer((int)wParam);
-			}
+    	}
+	} else {
+		if (!m_pCropCtl->OnTimer((int)wParam)) {
+			m_pPanelMgr->OnTimer((int)wParam);
 		}
 	}
+
 	return 0;
 }
 
