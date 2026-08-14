@@ -1,6 +1,19 @@
 JPEGView Changelog
 ******************
 
+[1.4.0.3] 2026-08-14
+- Add basic support for WINE for IDM_OPEN_DEFAULT_EDITOR and IDM_EXPLORE
+- Merged misc bug fixes from aviscaerulea fork
+- Fixed toast showing playback speed during animation
+- Fixed crash when toggling random sorting
+- Prevent unneccessary ini writes
+
+[1.4.0.2] 2026-04-11
+- Fixed avif submodule dependency and updated x86 submodule binaries.
+- Use lcms2 with libjpg-turbo for ICC profile handling in JPGs since that's faster than GDIPlus.
+- Added actions IDM_PLAYPAUSE and IDM_TOGGLE_USE_EMBEDDED_COLOR_PROFILES
+- Images loaded via GDIPlus will now also respect the TransparencyMode setting.
+
 [1.4.0.1] 2026-04-08
 - Fixed animation frame dropping
 - Updated to library versions:
