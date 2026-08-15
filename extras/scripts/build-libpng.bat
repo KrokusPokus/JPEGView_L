@@ -2,11 +2,7 @@
 
 setlocal
 
-REM Tested with libpng git ef37879 (branch libpng18) and zlib git 570720b (branch develop)
-
 SET EXPORT_DIR=%~dp0..\..\src\JPEGView\libpng
-REM SET EXPORT_DIR=%~dp0export_libpng-1.8
-
 SET XPATCH_DIR=%~dp0..\third_party\libpng
 
 SET ZLibSrcDir=%XPATCH_DIR%\zlib
@@ -25,31 +21,53 @@ IF ERRORLEVEL 1 exit /b 1
 call :BUILD_PNG x64 x64
 IF ERRORLEVEL 1 exit /b 1
 
+
 REM copy the libs over
 mkdir "%EXPORT_DIR%\include"
 mkdir "%EXPORT_DIR%\lib"
 mkdir "%EXPORT_DIR%\lib64"
 
 copy /y "%LIBPNG_BUILD_DIR%\x86\libpng18_static.lib" "%EXPORT_DIR%\lib\"
-IF ERRORLEVEL 1 exit /b 1
+IF ERRORLEVEL 1 (
+	echo Failed copy "%LIBPNG_BUILD_DIR%\x86\libpng18_static.lib" "%EXPORT_DIR%\lib\"
+	exit /b 1
+)
 
-copy /y "%ZLIB_BUILD_DIR%\x86\zlib.lib" "%EXPORT_DIR%\lib\"
-IF ERRORLEVEL 1 exit /b 1
+copy /y "%ZLIB_BUILD_DIR%\x86\libzs.lib" "%EXPORT_DIR%\lib\zlib.lib"
+IF ERRORLEVEL 1 (
+	echo Failed copy "%ZLIB_BUILD_DIR%\x86\libzs.lib" "%EXPORT_DIR%\lib\zlib.lib"
+	exit /b 1
+)
 
 copy /y "%LIBPNG_BUILD_DIR%\x64\libpng18_static.lib" "%EXPORT_DIR%\lib64\"
-IF ERRORLEVEL 1 exit /b 1
+IF ERRORLEVEL 1 (
+	echo Failed copy "%LIBPNG_BUILD_DIR%\x64\libpng18_static.lib" "%EXPORT_DIR%\lib64\"
+	exit /b 1
+)
 
-copy /y "%ZLIB_BUILD_DIR%\x64\zlib.lib" "%EXPORT_DIR%\lib64\"
-IF ERRORLEVEL 1 exit /b 1
+copy /y "%ZLIB_BUILD_DIR%\x64\libzs.lib" "%EXPORT_DIR%\lib64\zlib.lib"
+IF ERRORLEVEL 1 (
+	echo Failed copy "%ZLIB_BUILD_DIR%\x64\libzs.lib" "%EXPORT_DIR%\lib64\zlib.lib"
+	exit /b 1
+)
 
 copy /y "%LIBPNG_Source_Dir%\png.h" "%EXPORT_DIR%\include\"
-IF ERRORLEVEL 1 exit /b 1
+IF ERRORLEVEL 1 (
+	echo Failed copy "%LIBPNG_Source_Dir%\png.h" "%EXPORT_DIR%\include\"
+	exit /b 1
+)
 
 copy /y "%LIBPNG_Source_Dir%\pngconf.h" "%EXPORT_DIR%\include\"
-IF ERRORLEVEL 1 exit /b 1
+IF ERRORLEVEL 1 (
+	echo Failed copy "%LIBPNG_Source_Dir%\pngconf.h" "%EXPORT_DIR%\include\"
+	exit /b 1
+)
 
 copy /y "%LIBPNG_Source_Dir%\pnglibconf.h.prebuilt" "%EXPORT_DIR%\include\pnglibconf.h"
-IF ERRORLEVEL 1 exit /b 1
+IF ERRORLEVEL 1 (
+	echo Failed copy "%LIBPNG_Source_Dir%\pnglibconf.h.prebuilt" "%EXPORT_DIR%\include\pnglibconf.h"
+	exit /b 1
+)
 
 exit /b 0
 
@@ -82,8 +100,6 @@ copy /y "%ZLibSrcDir%\*.c" "%ZLIB_BUILD_DIR%\%1%\"
 popd
 
 
-
-
 mkdir "%LIBPNG_BUILD_DIR%\%1%" >nul
 pushd "%LIBPNG_BUILD_DIR%\%1%"
 
@@ -98,37 +114,6 @@ popd
 
 endlocal
 exit /b 0
-
-
-
-:PATCH_PNG
-
-setlocal
-
-REM set up path to find the required bin files
-SET PATH=%ProgramFiles%\Git\usr\bin;%PATH%
-
-where.exe bash.exe >nul
-IF ERRORLEVEL 1 (
-	echo bash.exe not found in PATH
-	exit /b 1
-)
-
-REM can't check where.exe's together as the ERRORLEVEL doesn't come back as 1 if at least one thing was found
-where.exe patch.exe >nul
-IF ERRORLEVEL 1 (
-	echo patch.exe not found in PATH
-	exit /b 1
-)
-
-pushd %XPATCH_DIR%
-REM bash.exe is on the path somewhere, honor the path order
-bash.exe -c "./patch-libpng-1.8.ef37879.sh"
-SET XERROR=%ERRORLEVEL%
-
-popd
-exit /b %XERROR%
-
 
 
 

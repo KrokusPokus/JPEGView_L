@@ -11,9 +11,11 @@ JPEGView Changelog
   * libde265        (2026-06-29)    branch "master"     (v0.1-2515-g4d45a6b3)
   * libheif         (2026-07-10)    branch "master"     (v1.23.1-7-g1a3583bc)
   * libjxl          (2026-08-11)    branch "main"       (v0.12-snapshot-6-gd089091a)
+  * libpng          (2026-06-26)    branch "libpng18"   (v1.6.58-140-gd1d0abeff)
   * libraw          (2026-07-18)    branch "master"     (0.22.0-82-ge419de08)
   * libwebp         (2026-08-14)    branch "main"       (v1.6.0-221-g4fe551df)
   * qoi             (2026-05-29)    branch "master"     (g97bacc8)
+  * zlib            (2026-04-05)    branch "develop"    (v1.3.2-85-ge3dc0a8)
 
 [1.4.0.3] 2026-08-14
 - Add basic support for WINE for IDM_OPEN_DEFAULT_EDITOR and IDM_EXPLORE
