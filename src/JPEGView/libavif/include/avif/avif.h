@@ -79,8 +79,8 @@ extern "C" {
 // to leverage in-development code without breaking their stable builds.
 #define AVIF_VERSION_MAJOR 1
 #define AVIF_VERSION_MINOR 4
-#define AVIF_VERSION_PATCH 1
-#define AVIF_VERSION_DEVEL 0
+#define AVIF_VERSION_PATCH 2
+#define AVIF_VERSION_DEVEL 1
 #define AVIF_VERSION \
     ((AVIF_VERSION_MAJOR * 1000000) + (AVIF_VERSION_MINOR * 10000) + (AVIF_VERSION_PATCH * 100) + AVIF_VERSION_DEVEL)
 
@@ -154,7 +154,7 @@ AVIF_API unsigned int avifLibYUVVersion(void); // returns 0 if libavif wasn't co
 // ---------------------------------------------------------------------------
 // Memory management
 
-// Returns NULL on memory allocation failure.
+// Returns NULL on memory allocation failure or if size is 0.
 AVIF_API void * avifAlloc(size_t size);
 AVIF_API void avifFree(void * p);
 
@@ -1229,8 +1229,10 @@ AVIF_API const char * avifProgressiveStateToString(avifProgressiveState progress
 typedef enum avifImageContentTypeFlag
 {
     AVIF_IMAGE_CONTENT_NONE = 0,
-    // Color only or alpha only is not currently supported.
-    AVIF_IMAGE_CONTENT_COLOR_AND_ALPHA = (1 << 0) | (1 << 1),
+    AVIF_IMAGE_CONTENT_COLOR = (1 << 0),
+    // Alpha only is not currently supported.
+    AVIF_IMAGE_CONTENT_ALPHA = (1 << 1),
+    AVIF_IMAGE_CONTENT_COLOR_AND_ALPHA = AVIF_IMAGE_CONTENT_COLOR | AVIF_IMAGE_CONTENT_ALPHA,
     AVIF_IMAGE_CONTENT_GAIN_MAP = (1 << 2),
     AVIF_IMAGE_CONTENT_ALL = AVIF_IMAGE_CONTENT_COLOR_AND_ALPHA | AVIF_IMAGE_CONTENT_GAIN_MAP,
 
@@ -1290,14 +1292,14 @@ typedef struct avifDecoder
     avifBool ignoreXMP;
 
     // This represents the maximum size of an image (in pixel count) that libavif and the underlying
-    // AV1 decoder should attempt to decode. It defaults to AVIF_DEFAULT_IMAGE_SIZE_LIMIT, and can
-    // be set to a smaller value. The value 0 is reserved.
-    // Note: Only some underlying AV1 codecs support a configurable size limit (such as dav1d).
+    // AV1 decoder should attempt to decode. It defaults to AVIF_DEFAULT_IMAGE_SIZE_LIMIT. 0 means
+    // unlimited.
+    // Note: Only some underlying AV1 codecs support a configurable size limit (such as dav1d and
+    // libaom v3.14.0 or later).
     uint32_t imageSizeLimit;
 
     // This represents the maximum dimension of an image (width or height) that libavif should
-    // attempt to decode. It defaults to AVIF_DEFAULT_IMAGE_DIMENSION_LIMIT. Set it to 0 to ignore
-    // the limit.
+    // attempt to decode. It defaults to AVIF_DEFAULT_IMAGE_DIMENSION_LIMIT. 0 means unlimited.
     uint32_t imageDimensionLimit;
 
     // This provides an upper bound on how many images the decoder is willing to attempt to decode,
@@ -1384,6 +1386,10 @@ typedef struct avifDecoder
 
     // Version 1.2.0 ends here. Add any new members after this line.
     // --------------------------------------------------------------------------------------------
+
+    // Enable this to avoid reading and surfacing ICC profile to the decoded avifImage and gain map
+    // metadata.
+    avifBool ignoreICC;
 } avifDecoder;
 
 // Creates a decoder initialized with default settings values.
@@ -1414,6 +1420,9 @@ AVIF_API avifResult avifDecoderReadFile(avifDecoder * decoder, avifImage * image
 // You can use avifDecoderReset() any time after a successful call to avifDecoderParse()
 // to reset the internal decoder back to before the first frame. Calling either
 // avifDecoderSetSource() or avifDecoderParse() will automatically Reset the decoder.
+//
+// The decoder must be destroyed once there is no need for further parsing or decoding.
+// Reusing the decoder instance for another file is not recommended. Call avifDecoderCreate() instead.
 //
 // avifDecoderSetSource() allows you not only to choose whether to parse tracks or
 // items in a file containing both, but switch between sources without having to
@@ -1450,7 +1459,7 @@ AVIF_API avifResult avifDecoderNthImageTiming(const avifDecoder * decoder, uint3
 // avifDecoderNextImage() or avifDecoderNthImage() was called, the gain map's planes can also be accessed
 // in the same way. If the gain map's height is different from the main image, then the number of
 // available gain map rows is at least:
-//   roundf((float)decoded_row_count / decoder->image->height * decoder->image->gainMap.image->height)
+//   roundf((float)decoded_row_count / decoder->image->height * decoder->image->gainMap->image->height)
 // When gain map scaling is needed, callers might choose to use a few less rows depending on how many rows
 // are needed by the scaling algorithm, to avoid the last row(s) changing when more data becomes available.
 // decoder->allowIncremental must be set to true before calling avifDecoderNextImage() or
@@ -1648,6 +1657,7 @@ typedef uint32_t avifAddImageFlags;
 //
 // Usage / function call order is:
 // * avifEncoderCreate()
+//
 // - Still image:
 //   * avifEncoderAddImage() [exactly once]
 // - Still image grid:
@@ -1661,11 +1671,15 @@ typedef uint32_t avifAddImageFlags;
 // - Still layered grid:
 //   * Set encoder->extraLayerCount correctly
 //   * avifEncoderAddImageGrid() ... [exactly encoder->extraLayerCount+1 times]
+//
 // * avifEncoderFinish()
 // * avifEncoderDestroy()
 //
 // The image passed to avifEncoderAddImage() or avifEncoderAddImageGrid() is encoded during the
 // call (which may be slow) and can be freed after the function returns.
+//
+// The encoder must be destroyed after avifEncoderFinish() is called.
+// The encoder instance cannot be reused. Call avifEncoderCreate() instead.
 //
 // durationInTimescales is ignored if AVIF_ADD_IMAGE_FLAG_SINGLE is set in addImageFlags,
 // or if we are encoding a layered image.
@@ -1707,6 +1721,8 @@ AVIF_NODISCARD AVIF_API avifBool avifPeekCompatibleFileType(const avifROData * i
 // Performs tone mapping on a base image using the provided gain map.
 // The HDR headroom is log2 of the ratio of HDR to SDR white brightness of the display to tone map for.
 // 'toneMappedImage' should have the 'format', 'depth', and 'isFloat' fields set to the desired values.
+// This function sets the 'width' and 'height' fields of 'toneMappedImage' to the width and height of
+// `baseImage`, and allocates the 'pixels' buffer and sets the 'rowBytes' field of 'toneMappedImage'.
 // If non NULL, 'clli' will be filled with the light level information of the tone mapped image.
 AVIF_API avifResult avifImageApplyGainMap(const avifImage * baseImage,
                                           const avifGainMap * gainMap,

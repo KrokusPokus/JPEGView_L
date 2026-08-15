@@ -232,6 +232,22 @@ namespace heif {
 
     int get_ispe_height() const noexcept;
 
+    // ------------------------- HDR metadata -------------------------
+
+    bool has_content_light_level() const noexcept;
+
+    // Returns a zero-initialized struct if the image has no such information.
+    heif_content_light_level get_content_light_level() const noexcept;
+
+    void set_content_light_level(const heif_content_light_level&) noexcept;
+
+    bool has_mastering_display_colour_volume() const noexcept;
+
+    // Returns a zero-initialized struct if the image has no such information.
+    heif_mastering_display_colour_volume get_mastering_display_colour_volume() const noexcept;
+
+    void set_mastering_display_colour_volume(const heif_mastering_display_colour_volume&) noexcept;
+
     // ------------------------- depth images -------------------------
 
     // TODO
@@ -323,8 +339,8 @@ namespace heif {
 
     // throws Error
     void create(int width, int height,
-                enum heif_colorspace colorspace,
-                enum heif_chroma chroma);
+                heif_colorspace colorspace,
+                heif_chroma chroma);
 
     // throws Error
     void add_plane(enum heif_channel channel,
@@ -368,6 +384,22 @@ namespace heif {
     void set_raw_color_profile(heif_color_profile_type type,
                                const std::vector<uint8_t>& data);
 
+    // ------------------------- HDR metadata -------------------------
+
+    bool has_content_light_level() const noexcept;
+
+    // Returns a zero-initialized struct if the image has no such information.
+    heif_content_light_level get_content_light_level() const noexcept;
+
+    void set_content_light_level(const heif_content_light_level&) noexcept;
+
+    bool has_mastering_display_colour_volume() const noexcept;
+
+    // Returns a zero-initialized struct if the image has no such information.
+    heif_mastering_display_colour_volume get_mastering_display_colour_volume() const noexcept;
+
+    void set_mastering_display_colour_volume(const heif_mastering_display_colour_volume&) noexcept;
+
     bool is_premultiplied_alpha() const noexcept;
 
     void set_premultiplied_alpha(bool is_premultiplied_alpha) noexcept;
@@ -391,14 +423,14 @@ namespace heif {
   {
   public:
     static std::vector<EncoderDescriptor>
-    get_encoder_descriptors(enum heif_compression_format format_filter,
+    get_encoder_descriptors(heif_compression_format format_filter,
                             const char* name_filter) noexcept;
 
     std::string get_name() const noexcept;
 
     std::string get_id_name() const noexcept;
 
-    enum heif_compression_format get_compression_format() const noexcept;
+    heif_compression_format get_compression_format() const noexcept;
 
     // DEPRECATED: typo in function name
     bool supportes_lossy_compression() const noexcept;
@@ -453,7 +485,7 @@ namespace heif {
   {
   public:
     // throws Error
-    Encoder(enum heif_compression_format format);
+    Encoder(heif_compression_format format);
 
     // throws Error
     void set_lossy_quality(int quality);
@@ -722,6 +754,40 @@ namespace heif {
     return heif_image_handle_get_ispe_height(m_image_handle.get());
   }
 
+  inline bool ImageHandle::has_content_light_level() const noexcept
+  {
+    return heif_image_handle_has_content_light_level(m_image_handle.get()) != 0;
+  }
+
+  inline heif_content_light_level ImageHandle::get_content_light_level() const noexcept
+  {
+    heif_content_light_level clli{};
+    heif_image_handle_get_content_light_level(m_image_handle.get(), &clli);
+    return clli;
+  }
+
+  inline void ImageHandle::set_content_light_level(const heif_content_light_level& clli) noexcept
+  {
+    heif_image_handle_set_content_light_level(m_image_handle.get(), &clli);
+  }
+
+  inline bool ImageHandle::has_mastering_display_colour_volume() const noexcept
+  {
+    return heif_image_handle_has_mastering_display_colour_volume(m_image_handle.get()) != 0;
+  }
+
+  inline heif_mastering_display_colour_volume ImageHandle::get_mastering_display_colour_volume() const noexcept
+  {
+    heif_mastering_display_colour_volume mdcv{};
+    heif_image_handle_get_mastering_display_colour_volume(m_image_handle.get(), &mdcv);
+    return mdcv;
+  }
+
+  inline void ImageHandle::set_mastering_display_colour_volume(const heif_mastering_display_colour_volume& mdcv) noexcept
+  {
+    heif_image_handle_set_mastering_display_colour_volume(m_image_handle.get(), &mdcv);
+  }
+
   // ------------------------- depth images -------------------------
 
   // TODO
@@ -859,8 +925,8 @@ namespace heif {
 
 
   inline void Image::create(int width, int height,
-                            enum heif_colorspace colorspace,
-                            enum heif_chroma chroma)
+                            heif_colorspace colorspace,
+                            heif_chroma chroma)
   {
     heif_image* image;
     Error err = Error(heif_image_create(width, height, colorspace, chroma, &image));
@@ -998,6 +1064,40 @@ namespace heif {
     }
   }
 
+  inline bool Image::has_content_light_level() const noexcept
+  {
+    return heif_image_has_content_light_level(m_image.get()) != 0;
+  }
+
+  inline heif_content_light_level Image::get_content_light_level() const noexcept
+  {
+    heif_content_light_level clli{};
+    heif_image_get_content_light_level(m_image.get(), &clli);
+    return clli;
+  }
+
+  inline void Image::set_content_light_level(const heif_content_light_level& clli) noexcept
+  {
+    heif_image_set_content_light_level(m_image.get(), &clli);
+  }
+
+  inline bool Image::has_mastering_display_colour_volume() const noexcept
+  {
+    return heif_image_has_mastering_display_colour_volume(m_image.get()) != 0;
+  }
+
+  inline heif_mastering_display_colour_volume Image::get_mastering_display_colour_volume() const noexcept
+  {
+    heif_mastering_display_colour_volume mdcv{};
+    heif_image_get_mastering_display_colour_volume(m_image.get(), &mdcv);
+    return mdcv;
+  }
+
+  inline void Image::set_mastering_display_colour_volume(const heif_mastering_display_colour_volume& mdcv) noexcept
+  {
+    heif_image_set_mastering_display_colour_volume(m_image.get(), &mdcv);
+  }
+
   inline bool Image::is_premultiplied_alpha() const noexcept
   {
     return heif_image_is_premultiplied_alpha(m_image.get()) != 0;
@@ -1023,7 +1123,7 @@ namespace heif {
 
 
   inline std::vector<EncoderDescriptor>
-  EncoderDescriptor::get_encoder_descriptors(enum heif_compression_format format_filter,
+  EncoderDescriptor::get_encoder_descriptors(heif_compression_format format_filter,
                                              const char* name_filter) noexcept
   {
     int maxDescriptors = 10;
@@ -1066,7 +1166,7 @@ namespace heif {
     return heif_encoder_descriptor_get_id_name(m_descriptor);
   }
 
-  inline enum heif_compression_format EncoderDescriptor::get_compression_format() const noexcept
+  inline heif_compression_format EncoderDescriptor::get_compression_format() const noexcept
   {
     return heif_encoder_descriptor_get_compression_format(m_descriptor);
   }
@@ -1103,7 +1203,7 @@ namespace heif {
   }
 
 
-  inline Encoder::Encoder(enum heif_compression_format format)
+  inline Encoder::Encoder(heif_compression_format format)
   {
     heif_encoder* encoder;
     Error err = Error(heif_context_get_encoder_for_format(nullptr, format, &encoder));
