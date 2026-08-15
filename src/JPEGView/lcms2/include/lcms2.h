@@ -23,7 +23,7 @@
 //
 //---------------------------------------------------------------------------------
 //
-// Version 2.19a3
+// Version 2.19
 //
 
 #ifndef _lcms2_H
@@ -86,8 +86,10 @@
 
 #ifndef CMS_USE_CPP_API
 #   ifdef __cplusplus
-#       if __cplusplus >= 201703L
-#            define CMS_NO_REGISTER_KEYWORD 1  
+        // MSVC keeps __cplusplus at 199711L unless /Zc:__cplusplus is passed, so also
+        // honor _MSVC_LANG; otherwise the C++17 'register' removal below never triggers.
+#       if (__cplusplus >= 201703L) || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+#            define CMS_NO_REGISTER_KEYWORD 1
 #       endif
 extern "C" {
 #   endif
@@ -1893,6 +1895,9 @@ CMSAPI cmsUInt32Number CMSEXPORT cmsGetTransformOutputFormat(cmsHTRANSFORM hTran
 // Access the optimized pipeline and gamut-check pipeline inside a transform.
 CMSAPI cmsPipeline*    CMSEXPORT cmsGetTransformPipeline(cmsHTRANSFORM hTransform);
 CMSAPI cmsPipeline*    CMSEXPORT cmsGetTransformGamutCheckPipeline(cmsHTRANSFORM hTransform);
+// Grab colorants
+CMSAPI cmsNAMEDCOLORLIST* CMSEXPORT cmsGetTransformInputColorants(cmsHTRANSFORM hTransform);
+CMSAPI cmsNAMEDCOLORLIST* CMSEXPORT cmsGetTransformOutputColorants(cmsHTRANSFORM hTransform);
 
 // For backwards compatibility
 CMSAPI cmsBool          CMSEXPORT cmsChangeBuffersFormat(cmsHTRANSFORM hTransform,
