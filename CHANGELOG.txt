@@ -1,6 +1,12 @@
 JPEGView Changelog
 ******************
-
+[1.4.0.4] 2026-04-16
+- Fixed issue of panels not becoming visible
+- Fixed issue of zoom factor displaying even when switching fullscreen state
+- Updated to library versions:
+  * bit7z           (2026-06-18)    branch "master"		(v4.0.12-821-g3c7cbbf2)
+  * libjxl          (2026-02-09)    branch "main"       (v0.12-snapshot-6-gd089091a)
+ 
 [1.4.0.3] 2026-08-14
 - Add basic support for WINE for IDM_OPEN_DEFAULT_EDITOR and IDM_EXPLORE
 - Merged misc bug fixes from aviscaerulea fork
