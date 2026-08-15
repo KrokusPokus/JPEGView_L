@@ -214,6 +214,8 @@ echo Copying 'extras\third_party\libheif\libheif\libheif\*.*' -to- 'src\JPEGView
 copy /y "%XLIBHEIF_DIR%\libheif\libheif\api\libheif\*.h" "%XHEIFSRC_DIR%\include\libheif\"
 copy /y "%XBUILD_DIR%\libheif\heif_version.h" "%XHEIFSRC_DIR%\include\libheif\"
 
+del /q "%XLIBHEIF_DIR%\dav1d\subprojects\.wraplock"
+rmdir /S /Q "%XLIBHEIF_DIR%\dav1d\subprojects\checkasm"
 
 exit /b 0
 
