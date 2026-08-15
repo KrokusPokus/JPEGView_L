@@ -3947,7 +3947,7 @@ void CMainDlg::ResetZoomToFitScreen(bool bFillWithCrop, bool bAllowEnlarge, bool
 			m_bUserZoom = m_dZoom > 1.0;
 			m_bUserPan = false;
 			if (fabs(dOldZoom - m_dZoom) > 0.01) {
-				m_bInZooming = true;
+				//m_bInZooming = true;	// Disabled, since this would trigger a display of the Zoom Factor text at ANY change in zoom (fullscreen, onsize() etc.)
 				StartLowQTimer(ZOOM_TIMEOUT);
 				this->Invalidate(FALSE);
 			}
