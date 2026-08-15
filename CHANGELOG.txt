@@ -4,12 +4,15 @@ JPEGView Changelog
 - Fixed issue of panels not becoming visible
 - Fixed issue of zoom factor displaying even when switching fullscreen state
 - Updated to library versions:
-  * bit7z           (2026-06-18)    branch "master"		(v4.0.12-821-g3c7cbbf2)
+  * bit7z           (2026-06-18)    branch "master"     (v4.0.12-821-g3c7cbbf2)
   * dav1d           (2026-08-14)    branch "master"     (1.5.4-1-g52b9d3d3)
   * libavif         (2026-08-13)    branch "main"       (v1.4.2-61-g93717e95)
   * libde265        (2026-06-29)    branch "master"     (v0.1-2515-g4d45a6b3)
   * libheif         (2026-07-10)    branch "master"     (v1.23.1-7-g1a3583bc)
   * libjxl          (2026-08-11)    branch "main"       (v0.12-snapshot-6-gd089091a)
+  * libraw          (2026-07-18)    branch "master"		(0.22.0-82-ge419de08)
+  
++e419de08001de28ae6988ecb22df47e52b9c5eaa extras/third_party/LibRaw 
 
 [1.4.0.3] 2026-08-14
 - Add basic support for WINE for IDM_OPEN_DEFAULT_EDITOR and IDM_EXPLORE
