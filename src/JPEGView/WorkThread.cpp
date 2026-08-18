@@ -106,7 +106,9 @@ void CWorkThread::ThreadFunc(void* arg) {
 		std::list<CRequestBase*>::iterator iter;
 		for (iter = thisPtr->m_requestList.begin( ); iter != thisPtr->m_requestList.end( ); iter++ ) {
 			if ((*iter)->Processed == false) {
-				requestHandled = *iter;
+				if (requestHandled == NULL) {
+					requestHandled = *iter;	// pick the first unprocessed in the queue
+				}
 				nNumUnprocessedRequests++;
 			}
 		}

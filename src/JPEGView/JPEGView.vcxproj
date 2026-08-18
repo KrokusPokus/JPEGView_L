@@ -394,7 +394,6 @@
     <ClCompile Include="UserCommand.cpp" />
     <ClCompile Include="WEBPWrapper.cpp" />
     <ClCompile Include="WndButtonPanel.cpp" />
-    <ClCompile Include="ZipHandler.cpp" />
     <ClCompile Include="zip\zip.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
