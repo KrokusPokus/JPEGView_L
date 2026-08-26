@@ -21,6 +21,8 @@ public:
 
 	// Copy file path to the clipboard.
 	static void CopyPathToClipboard(HWND hWnd, CJPEGImage* pImage, LPCTSTR fileName);
+	
+	static void CutFileToClipboard(HWND hWnd, LPCTSTR fileName);
 
 	// Paste image from clipboard. Returns NULL if paste failed. The caller gets ownership of the returned image.
 	static CJPEGImage* PasteImageFromClipboard(HWND hWnd, const CImageProcessingParams& procParams, EProcessingFlags eFlags);

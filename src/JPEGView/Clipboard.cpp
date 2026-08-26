@@ -7,6 +7,39 @@
 #include "MaxImageDef.h"
 #include <gdiplus.h>
 
+// Hilfsfunktion: Wandelt Windows-Pfade (z. B. C:\Bilder\test.jpg) in file://-URIs um,
+// die KDE/Wine verstehen.
+static std::string PathToFileUri(LPCWSTR filename) {
+	// Falls unter Wine ausgeführt, optional den echten Unix-Pfad ermitteln
+	typedef char* (__cdecl* pfnWineGetUnixFileName)(LPCWSTR);
+	static pfnWineGetUnixFileName pWineGetUnixFileName =
+		(pfnWineGetUnixFileName)::GetProcAddress(::GetModuleHandle(L"kernel32.dll"), "wine_get_unix_file_name");
+
+	std::string unixPath;
+	if (pWineGetUnixFileName) {
+		char* pPath = pWineGetUnixFileName(filename);
+		if (pPath) {
+			unixPath = pPath;
+			::HeapFree(::GetProcessHeap(), 0, pPath);
+		}
+	}
+
+	// Fallback, falls nicht unter Wine oder Konvertierung fehlgeschlagen:
+	// Erstelle Standard-URI aus Windows-Pfad (z.B. C:/Bilder/test.jpg -> file:///C:/Bilder/test.jpg)
+	if (unixPath.empty()) {
+		int size_needed = ::WideCharToMultiByte(CP_UTF8, 0, filename, -1, NULL, 0, NULL, NULL);
+		std::string utf8Path(size_needed - 1, 0);
+		::WideCharToMultiByte(CP_UTF8, 0, filename, -1, &utf8Path[0], size_needed, NULL, NULL);
+
+		for (auto& ch : utf8Path) {
+			if (ch == '\\') ch = '/';
+		}
+		unixPath = "/" + utf8Path;
+	}
+
+	return "file://" + unixPath;
+}
+
 static void CopyOriginalFileNameToClipboard(LPCWSTR filename) {
 	int fileNameLength = (int)wcslen(filename);
 	DWORD fileNameLengthBytes = sizeof(wchar_t) * (fileNameLength + 1);
@@ -71,6 +104,76 @@ void CClipboard::CopyPathToClipboard(HWND hWnd, CJPEGImage* pImage, LPCTSTR file
 	pImage->EnableDimming(false);
 	DoCopyFileNameText(hWnd, fileName);
 	pImage->EnableDimming(true);
+}
+
+void CClipboard::CutFileToClipboard(HWND hWnd, LPCTSTR fileName) {
+	if (!::OpenClipboard(hWnd)) {
+		return;
+	}
+	::EmptyClipboard();
+
+// 1. Dateipfad als HDROP in die Zwischenablage schreiben
+    CopyOriginalFileNameToClipboard(fileName);
+
+    // 2. Preferred Drop Effect auf DROPEFFECT_MOVE setzen (Ausschneiden/Verschieben)
+    UINT uFormat = ::RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT);
+    if (uFormat != 0) {
+        HGLOBAL hMem = ::GlobalAlloc(GMEM_MOVEABLE | GMEM_ZEROINIT, sizeof(DWORD));
+        if (hMem != NULL) {
+            DWORD* pDropEffect = (DWORD*)::GlobalLock(hMem);
+            if (pDropEffect != NULL) {
+                *pDropEffect = DROPEFFECT_MOVE;
+                ::GlobalUnlock(hMem);
+                
+                // Nach SetClipboardData übernimmt das System die Speicherverwaltung von hMem
+                if (::SetClipboardData(uFormat, hMem) == NULL) {
+                    ::GlobalFree(hMem);
+                }
+            } else {
+                ::GlobalFree(hMem);
+            }
+        }
+    }
+
+	// 2. Linux / KDE-spezifisches Format (application/x-kde-cutselection = "1")
+	UINT uFormatKdeCut = ::RegisterClipboardFormat(L"application/x-kde-cutselection");
+	if (uFormatKdeCut != 0) {
+		HGLOBAL hMemKde = ::GlobalAlloc(GMEM_MOVEABLE, 1);
+		if (hMemKde != NULL) {
+			char* pData = (char*)::GlobalLock(hMemKde);
+			if (pData != NULL) {
+				pData[0] = '1';
+				::GlobalUnlock(hMemKde);
+				if (::SetClipboardData(uFormatKdeCut, hMemKde) == NULL) ::GlobalFree(hMemKde);
+			}
+			else {
+				::GlobalFree(hMemKde);
+			}
+		}
+	}
+
+	// 3. Linux / Freedesktop Standard (x-special/gnome-copied-files)
+	// Format der Nutzdaten: "cut\nfile:///pfad/zur/datei.jpg"
+	UINT uFormatGnomeCut = ::RegisterClipboardFormat(L"x-special/gnome-copied-files");
+	if (uFormatGnomeCut != 0) {
+		std::string fileUri = PathToFileUri(fileName);
+		std::string gnomePayload = "cut\n" + fileUri + "\n";
+
+		HGLOBAL hMemGnome = ::GlobalAlloc(GMEM_MOVEABLE, gnomePayload.size());
+		if (hMemGnome != NULL) {
+			char* pData = (char*)::GlobalLock(hMemGnome);
+			if (pData != NULL) {
+				::CopyMemory(pData, gnomePayload.c_str(), gnomePayload.size());
+				::GlobalUnlock(hMemGnome);
+				if (::SetClipboardData(uFormatGnomeCut, hMemGnome) == NULL) ::GlobalFree(hMemGnome);
+			}
+			else {
+				::GlobalFree(hMemGnome);
+			}
+		}
+	}
+
+	::CloseClipboard();
 }
 
 CJPEGImage* CClipboard::PasteImageFromClipboard(HWND hWnd, const CImageProcessingParams& procParams, 

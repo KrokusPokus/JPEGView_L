@@ -1898,6 +1898,11 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 				CClipboard::CopyPathToClipboard(this->m_hWnd, m_pCurrentImage, m_pFileList->Current());
 			}
 			break;
+		case IDM_CUT_FILE:
+			if (m_pCurrentImage != NULL && !m_pCurrentImage->IsClipboardImage()) {
+				CClipboard::CutFileToClipboard(this->m_hWnd, m_pFileList->Current());
+			}
+			break;
 		case IDM_PASTE:
 			if (::IsClipboardFormatAvailable(CF_DIB)) {
 				GotoImage(POS_Clipboard);

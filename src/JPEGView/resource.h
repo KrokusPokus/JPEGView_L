@@ -151,6 +151,7 @@
 #define IDM_COPY			2000		// :KeyMap: copy image to clipboard in screen size
 #define IDM_COPY_FULL		2500		// :KeyMap: copy image to clipboard in original size
 #define IDM_COPY_PATH		2525		// :KeyMap: copy image path to clipboard
+#define IDM_CUT_FILE		2530		// :KeyMap: cut image file to clipboard (for paste action in file manager)
 #define IDM_PASTE			2550		// :KeyMap: paste image from clipboard
 #define IDM_BATCH_COPY		2600		// :KeyMap: open batch copy dialog
 #define IDM_RENAME			2610		// :KeyMap: rename current file, only works when image processing panel can be shown (i.e. panel not disabled in INI and window size is big enough)
