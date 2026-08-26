@@ -4,8 +4,8 @@
 	<!-- Supported language and codepage codes can be found here: http://www.tramontana.co.hu/wix/lesson2.php#2.4 -->
 
 	<String Id="ApplicationName">JPEGView</String>
-	<String Id="ManufacturerName">Kevin M</String>
-	<String Id="ManufacturerFullName">Kevin M (sylikc)</String>
+	<String Id="ManufacturerName">Gernot F</String>
+	<String Id="ManufacturerFullName">Gernot F (KrokusPokus)</String>
 	<String Id="ProductDescription">Lightweight Image Viewer</String>
 	<String Id="Comments">Installs JPEGView</String>
 

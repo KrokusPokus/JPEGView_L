@@ -766,12 +766,14 @@ void CImageLoadThread::ProcessReadJXLRequest(CRequest* request) {
 	bool bUseCachedDecoder = false;
 	const wchar_t* sFileName;
 	sFileName = (const wchar_t*)request->FileName;
+
+
 	if (sFileName != m_sLastJxlFileName) {
 		DeleteCachedJxlDecoder();
 	} else {
 		bUseCachedDecoder = true;
 	}
-
+	
 	HANDLE hFile;
 	if (!bUseCachedDecoder) {
 		hFile = ::CreateFile(request->FileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
@@ -806,8 +808,9 @@ void CImageLoadThread::ProcessReadJXLRequest(CRequest* request) {
 			void* pEXIFData = NULL;
 			uint8* pPixelData = (uint8*)JxlReader::ReadImage(nWidth, nHeight, nBPP, bHasAnimation, nFrameCount, nFrameTimeMs, pEXIFData, request->OutOfMemory, pBuffer, nFileSize);
 			if (pPixelData != NULL) {
-				if (bHasAnimation)
+				if (bHasAnimation) {
 					m_sLastJxlFileName = sFileName;
+					}
 				// Multiply alpha value into each AABBGGRR pixel
 				Helpers::BlendAlpha((uint32*)pPixelData, nWidth, nHeight, request->ProcessParams.TransparencyMode);
 				request->Image = new CJPEGImage(nWidth, nHeight, pPixelData, pEXIFData, 4, 0, IF_JXL, bHasAnimation, request->FrameIndex, nFrameCount, nFrameTimeMs);

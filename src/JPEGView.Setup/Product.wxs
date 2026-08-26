@@ -246,11 +246,14 @@
 				<ComponentRef Id="JPEGView_ru.ini"/>
 				<ComponentRef Id="JPEGView_ru.ini.tpl"/>
 				<ComponentRef Id="KeyMap.txt.default"/>
+				<ComponentRef Id="KeyMap.txt.default_ru"/>
 				<ComponentRef Id="symbols.km"/>
-				<!-- <ComponentRef Id="KeyMap_ru.txt"/> -->
 			</Feature>
 			<Feature Id="Docs" Title="Documentation">
+				<ComponentRef Id="CHANGELOG.txt"/>
 				<ComponentRef Id="LICENSE.txt"/>
+				<ComponentRef Id="HowToInstall.txt"/>
+				<ComponentRef Id="HowToInstall_ru.txt"/>
 				<ComponentRef Id="readme.html"/>
 				<ComponentRef Id="readme_ru.html"/>
 				<ComponentRef Id="readme_uk.html"/>
@@ -593,18 +596,27 @@
 					<Component Id="KeyMap.txt.default" Guid="*">
 						<File Id="KeyMap.txt.default" Name="KeyMap.txt.default" Source="$(var.JPEGView.TargetDir)KeyMap.txt.default" />
 					</Component>
+					<Component Id="KeyMap.txt.default_ru" Guid="*">
+						<File Id="KeyMap.txt.default_ru" Name="KeyMap.txt.default_ru" Source="$(var.JPEGView.TargetDir)KeyMap.txt.default_ru" />
+					</Component>
 					<Component Id="symbols.km" Guid="*">
 						<File Id="symbols.km" Name="symbols.km" Source="$(var.JPEGView.TargetDir)symbols.km" />
 					</Component>
-					<!--
-					<Component Id="KeyMap_ru.txt" Guid="*">
-						<File Id="KeyMap_ru.txt" Name="KeyMap_ru.txt" Source="$(var.JPEGView.TargetDir)KeyMap_ru.txt" />
-					</Component>
-					-->
 
+					<Component Id="CHANGELOG.txt" Guid="*">
+						<File Id="CHANGELOG.txt" Name="CHANGELOG.txt" Source="$(var.JPEGView.TargetDir)CHANGELOG.txt" />
+					</Component>
 					<Component Id="LICENSE.txt" Guid="*">
 						<File Id="LICENSE.txt" Name="LICENSE.txt" Source="$(var.JPEGView.TargetDir)LICENSE.txt" />
 					</Component>
+
+					<Component Id="HowToInstall.txt" Guid="*">
+						<File Id="HowToInstall.txt" Name="HowToInstall.txt" Source="$(var.JPEGView.TargetDir)HowToInstall.txt" />
+					</Component>
+					<Component Id="HowToInstall_ru.txt" Guid="*">
+						<File Id="HowToInstall_ru.txt" Name="HowToInstall_ru.txt" Source="$(var.JPEGView.TargetDir)HowToInstall_ru.txt" />
+					</Component>
+					
 					<Component Id="readme.html" Guid="*">
 						<File Id="readme.html" Name="readme.html" Source="$(var.JPEGView.TargetDir)readme.html" />
 					</Component>
