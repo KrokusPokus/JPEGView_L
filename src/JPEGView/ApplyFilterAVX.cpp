@@ -2,111 +2,91 @@
 #include "XMMImage.h"
 #include "ResizeFilter.h"
 #include "ApplyFilterAVX.h"
+#include <immintrin.h>
 
 #ifdef _WIN64
 
 CXMMImage* ApplyFilter_AVX(int nSourceHeight, int nTargetHeight, int nWidth,
-	int nStartY_FP, int nStartX, int nIncrementY_FP,
-	const AVXFilterKernelBlock& filter,
-	int nFilterOffset, const CXMMImage* pSourceImg, bool bRoundResult) {
+    int nStartY_FP, int nStartX, int nIncrementY_FP,
+    const AVXFilterKernelBlock& filter,
+    int nFilterOffset, const CXMMImage* pSourceImg, bool bRoundResult) {
 
-	int nStartXAligned = nStartX & ~7;
-	int nEndXAligned = (nStartX + nWidth + 7) & ~7;
-	CXMMImage* tempImage = new CXMMImage(nEndXAligned - nStartXAligned, nTargetHeight, 8);
-	if (tempImage->AlignedPtr() == NULL) {
-		delete tempImage;
-		return NULL;
-	}
+    int nStartXAligned = nStartX & ~7;
+    int nEndXAligned = (nStartX + nWidth + 7) & ~7;
+    CXMMImage* tempImage = new CXMMImage(nEndXAligned - nStartXAligned, nTargetHeight, 8);
+    if (tempImage->AlignedPtr() == NULL) {
+        delete tempImage;
+        return NULL;
+    }
 
-	int nCurY = nStartY_FP;
-	int nChannelLenBytes = pSourceImg->GetPaddedWidth() * sizeof(float);
-	int nRowLenBytes = nChannelLenBytes * 3;
-	int nNumberOfBlocksX = (nEndXAligned - nStartXAligned) >> 3;
+    int nCurY = nStartY_FP;
+    int nChannelLenBytes = pSourceImg->GetPaddedWidth() * sizeof(float);
+    int nRowLenBytes = nChannelLenBytes * 3;
+    int nNumberOfBlocksX = (nEndXAligned - nStartXAligned) >> 3;
 
-	const uint8* pSourceStart = (const uint8*)pSourceImg->AlignedPtr() + nStartXAligned * sizeof(float);
-	AVXFilterKernel** pKernelIndexStart = filter.Indices;
+    const uint8* pSourceStart = (const uint8*)pSourceImg->AlignedPtr() + nStartXAligned * sizeof(float);
+    AVXFilterKernel** pKernelIndexStart = filter.Indices;
 
-	_MM_ALIGN16 float YMM255[8] = {4095.0, 4095.0, 4095.0, 4095.0, 4095.0, 4095.0, 4095.0, 4095.0};
+    const __m256 ymmZero = _mm256_setzero_ps();
+    const __m256 ymmMax = _mm256_set1_ps(4095.0f); // (Wert entsprechend YMM255)
 
-	__m256 ymm0 = _mm256_setzero_ps();
-	__m256 ymm1 = *((__m256*)YMM255);
-	__m256 ymm2;
-	__m256 ymm3;
-	__m256 ymm4 = _mm256_setzero_ps();
-	__m256 ymm5 = _mm256_setzero_ps();
-	__m256 ymm6 = _mm256_setzero_ps();
-	__m256 ymm7;
+    __m256* pDestination = (__m256*)tempImage->AlignedPtr();
 
-	__m256* pDestination = (__m256*)tempImage->AlignedPtr();
+    for (int y = 0; y < nTargetHeight; y++) {
+        uint32 nCurYInt = (uint32)nCurY >> 16;
+        int filterIndex = y + nFilterOffset;
+        AVXFilterKernel* pKernel = pKernelIndexStart[filterIndex];
+        int filterLen = pKernel->FilterLen;
+        int filterOffset = pKernel->FilterOffset;
+        const __m256* pFilterStart = (__m256*) & (pKernel->Kernel);
+        const __m256* pSourceRow = (const __m256*)(pSourceStart + ((int)nCurYInt - filterOffset) * nRowLenBytes);
 
-	for (int y = 0; y < nTargetHeight; y++) {
-		uint32 nCurYInt = (uint32)nCurY >> 16; // integer part of Y
-		int filterIndex = y + nFilterOffset;
-		AVXFilterKernel* pKernel = pKernelIndexStart[filterIndex];
-		int filterLen = pKernel->FilterLen;
-		int filterOffset = pKernel->FilterOffset;
-		const __m256* pFilterStart = (__m256*)&(pKernel->Kernel);
-		const __m256* pSourceRow = (const __m256*)(pSourceStart + ((int)nCurYInt - filterOffset) * nRowLenBytes);
+        for (int x = 0; x < nNumberOfBlocksX; x++) {
+            const __m256* pFilter = pFilterStart;
 
-		for (int x = 0; x < nNumberOfBlocksX; x++) {
-			const __m256* pSource = pSourceRow;
-			const __m256* pFilter = pFilterStart;
-			ymm4 = _mm256_setzero_ps();
-			ymm5 = _mm256_setzero_ps();
-			ymm6 = _mm256_setzero_ps();
-			for (int i = 0; i < filterLen; i++) {
-				ymm7 = *pFilter;
+            const uint8* pR = (const uint8*)pSourceRow;
+            const uint8* pG = pR + nChannelLenBytes;
+            const uint8* pB = pG + nChannelLenBytes;
 
-				// the pixel data RED channel
-				ymm2 = *pSource;
-				ymm2 = _mm256_mul_ps(ymm2, ymm7);
-				ymm4 = _mm256_add_ps(ymm4, ymm2);
-				pSource = (__m256*)((uint8*)pSource + nChannelLenBytes);
+            __m256 ymmR = _mm256_setzero_ps();
+            __m256 ymmG = _mm256_setzero_ps();
+            __m256 ymmB = _mm256_setzero_ps();
 
-				// the pixel data GREEN channel
-				ymm3 = *pSource;
-				ymm3 = _mm256_mul_ps(ymm3, ymm7);
-				ymm5 = _mm256_add_ps(ymm5, ymm3);
-				pSource = (__m256*)((uint8*)pSource + nChannelLenBytes);
+            for (int i = 0; i < filterLen; i++) {
+                __m256 ymmKernel = *pFilter++;
 
-				// the pixel data BLUE channel
-				ymm2 = *pSource;
-				ymm2 = _mm256_mul_ps(ymm2, ymm7);
-				ymm6 = _mm256_add_ps(ymm6, ymm2);
-				pSource = (__m256*)((uint8*)pSource + nChannelLenBytes);
+                // Fused Multiply-Add: ymmR += (*pR) * ymmKernel
+                ymmR = _mm256_fmadd_ps(*((const __m256*)pR), ymmKernel, ymmR);
+                ymmG = _mm256_fmadd_ps(*((const __m256*)pG), ymmKernel, ymmG);
+                ymmB = _mm256_fmadd_ps(*((const __m256*)pB), ymmKernel, ymmB);
 
-				pFilter++;
-			}
+                pR += nRowLenBytes;
+                pG += nRowLenBytes;
+                pB += nRowLenBytes;
+            }
 
-			if (bRoundResult == true) {
-				// limit to range <=255 (in ymm1)
-				ymm4 = _mm256_min_ps(ymm4, ymm1);
-				ymm5 = _mm256_min_ps(ymm5, ymm1);
-				ymm6 = _mm256_min_ps(ymm6, ymm1);
+            if (bRoundResult) {
+                // Clamping [0, 4095]
+                ymmR = _mm256_min_ps(_mm256_max_ps(ymmR, ymmZero), ymmMax);
+                ymmG = _mm256_min_ps(_mm256_max_ps(ymmG, ymmZero), ymmMax);
+                ymmB = _mm256_min_ps(_mm256_max_ps(ymmB, ymmZero), ymmMax);
 
-				// limit to range >=0 (in ymm0)
-				ymm4 = _mm256_max_ps(ymm4, ymm0);
-				ymm5 = _mm256_max_ps(ymm5, ymm0);
-				ymm6 = _mm256_max_ps(ymm6, ymm0);
+                ymmR = _mm256_round_ps(ymmR, _MM_FROUND_TO_NEAREST_INT);
+                ymmG = _mm256_round_ps(ymmG, _MM_FROUND_TO_NEAREST_INT);
+                ymmB = _mm256_round_ps(ymmB, _MM_FROUND_TO_NEAREST_INT);
+            }
 
-				// round to nearest integer
-				ymm4 = _mm256_round_ps(ymm4, _MM_FROUND_TO_NEAREST_INT);
-				ymm5 = _mm256_round_ps(ymm5, _MM_FROUND_TO_NEAREST_INT);
-				ymm6 = _mm256_round_ps(ymm6, _MM_FROUND_TO_NEAREST_INT);
-				}
+            *pDestination++ = ymmR;
+            *pDestination++ = ymmG;
+            *pDestination++ = ymmB;
 
-			// store result in blocks
-			*pDestination++ = ymm4;
-			*pDestination++ = ymm5;
-			*pDestination++ = ymm6;
+            pSourceRow++;
+        }
 
-			pSourceRow++;
-		};
+        nCurY += nIncrementY_FP;
+    }
 
-		nCurY += nIncrementY_FP;
-	};
-
-	return tempImage;
+    return tempImage;
 }
 
 #endif
