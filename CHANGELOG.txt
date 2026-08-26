@@ -1,6 +1,12 @@
 JPEGView Changelog
 ******************
-[1.4.0.4] 2026-04-16
+[1.4.0.5] 2026-08-26
+- Fixed jxl animation issue
+- Fixed some image formats not loading in zip archives.
+- Addressed raw format display default (ini value "DisplayFullSizeRAW" changed from 0 to 3)
+- Fixed issue of very large jpeg files no loading
+
+[1.4.0.4] 2026-08-16
 - Fixed issue of panels not becoming visible
 - Fixed issue of zoom factor displaying even when switching fullscreen state
 - Updated to library versions:
