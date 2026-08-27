@@ -147,6 +147,7 @@
 #define IDM_SAVE_SCREEN		1501		// :KeyMap: save to file in screen size
 #define IDM_SAVE_ALLOW_NO_PROMPT	1502		// :KeyMap: save to file in original size, allow overwrite without prompt when option 'OverwriteOriginalFileWithoutSaveDialog=true' is enabled in INI
 #define IDM_RELOAD			1600		// :KeyMap: reload image
+#define IDM_RELOAD_FULL		1610		// :KeyMap: reload image and file list
 #define IDM_PRINT			1700		// :KeyMap: print image
 #define IDM_COPY			2000		// :KeyMap: copy image to clipboard in screen size
 #define IDM_COPY_FULL		2500		// :KeyMap: copy image to clipboard in original size

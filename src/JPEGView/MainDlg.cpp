@@ -1330,9 +1330,14 @@ LRESULT CMainDlg::OnDisplayedFileChangedOnDisk(UINT /*uMsg*/, WPARAM /*wParam*/,
 }
 
 LRESULT CMainDlg::OnActiveDirectoryFilelistChanged(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/) {
-	if (CSettingsProvider::This().ReloadWhenDisplayedImageChanged() && m_pFileList != NULL && m_pFileList->CurrentFileExists()) {
-		m_pFileList->Reload(NULL, false);
-		Invalidate(FALSE);
+	if (CSettingsProvider::This().ReloadWhenDisplayedImageChanged()) {
+		if (m_pFileList != NULL && m_pFileList->CurrentFileExists()) {
+			m_pFileList->Reload(NULL, false);
+			Invalidate(FALSE);
+		}
+
+	if (m_pCurrentImage != NULL)
+		GotoImage(POS_Current);
 	}
 	return 0;
 }
@@ -1873,6 +1878,16 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			break;
 		case IDM_RELOAD:
 			ReloadImage(false);
+			break;
+		case IDM_RELOAD_FULL:
+			if (m_pFileList != NULL && m_pFileList->CurrentFileExists())
+				{
+				m_pFileList->Reload(NULL);
+				this->Invalidate(FALSE);
+				}
+
+			if (m_pCurrentImage != NULL)
+				GotoImage(POS_Current);
 			break;
 		case IDM_PRINT:
 			if (m_pCurrentImage != NULL) {
