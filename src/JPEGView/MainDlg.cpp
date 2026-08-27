@@ -4850,12 +4850,7 @@ void CMainDlg::ToggleAlwaysOnTop() {
 // Handler used when receiving the custom WM_REFRESHVIEW message
 // Compared to ReloadImage() this also reloads the file list!
 LRESULT CMainDlg::OnRefreshView(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM lParam, BOOL& bHandled) {
-	if (m_pFileList != NULL && m_pFileList->CurrentFileExists()) {
-		m_pFileList->Reload(NULL);
-		this->Invalidate(FALSE);
-	}
-	if (m_pCurrentImage != NULL)
-		GotoImage(POS_Current);
+	ExecuteCommand(IDM_RELOAD_FULL);
 	return 0;
 }
 
