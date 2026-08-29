@@ -103,6 +103,7 @@ AllowFileDeletion=true
 ;     strings_<language>.txt
 ;
 ; Currently supported languages:
+;  'ar'    Arabic
 ;  'be'    Belarusian
 ;  'bg'    Bulgarian
 ;  'cs'    Czech
