@@ -1,0 +1,69 @@
+name: Build JPEGView
+
+on:
+  push:
+    branches:
+      - master
+      - azizr12-patch-3
+  pull_request:
+    branches:
+      - master
+      - azizr12-patch-3
+  workflow_dispatch: # Allows manual triggering from the GitHub Actions tab
+
+jobs:
+  build:
+    name: Build ${{ matrix.arch }} (${{ matrix.config }})
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [Win32, x64]
+        config: [Release]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive # Critical for fetching WTL and other dependencies
+          fetch-depth: 0
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v2
+        with:
+          vs-version: '[17.0,18.0)' # Targets Visual Studio 2022 (backward compatible with VS2019 projects)
+          msbuild-architecture: ${{ matrix.arch }}
+
+      - name: Verify WTL Submodule
+        shell: powershell
+        run: |
+          # Ensure the Windows Template Library (WTL) dependency is present as expected by the build system
+          $wtlPath = "deps/WTL-sf"
+          if (Test-Path $wtlPath) {
+            Write-Host "WTL submodule successfully found at $wtlPath"
+          } else {
+            Write-Host "WTL submodule not found. Attempting to initialize..."
+            git submodule update --init --recursive
+          }
+
+      - name: Build Solution
+        shell: cmd
+        run: |
+          msbuild.exe src\JPEGView.sln ^
+            /p:Platform=${{ matrix.arch }} ^
+            /p:Configuration=${{ matrix.config }} ^
+            /p:RestorePackagesConfig=true ^
+            /m ^
+            /verbosity:minimal
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: JPEGView-${{ matrix.arch }}-${{ matrix.config }}
+          # Wildcard ensures compatibility regardless of whether the output folder is named 'x86', 'Win32', or 'x64'
+          path: |
+            src/JPEGView/bin/**/${{ matrix.config }}/*.exe
+            src/JPEGView/bin/**/${{ matrix.config }}/*.dll
+            src/JPEGView/bin/**/${{ matrix.config }}/*.pdb
+          if-no-files-found: warn
+          retention-days: 14
