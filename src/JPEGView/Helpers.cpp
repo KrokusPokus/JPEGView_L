@@ -991,15 +991,7 @@ CString GetFileInfoString(LPCTSTR sFormat, CJPEGImage* pImage, CFileList* pFilel
 	}
 	if (_tcsstr(sFormat, _T("<l>")) != NULL) {
 		__int64 fileSize = isClipboardImage ? 0 : GetFileSize(pFilelist->Current());
-		CString sFileSize;
-		if (fileSize >= 1024 * 1024) {
-			sFileSize.Format(_T("%d MB"), (int)(fileSize >> 20));
-		} else if (fileSize >= 1024) {
-			sFileSize.Format(_T("%d KB"), (int)(fileSize >> 10));
-		} else if (fileSize > 0) {
-			sFileSize.Format(_T("%d b"), (int)fileSize);
-		}
-		sFileInfo.Replace(_T("<l>"), sFileSize);
+		sFileInfo.Replace(_T("<l>"), FormatFileSize(fileSize));
 	}
 	sFileInfo.TrimLeft();
 	sFileInfo.TrimRight();
