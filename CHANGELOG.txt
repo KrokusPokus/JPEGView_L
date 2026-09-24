@@ -1,5 +1,12 @@
 JPEGView Changelog
 ******************
+[1.4.0.6] 2026-09-25
+- Added new action IDM_CUT_FILE (can be used to move the currently open image's file into a different directory)
+- Added new action IDM_RELOAD_FULL (reloads image and file list)
+- Added Arabic translation
+- Fix issue #14 (MouseWheel navigation not working when current image couldn't be loaded)
+- Fix issue #21 (filesize string not using decimals)
+
 [1.4.0.5] 2026-08-26
 - Fixed jxl animation issue
 - Fixed some image formats not loading in zip archives.
