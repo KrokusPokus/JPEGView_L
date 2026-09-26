@@ -249,8 +249,12 @@ BeepSoundAlert=false
 ; - MOUSE NAVIGATION OPTIONS
 ; -----------------------------------------------
 
-; If true, the mouse wheel can be used to navigate forward and backward and zoom must be done with Ctrl-MouseWheel
-; If false, zoom is done with the mousewheel (no Ctrl required)
+; If "false", the mousewheel will zoom the image without any modifier keys neccessary. But it will ONLY zoom, no matter which modifier keys are used.
+; If "true", it behaves like this:
+;	- MouseWheel only: pan vertically if image is vertically larger than the window. If not, it will go to next/previous image.
+;	- Ctrl + MouseWheel: pans image vertically
+;	- Shift + MouseWheel: pans image horizontally
+;	- Ctrl + Shift MouseWheel: zooms image
 NavigateWithMouseWheel=true
 
 ; If true, the extended mouse buttons (Forward and backward) are reversed compared to Internet explorer
