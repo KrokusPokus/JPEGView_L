@@ -1,5 +1,8 @@
 JPEGView Changelog
 ******************
+[1.4.0.7] 2026-10-06
+- Allow transition effects to work when not in fullscreen mode
+
 [1.4.0.6] 2026-09-25
 - Added new action IDM_CUT_FILE (can be used to move the currently open image's file into a different directory)
 - Added new action IDM_RELOAD_FULL (reloads image and file list)
