@@ -4517,10 +4517,10 @@ void CMainDlg::UpdateWindowTitle(bool bForce) {
 				if (*pExt != '\0') {
 					wsprintf(s_PrevFileExt, _T("%s"),pExt);
 	
-					if (SHGetFileInfo(sCurrentFilePath,0,&shfi,sizeof(SHFILEINFO),SHGFI_ICON))
+					if (SHGetFileInfo(sCurrentFilePath,0,&shfi,sizeof(SHFILEINFO),SHGFI_ICON|SHGFI_USEFILEATTRIBUTES))
 						hIconBig = shfi.hIcon;
 					
-					if (SHGetFileInfo(sCurrentFilePath,0,&shfi,sizeof(SHFILEINFO),SHGFI_ICON|SHGFI_SMALLICON))
+					if (SHGetFileInfo(sCurrentFilePath,0,&shfi,sizeof(SHFILEINFO),SHGFI_ICON|SHGFI_SMALLICON|SHGFI_USEFILEATTRIBUTES))
 						hIconSmall = shfi.hIcon;
 				} else {
 					*s_PrevFileExt = '\0';

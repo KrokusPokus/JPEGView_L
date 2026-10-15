@@ -1,5 +1,8 @@
 JPEGView Changelog
 ******************
+[1.4.0.8] TBD
+- Speed optimization when opening folders with a huge number of files
+
 [1.4.0.7] 2026-10-06
 - Allow transition effects to work when not in fullscreen mode
 
