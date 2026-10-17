@@ -1729,7 +1729,7 @@ LRESULT CMainDlg::OnContextMenu(UINT /*uMsg*/, WPARAM wParam, LPARAM lParam, BOO
 		::DeleteMenu(hMenuTrackPopup, SUBMENU_POS_USER_COMMANDS, MF_BYPOSITION);
 		::DeleteMenu(hMenuTrackPopup, SUBMENU_POS_USER_COMMANDS - 1, MF_BYPOSITION);
 	}
-	if (!m_bFullScreenMode) {
+	if (0 /*!m_bFullScreenMode*/) {
 		// Transition effect and speed only available in full screen mode
 		::DeleteMenu(hMenuMovie, 9, MF_BYPOSITION);
 		::DeleteMenu(hMenuMovie, 9, MF_BYPOSITION);
@@ -4542,10 +4542,10 @@ void CMainDlg::UpdateWindowTitle(bool bForce) {
 				if (*pExt != '\0') {
 					wsprintf(s_PrevFileExt, _T("%s"),pExt);
 	
-					if (SHGetFileInfo(sCurrentFilePath,0,&shfi,sizeof(SHFILEINFO),SHGFI_ICON))
+					if (SHGetFileInfo(sCurrentFilePath,0,&shfi,sizeof(SHFILEINFO),SHGFI_ICON|SHGFI_USEFILEATTRIBUTES))
 						hIconBig = shfi.hIcon;
 					
-					if (SHGetFileInfo(sCurrentFilePath,0,&shfi,sizeof(SHFILEINFO),SHGFI_ICON|SHGFI_SMALLICON))
+					if (SHGetFileInfo(sCurrentFilePath,0,&shfi,sizeof(SHFILEINFO),SHGFI_ICON|SHGFI_SMALLICON|SHGFI_USEFILEATTRIBUTES))
 						hIconSmall = shfi.hIcon;
 				} else {
 					*s_PrevFileExt = '\0';
@@ -4646,7 +4646,7 @@ bool CMainDlg::HandleMouseButtonByKeymap(int nMouseButtonCode, bool bExecuteComm
 }
 
 bool CMainDlg::UseSlideShowTransitionEffect() {
-	return m_bFullScreenMode && m_nCurrentTimeout >= 1000 && m_eTransitionEffect != Helpers::TE_None;
+	return /*m_bFullScreenMode &&*/ m_nCurrentTimeout >= 1000 && m_eTransitionEffect != Helpers::TE_None;
 }
 
 void CMainDlg::AnimateTransition(CDC& oldFrameDC) {

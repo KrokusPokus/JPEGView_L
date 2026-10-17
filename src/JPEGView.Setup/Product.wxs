@@ -262,6 +262,7 @@
 			</Feature>
 			<Feature Id="Localization" Title="Localization Strings">
 				<ComponentRef Id="strings.txt" />
+				<ComponentRef Id="strings_ar.txt" />
 				<ComponentRef Id="strings_be.txt" />
 				<ComponentRef Id="strings_bg.txt" />
 				<ComponentRef Id="strings_cs.txt" />
@@ -636,6 +637,9 @@
 
 					<Component Id="strings.txt" Guid="*">
 						<File Id="strings.txt" Name="strings.txt" Source="$(var.JPEGView.TargetDir)strings.txt" />
+					</Component>
+					<Component Id="strings_ar.txt" Guid="*">
+						<File Id="strings_ar.txt" Name="strings_ar.txt" Source="$(var.JPEGView.TargetDir)strings_ar.txt" />
 					</Component>
 					<Component Id="strings_be.txt" Guid="*">
 						<File Id="strings_be.txt" Name="strings_be.txt" Source="$(var.JPEGView.TargetDir)strings_be.txt" />
