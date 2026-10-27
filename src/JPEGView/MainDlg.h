@@ -383,7 +383,7 @@ private:
 	bool HandleMouseButtonByKeymap(int nMouseButton, bool bExecuteCommand = true);
 	bool UseSlideShowTransitionEffect();
 	void PaintToDC(CDC& dc);
-	void AnimateTransition(CDC& oldFrameDC);
+	void AnimateTransition();
 	void CleanupAndTerminate();
 	void InvalidateHelpDlg();
 	bool CloseHelpDlg();

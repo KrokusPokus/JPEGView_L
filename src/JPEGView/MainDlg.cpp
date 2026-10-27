@@ -1408,34 +1408,9 @@ LRESULT CMainDlg::OnTimer(UINT /*uMsg*/, WPARAM wParam, LPARAM /*lParam*/, BOOL&
 				::SetTimer(this->m_hWnd, SLIDESHOW_TIMER_EVENT_ID, m_nCurrentTimeout, NULL);
 			}
 		}
-		bool bDoTransition =
-			wParam == SLIDESHOW_TIMER_EVENT_ID &&
-			UseSlideShowTransitionEffect();
-
-		if (bDoTransition) {
-			int nW = m_clientRect.Width();
-			int nH = m_clientRect.Height();
-
-			HDC hWndDC = ::GetDC(m_hWnd);
-			if (hWndDC != NULL) {
-				CDC screenDC(hWndDC);
-				CDC oldFrameDC;
-				oldFrameDC.CreateCompatibleDC(screenDC);
-				CBitmap oldFrameBitmap;
-				oldFrameBitmap.CreateCompatibleBitmap(screenDC, nW, nH);
-				oldFrameDC.SelectBitmap(oldFrameBitmap);
-
-				// Capture the frame that is actually visible BEFORE GotoImage().
-				oldFrameDC.BitBlt(0, 0, nW, nH, screenDC, 0, 0, SRCCOPY);
-				::ReleaseDC(m_hWnd, hWndDC);
-
-				GotoImage(POS_NextSlideShow, NO_REMOVE_KEY_MSG);
-				AnimateTransition(oldFrameDC);
-			} else {
-				GotoImage(POS_NextSlideShow, NO_REMOVE_KEY_MSG);
-			}
-		} else {
-			GotoImage((wParam == ANIMATION_TIMER_EVENT_ID) ? POS_NextFrame : POS_NextSlideShow, NO_REMOVE_KEY_MSG);
+		GotoImage((wParam == ANIMATION_TIMER_EVENT_ID) ? POS_NextFrame : POS_NextSlideShow, NO_REMOVE_KEY_MSG);
+		if (wParam == SLIDESHOW_TIMER_EVENT_ID && UseSlideShowTransitionEffect()) {
+			AnimateTransition();
 		}
 		if (wParam != ANIMATION_TIMER_EVENT_ID) {
 			m_nLastSlideShowImageTickCount = ::GetTickCount();
@@ -4649,215 +4624,143 @@ bool CMainDlg::UseSlideShowTransitionEffect() {
 	return /*m_bFullScreenMode &&*/ m_nCurrentTimeout >= 1000 && m_eTransitionEffect != Helpers::TE_None;
 }
 
-void CMainDlg::AnimateTransition(CDC& oldFrameDC) {
+void CMainDlg::AnimateTransition() {
 
-	int nFrameTimeMs =
-		(m_eTransitionEffect >= Helpers::TE_RollLR ||
-		 m_eTransitionEffect <= Helpers::TE_ScrollBT) ? 10 : 20;
+	int nFrameTimeMs = (m_eTransitionEffect >= Helpers::TE_RollLR || m_eTransitionEffect <= Helpers::TE_ScrollBT) ? 10 : 20;
 
-	int nW = m_clientRect.Width();
-	int nH = m_clientRect.Height();
+	// paint to memory DC
+	int nW = m_clientRect.Width(), nH = m_clientRect.Height();
 
 	HDC hWndDC = ::GetDC(m_hWnd);
 	if (hWndDC == NULL) {
 		return;
 	}
-
-	CDC paintDC(hWndDC);
-	CDC newFrameDC;
-	newFrameDC.CreateCompatibleDC(paintDC);
-
-	CBitmap newFrameBitmap;
-	newFrameBitmap.CreateCompatibleBitmap(paintDC, nW, nH);
-	newFrameDC.SelectBitmap(newFrameBitmap);
-
-	// Keep the existing Blend workaround.
-	bool bSavedHQResampling = m_bHQResampling;
-	if (m_eTransitionEffect == Helpers::TE_Blend) {
-		m_bHQResampling = false;
-	}
-	PaintToDC(newFrameDC);
-	m_bHQResampling = bSavedHQResampling;
+	CDCHandle paintDC(hWndDC);
+	
+	CDC memDC;
+	memDC.CreateCompatibleDC(paintDC);
+	CBitmap memDCBitmap;
+	memDCBitmap.CreateCompatibleBitmap(paintDC, nW, nH);
+	memDC.SelectBitmap(memDCBitmap);
+	PaintToDC(memDC);
 
 	int nSteps = max(1, (m_nTransitionTime + 20) / nFrameTimeMs);
 
 	BLENDFUNCTION blendFunc{ 0 };
 	blendFunc.BlendOp = AC_SRC_OVER;
 	blendFunc.AlphaFormat = 0;
+	float fAlphaStep = 255.0f / nSteps;
 
 	DWORD lastTime = ::GetTickCount();
-
 	for (int i = 0; i <= nSteps; i++) {
-		paintDC.SelectClipRgn(NULL);
-
-		switch (m_eTransitionEffect) {
+		switch (m_eTransitionEffect)
+		{
 		case Helpers::TE_Blend:
 			{
-				// Always start from the old frame. The old frame must never be
-				// taken from the window while the window is being modified.
-				paintDC.BitBlt(0, 0, nW, nH, oldFrameDC, 0, 0, SRCCOPY);
-
 				if (i == nSteps) {
-					paintDC.BitBlt(0, 0, nW, nH, newFrameDC, 0, 0, SRCCOPY);
+					paintDC.BitBlt(0, 0, nW, nH, memDC, 0, 0, SRCCOPY);
 				} else {
-					float fFactor = (float)(i + 1) / (float)(nSteps + 1);
-					blendFunc.SourceConstantAlpha =
-						(BYTE)(fFactor * 255.0f + 0.5f);
-					paintDC.AlphaBlend(
-						0, 0, nW, nH,
-						newFrameDC, 0, 0, nW, nH,
-						blendFunc);
+					float fFactor = (float)i / nSteps ;
+					blendFunc.SourceConstantAlpha = min(255, (int)((fFactor * fFactor * i + 1) * fAlphaStep + 0.5f));
+					paintDC.AlphaBlend(0, 0, nW, nH, memDC, 0, 0, nW, nH, blendFunc);
 				}
 				break;
 			}
-
 		case Helpers::TE_SlideLR:
 		case Helpers::TE_SlideRL:
 		case Helpers::TE_SlideBT:
 		case Helpers::TE_SlideTB:
 			{
-				float fFactor = (float)(i + 1) / (float)(nSteps + 1);
-				int nFracWidth = (int)(nW * fFactor + 0.5f);
+				float fFactor = (float)(i + 1) / (nSteps + 1);
 				int nFracHeight = (int)(nH * fFactor + 0.5f);
-
-				int nNewX = 0;
-				int nNewY = 0;
-				int nOldX = 0;
-				int nOldY = 0;
-
-				if (m_eTransitionEffect == Helpers::TE_SlideLR) {
-					nNewX = nFracWidth - nW;
-					nOldX = nFracWidth;
-				} else if (m_eTransitionEffect == Helpers::TE_SlideRL) {
-					nNewX = nW - nFracWidth;
-					nOldX = -nFracWidth;
-				} else if (m_eTransitionEffect == Helpers::TE_SlideTB) {
-					nNewY = nFracHeight - nH;
-					nOldY = nFracHeight;
-				} else {
-					nNewY = nH - nFracHeight;
-					nOldY = -nFracHeight;
-				}
-
-				paintDC.BitBlt(0, 0, nW, nH, oldFrameDC, 0, 0, SRCCOPY);
-				paintDC.BitBlt(nOldX, nOldY, nW, nH,
-					oldFrameDC, 0, 0, SRCCOPY);
-				paintDC.BitBlt(nNewX, nNewY, nW, nH,
-					newFrameDC, 0, 0, SRCCOPY);
+				int nFracWidth = (int)(nW * fFactor + 0.5f);
+				int nStartX = (m_eTransitionEffect == Helpers::TE_SlideLR) ? nFracWidth - nW : (m_eTransitionEffect == Helpers::TE_SlideRL) ? nW - nFracWidth : 0;
+				int nStartY = (m_eTransitionEffect == Helpers::TE_SlideTB) ? nFracHeight - nH : (m_eTransitionEffect == Helpers::TE_SlideBT) ? nH - nFracHeight : 0;
+				paintDC.BitBlt(nStartX, nStartY, nW, nH, memDC, 0, 0, SRCCOPY);
 				break;
 			}
-
 		case Helpers::TE_RollLR:
 		case Helpers::TE_RollRL:
 		case Helpers::TE_RollBT:
 		case Helpers::TE_RollTB:
 			{
-				float fFactor = (float)(i + 1) / (float)(nSteps + 1);
-				int nFracWidth = (int)(nW * fFactor + 0.5f);
+				float fFactor = (float)(i + 1) / (nSteps + 1);
 				int nFracHeight = (int)(nH * fFactor + 0.5f);
-				int nClipW =
-					(m_eTransitionEffect == Helpers::TE_RollTB ||
-					 m_eTransitionEffect == Helpers::TE_RollBT)
-					? nW : 1 + nW / (nSteps + 1);
-				int nClipH =
-					(m_eTransitionEffect == Helpers::TE_RollLR ||
-					 m_eTransitionEffect == Helpers::TE_RollRL)
-					? nH : 1 + nH / (nSteps + 1);
-				int nClipX =
-					(m_eTransitionEffect == Helpers::TE_RollLR)
-					? nFracWidth - nClipW
-					: (m_eTransitionEffect == Helpers::TE_RollRL)
-					? nW - nFracWidth : 0;
-				int nClipY =
-					(m_eTransitionEffect == Helpers::TE_RollTB)
-					? nFracHeight - nClipH
-					: (m_eTransitionEffect == Helpers::TE_RollBT)
-					? nH - nFracHeight : 0;
-
-				paintDC.BitBlt(0, 0, nW, nH, oldFrameDC, 0, 0, SRCCOPY);
-
+				int nClipH = (m_eTransitionEffect == Helpers::TE_RollLR || m_eTransitionEffect == Helpers::TE_RollRL) ? nH : 1 + nH / (nSteps + 1);
+				int nFracWidth = (int)(nW * fFactor + 0.5f);
+				int nClipW = (m_eTransitionEffect == Helpers::TE_RollTB || m_eTransitionEffect == Helpers::TE_RollBT) ? nW : 1 + nW / (nSteps + 1);
+				int nClipX = (m_eTransitionEffect == Helpers::TE_RollLR) ? nFracWidth - nClipW : (m_eTransitionEffect == Helpers::TE_RollRL) ? nW - nFracWidth : 0;
+				int nClipY = (m_eTransitionEffect == Helpers::TE_RollTB) ? nFracHeight - nClipH : (m_eTransitionEffect == Helpers::TE_RollBT) ? nH - nFracHeight : 0;
 				CRgn region;
-				region.CreateRectRgn(
-					nClipX, nClipY,
-					nClipX + nClipW, nClipY + nClipH);
+				region.CreateRectRgn(nClipX, nClipY, nClipX + nClipW, nClipY + nClipH);
 				paintDC.SelectClipRgn(region);
-				paintDC.BitBlt(0, 0, nW, nH,
-					newFrameDC, 0, 0, SRCCOPY);
-				paintDC.SelectClipRgn(NULL);
+				paintDC.BitBlt(0, 0, nW, nH, memDC, 0, 0, SRCCOPY);
 				break;
 			}
-
 		case Helpers::TE_ScrollLR:
 		case Helpers::TE_ScrollRL:
 		case Helpers::TE_ScrollBT:
 		case Helpers::TE_ScrollTB:
 			{
-				float fFactor = (float)(i + 1) / (float)(nSteps + 1);
-				int nShiftX = 0;
-				int nShiftY = 0;
-				int nNewX = 0;
-				int nNewY = 0;
-
+				float fFactorLast = (float)i / (nSteps + 1);
+				float fFactor = (float)(i + 1) / (nSteps + 1);
+				int nScrollW, nScrollH;
+				int nStartX, nStartY;
+				int nStartClipX, nStartClipY, nEndClipX, nEndClipY;
 				if (m_eTransitionEffect == Helpers::TE_ScrollLR) {
-					nShiftX = (int)(nW * fFactor + 0.5f);
-					nNewX = nShiftX - nW;
+					nScrollW = (int)(nW * fFactor + 0.5f) - (int)(nW * fFactorLast + 0.5f);
+					nScrollH = 0;
+					nStartX = (int)(nW * fFactor + 0.5f) - nW;
+					nStartY = 0;
+					nStartClipX = nStartClipY = 0;
+					nEndClipX = nScrollW; nEndClipY = nH;
 				} else if (m_eTransitionEffect == Helpers::TE_ScrollRL) {
-					nShiftX = -(int)(nW * fFactor + 0.5f);
-					nNewX = nW + nShiftX;
+					nScrollW = - ((int)(nW * fFactor + 0.5f) - (int)(nW * fFactorLast + 0.5f));
+					nScrollH = 0;
+					nStartX = nW - (int)(nW * fFactor + 0.5f);
+					nStartY = 0;
+					nStartClipX = nW + nScrollW;
+					nStartClipY = 0;
+					nEndClipX = nW; nEndClipY = nH;
 				} else if (m_eTransitionEffect == Helpers::TE_ScrollTB) {
-					nShiftY = (int)(nH * fFactor + 0.5f);
-					nNewY = nShiftY - nH;
+					nScrollW = 0;
+					nScrollH = (int)(nH * fFactor + 0.5f) - (int)(nH * fFactorLast + 0.5f);
+					nStartX = 0;
+					nStartY = (int)(nH * fFactor + 0.5f) - nH;
+					nStartClipX = 0; nStartClipY = 0;
+					nEndClipX = nW; nEndClipY = nScrollH;
 				} else {
-					nShiftY = -(int)(nH * fFactor + 0.5f);
-					nNewY = nH + nShiftY;
+					nScrollW = 0;
+					nScrollH = -((int)(nH * fFactor + 0.5f) - (int)(nH * fFactorLast + 0.5f));
+					nStartX = 0;
+					nStartY = nH - (int)(nH * fFactor + 0.5f);
+					nStartClipX = 0; nStartClipY = nH + nScrollH;
+					nEndClipX = nW; nEndClipY = nH;
 				}
 
-				// The old frame is the source. Never use paintDC as both
-				// source and destination; overlapping BitBlt is the artifact bug.
-				paintDC.BitBlt(
-					nShiftX, nShiftY, nW, nH,
-					oldFrameDC, 0, 0, SRCCOPY);
+				paintDC.SelectClipRgn(NULL);
+				paintDC.BitBlt(nScrollW, nScrollH, nW, nH, paintDC, 0, 0, SRCCOPY);
+				
+				CRgn region;
+				region.CreateRectRgn(nStartClipX, nStartClipY, nEndClipX, nEndClipY);
+				paintDC.SelectClipRgn(region);
 
-				paintDC.BitBlt(
-					nNewX, nNewY, nW, nH,
-					newFrameDC, 0, 0, SRCCOPY);
+				paintDC.BitBlt(nStartX, nStartY, nW, nH, memDC, 0, 0, SRCCOPY);
 				break;
 			}
-
-		default:
-			paintDC.BitBlt(0, 0, nW, nH,
-				newFrameDC, 0, 0, SRCCOPY);
-			break;
 		}
-
 		DWORD time = ::GetTickCount();
-		if (time - lastTime < (DWORD)nFrameTimeMs) {
+		if (time - lastTime < nFrameTimeMs) {
 			::Sleep(nFrameTimeMs - (time - lastTime));
 		}
-		lastTime = ::GetTickCount();
-
+		lastTime = time;
+		
+		// terminate if a key is pressed or context menu shall be shown
 		MSG msg;
-		if (::PeekMessage(&msg, m_hWnd,
-			WM_KEYFIRST, WM_KEYLAST, PM_NOREMOVE)) {
-			break;
-		}
-		if (::PeekMessage(&msg, m_hWnd,
-			WM_CONTEXTMENU, WM_CONTEXTMENU, PM_NOREMOVE)) {
-			break;
-		}
+		if (::PeekMessage(&msg, m_hWnd, WM_KEYFIRST, WM_KEYLAST, PM_NOREMOVE)) break;
+		if (::PeekMessage(&msg, m_hWnd, WM_CONTEXTMENU, WM_CONTEXTMENU, PM_NOREMOVE)) break;
 	}
-
-	// Remove any clip region left by an interrupted transition.
-	paintDC.SelectClipRgn(NULL);
-
-	// Always finish on the complete new frame.
-	paintDC.BitBlt(0, 0, nW, nH,
-		newFrameDC, 0, 0, SRCCOPY);
-
 	::ReleaseDC(m_hWnd, hWndDC);
-
-	this->Invalidate(FALSE);
-	this->UpdateWindow();
 }
 
 void CMainDlg::CleanupAndTerminate() {

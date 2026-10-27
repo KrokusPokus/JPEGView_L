@@ -28,40 +28,41 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          # Do NOT use "submodules: recursive" here: the prebuilt dependency
+          # libraries are committed to the repo, and pulling every source
+          # submodule (libjxl, libheif, dav1d, ...) is slow and can fail.
+          # Only WTL is needed, and it is initialized in the next step.
+          submodules: false
           fetch-depth: 0
+
+      - name: Checkout WTL submodule
+        shell: cmd
+        run: git submodule update --init deps/WTL-sf
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
         with:
+          vs-version: '[17.0,18.0)'
           msbuild-architecture: ${{ matrix.arch }}
-
-      - name: Patch Post-Build Script (Ignore Missing Optional DLLs)
-        shell: powershell
-        run: |
-          # The repo is currently missing some optional DLLs (like 7z.dll, jxl_dec.dll). 
-          # This patch modifies the post-build script to return success (exit 0) even if 
-          # xcopy fails to find them, allowing the build to finish successfully.
-          $scriptPath = "extras\scripts\JPEGView.vcxproj-postbuild-event.bat"
-          if (Test-Path $scriptPath) {
-              $content = Get-Content $scriptPath -Raw
-              $content = $content -replace 'exit /b %ErrorLevel%', 'exit /b 0'
-              Set-Content $scriptPath -Value $content
-              Write-Host "Successfully patched post-build script to ignore missing file errors."
-          } else {
-              Write-Host "Post-build script not found, proceeding anyway."
-          }
 
       - name: Build Main Application and Dependencies
         shell: cmd
+        # JPEGView.vcxproj uses PlatformToolset v143, but WICLoader.vcxproj
+        # still says v142 (VS2019). windows-2022 only ships v143, so force the
+        # toolset for every project instead of failing on the missing v142.
         run: |
           msbuild.exe src\JPEGView.sln ^
             /target:JPEGView;WICLoader ^
             /p:Platform=${{ matrix.platform }} ^
             /p:Configuration=${{ matrix.config }} ^
-            /p:RestorePackagesConfig=true ^
+            /p:PlatformToolset=v143 ^
+            /p:WindowsTargetPlatformVersion=10.0 ^
             /m ^
             /verbosity:minimal
+
+      - name: List build output
+        shell: cmd
+        run: dir /s /b src\JPEGView\bin\x64\${{ matrix.config }}
 
       - name: Upload Portable Artifact
         uses: actions/upload-artifact@v4
