@@ -108,7 +108,8 @@ static LCID GetDateLocale() {
 
     static const LanguageMapping mappings[] = {
         { _T("en"),     MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) },
-        { _T("ar"),     MAKELANGID(LANG_ARABIC, SUBLANG_DEFAULT) },
+        // using ar will display Hijri calendar as default, making it use EGYPT fix that
+        { _T("ar"),     MAKELANGID(LANG_ARABIC, SUBLANG_ARABIC_EGYPT) },
         { _T("be"),     MAKELANGID(LANG_BELARUSIAN, SUBLANG_DEFAULT) },
         { _T("bg"),     MAKELANGID(LANG_BULGARIAN, SUBLANG_DEFAULT) },
         { _T("cs"),     MAKELANGID(LANG_CZECH, SUBLANG_DEFAULT) },
@@ -160,7 +161,10 @@ CString SystemTimeToString(const SYSTEMTIME &time) {
 		::GetDateFormat(locale, DATE_SHORTDATE, &time, NULL, sBufferDate, 64);
 	}
 	::GetDateFormat(locale, 0, &time, _T("ddd"), sBufferDay, 16);
-	::GetTimeFormat(locale, TIME_NOSECONDS, &time, NULL, sBufferTime, 64);
+	
+	// Use custom format string for consistent 24-hour format
+	::GetTimeFormat(locale, TIME_NOSECONDS, &time, _T("HH:mm"), sBufferTime, 64);
+	
 	return CString(sBufferDay) + _T(" ") + sBufferDate + _T(" ") + sBufferTime;
 }
 
