@@ -2,6 +2,7 @@ JPEGView Changelog
 ******************
 [1.4.0.8] TBD
 - Speed optimization when opening folders with a huge number of files
+- Increased maximum allowed file size for all image formats to 1 GiB
 
 [1.4.0.7] 2026-10-06
 - Allow transition effects to work when not in fullscreen mode
