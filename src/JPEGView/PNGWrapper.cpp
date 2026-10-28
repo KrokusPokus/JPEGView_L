@@ -5,6 +5,8 @@
 #ifndef WINXP
 #include "png.h"
 #include "MaxImageDef.h"
+#include "ICCProfileTransform.h"
+
 #include <stdexcept>
 
 // Uncomment to build without APNG support
@@ -69,6 +71,7 @@ struct PngReader::png_cache {
 	void* buffer;
 	size_t buffer_size;
 	size_t buffer_offset;
+	void* transform;
 };
 
 PngReader::png_cache PngReader::cache = { 0 };
@@ -156,6 +159,11 @@ void* PngReader::ReadNextFrame(void** exif_chunk, png_uint_32* exif_size)
 #endif
 	cache.frame_index++;
 	cache.frame_index %= cache.frame_count;
+
+    if (cache.transform != NULL && pixels != NULL) {
+        ICCProfileTransform::DoTransform(cache.transform, pixels, pixels, cache.width, cache.height);
+    }
+
 	return pixels;
 }
 
@@ -179,7 +187,7 @@ bool PngReader::BeginReading(void* buffer, size_t sizebytes, bool& outOfMemory)
 		if (setjmp(png_jmpbuf(png_ptr)))
 		{
 			PngReader::DeleteCache();
-			throw std::runtime_error::runtime_error("Image contains errors.");
+            throw std::runtime_error("Image contains errors.");
 		}
 		// skip png signature since we already checked it
 		png_set_sig_bytes(png_ptr, 8);
@@ -199,6 +207,18 @@ bool PngReader::BeginReading(void* buffer, size_t sizebytes, bool& outOfMemory)
 		};
 		png_set_read_fn(png_ptr, (char*)buffer, read_data_fn);
 		png_read_info(png_ptr, info_ptr);
+
+        // icc start
+        png_charp name = NULL;
+        int compression_type = 0;
+        png_bytep profile = NULL;
+        png_uint_32 proflen = 0;
+        if (png_get_iCCP(png_ptr, info_ptr, &name, &compression_type, &profile, &proflen) == PNG_INFO_iCCP) {
+            // Da libpng über png_set_bgr ein BGRA-Layout im Puffer erzeugt:
+            cache.transform = ICCProfileTransform::CreateTransform(profile, proflen, ICCProfileTransform::FORMAT_BGRA);
+        }
+        // icc end
+
 		png_set_expand(png_ptr);
 		png_set_strip_16(png_ptr);
 		png_set_gray_to_rgb(png_ptr);
@@ -357,6 +377,11 @@ void* PngReader::ReadImage(int& width,
 
 void PngReader::DeleteCacheInternal(bool free_buffer)
 {
+    if (cache.transform) {
+        ICCProfileTransform::DeleteTransform(cache.transform);
+        cache.transform = NULL;
+    }
+
 	// png_read_end(cache.png_ptr, cache.info_ptr);
 	free(cache.rows_frame);
 	free(cache.rows_image);
