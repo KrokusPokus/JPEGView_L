@@ -1,6 +1,6 @@
 JPEGView Changelog
 ******************
-[1.4.0.8] TBD
+[1.4.0.8] 2026-10-28
 - Speed optimization when opening folders with a huge number of files
 - Increased maximum allowed file size for all image formats to 1 GiB
 - Added ICC handling via lcms2 to PNG reader, so it does not have to fall back to GDI+ anymore when UseEmbeddedColorProfiles=true
