@@ -671,8 +671,14 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
     		unsigned int iRealHeight = unsigned int (m_dZoom * (m_pCurrentImage->OrigHeight()));
 			
 			TCHAR infoText[4096];
-    		LPCTSTR sFullPath = CurrentFileName(false);
-    		if (sFullPath != NULL) {
+			CString sFullPath = CurrentFileName(false);
+    		if (!sFullPath.IsEmpty()) {
+                if (m_bIsRunningUnderWine) {
+                    CString sUnixPath = Helpers::GetUnixPathFromWine(sFullPath);
+                    if (!sUnixPath.IsEmpty()) {
+                        sFullPath = sUnixPath;
+                    }
+                }
 				if (m_pCurrentImage->NumberOfFrames() > 1) {
 					if (m_bIsAnimationPlaying) {
 						_stprintf_s(infoText,4096,_T("%s\nFrame %d of %d (%d ms)\nFile Size:   %s\nImage Size:  %d x %d\nZoomed Size: %d x %d   (Zoom Factor: %f)\nWindow Size: %d x %d\n\nCPU-Threads: %d\nCPU-Algorithm: %s\nDownsampling-Filter: %s\n\nLoading Image:  %.2f ms\nScaling Image:  %.2f ms"),sFullPath, m_pCurrentImage->FrameIndex()+1, m_pCurrentImage->NumberOfFrames(), m_pCurrentImage->FrameTimeMs(), Helpers::FormatFileSize(Helpers::GetFileSize(sFullPath)),m_pCurrentImage->OrigWidth(),m_pCurrentImage->OrigHeight(),iRealWidth,iRealHeight,m_dZoom,m_clientRect.Width(),m_clientRect.Height(),iNumThreads,sCPU,sFilter,m_pCurrentImage->GetLoadTickCount(), m_pCurrentImage->LastOpTickCount());
@@ -4467,6 +4473,12 @@ void CMainDlg::UpdateWindowTitle(bool bForce) {
 		}
 	} else {
 		CString sWindowText =  sCurrentFileName;
+        if (m_bIsRunningUnderWine && bShowFullPathInTitle) {
+            CString sUnixPath = Helpers::GetUnixPathFromWine(sCurrentFileName);
+            if (!sUnixPath.IsEmpty()) {
+				sWindowText = sUnixPath;
+            }
+        }
 		sWindowText += Helpers::GetMultiframeIndex(m_pCurrentImage);
 		if (CSettingsProvider::This().ShowEXIFDateInTitle()) {
 			CEXIFReader* pEXIF = m_pCurrentImage->GetEXIFReader();
