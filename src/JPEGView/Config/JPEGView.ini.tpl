@@ -315,7 +315,7 @@ ForceGDIPlus=false
 ; If true, an image's embedded ICC color profile will be applied during decoding.
 ; For PNG only, this additionally forces loading via GDI+ instead of libpng, which is slower.
 ; (For Animated PNG, ICC color profiles will not be used)
-UseEmbeddedColorProfiles=false
+UseEmbeddedColorProfiles=true
 
 ; -----------------------------------------------
 ; - TRANSPARENCY OPTIONS
