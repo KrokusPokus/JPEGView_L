@@ -14,20 +14,52 @@
 
 void* ICCProfileTransform::sRGBProfile = NULL;
 
+// Hilfsfunktion zur Prüfung, ob ein Profil sRGB ist
+static bool IsStandardsRGB(cmsHPROFILE hProfile) {
+    if (hProfile == nullptr) return false;
+
+    // 1. Prüfen über die Profil-Beschreibung (z.B. "sRGB IEC61966-2.1")
+    char desc[128] = {0};
+    cmsGetProfileInfoASCII(hProfile, cmsInfoDescription, "en", "US", desc, sizeof(desc));
+    if (std::strstr(desc, "sRGB") != nullptr) {
+        return true;
+    }
+
+    // 2. Optional: Alternativer Check über Farbraum-Signatur und Matrix-Eigenschaften
+    if (cmsGetColorSpace(hProfile) == cmsSigRgbData && cmsIsMatrixShaper(hProfile)) {
+        // Man könnte hier optional noch weitere Heuriken einbauen,
+        // aber der Beschreibungstext deckt 99% der Standard-JPEGs ab.
+    }
+
+    return false;
+}
+
 void* ICCProfileTransform::CreateTransform(const void* profile, unsigned int size, PixelFormat format)
 {
-	if (profile == NULL || size == 0)
+	if (profile == NULL || size == 0) {
 		return NULL; // No ICC Profile
+	}
+
 	if (sRGBProfile == NULL) {
 		try {
 			sRGBProfile = cmsCreate_sRGBProfile();
 		} catch (...) {}
 	}
-	if (sRGBProfile == NULL)
+
+	if (sRGBProfile == NULL) {
 		return NULL; // lcms2.dll not found or out of memory
+	}
+
 	cmsHPROFILE hInProfile = cmsOpenProfileFromMem(profile, size);
-	if (hInProfile == NULL)
+	if (hInProfile == NULL) {
 		return NULL; // Invalid profile
+	}
+
+    // Already sRGB?
+    if (IsStandardsRGB(hInProfile)) {
+        cmsCloseProfile(hInProfile);
+        return nullptr;
+    }
 
 	// Create transform from embedded profile to sRGB
 	cmsUInt32Number flags = cmsFLAGS_BLACKPOINTCOMPENSATION | cmsFLAGS_COPY_ALPHA;
