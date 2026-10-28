@@ -5,6 +5,7 @@ JPEGView Changelog
 - Increased maximum allowed file size for all image formats to 1 GiB
 - Added ICC handling via lcms2 to PNG reader, so it does not have to fall back to GDI+ anymore when UseEmbeddedColorProfiles=true
 - The embedded ICC Profile will now only be applied if it differs from sRGB
+- Fixed info window not displaying locale arabic correctly
 
 [1.4.0.7] 2026-10-06
 - Allow transition effects to work when not in fullscreen mode

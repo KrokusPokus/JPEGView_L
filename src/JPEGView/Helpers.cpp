@@ -93,79 +93,106 @@ CSize GetImageRect(int nWidth, int nHeight, int nScreenWidth, int nScreenHeight,
 	return size;
 }
 
+// Design decision: always show the time in 24h format, independent of the
+// Windows locale. Set to false to follow the locale's own time format
+// (e.g. "3:45 PM" for en-US).
+static const bool kForce24HourTime = true;
+
+struct LanguageMapping {
+	LPCTSTR languageCode;
+	LANGID languageId;
+};
+
+// Maps the language selected in JPEGView to a Windows LANGID.
+// Keep in sync with the language files shipped with JPEGView.
+static const LanguageMapping kLanguageMappings[] = {
+	{ _T("en"),     MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) },
+	// Plain "ar" would default to the Hijri calendar, so use the Egyptian
+	// sublanguage, which uses the Gregorian calendar.
+	{ _T("ar"),     MAKELANGID(LANG_ARABIC, SUBLANG_ARABIC_EGYPT) },
+	{ _T("be"),     MAKELANGID(LANG_BELARUSIAN, SUBLANG_DEFAULT) },
+	{ _T("bg"),     MAKELANGID(LANG_BULGARIAN, SUBLANG_DEFAULT) },
+	{ _T("cs"),     MAKELANGID(LANG_CZECH, SUBLANG_DEFAULT) },
+	{ _T("de"),     MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT) },
+	{ _T("el"),     MAKELANGID(LANG_GREEK, SUBLANG_DEFAULT) },
+	{ _T("es-ar"),  MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_ARGENTINA) },
+	{ _T("es"),     MAKELANGID(LANG_SPANISH, SUBLANG_DEFAULT) },
+	{ _T("eu"),     MAKELANGID(LANG_BASQUE, SUBLANG_DEFAULT) },
+	{ _T("fi"),     MAKELANGID(LANG_FINNISH, SUBLANG_DEFAULT) },
+	{ _T("fr"),     MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT) },
+	{ _T("hu"),     MAKELANGID(LANG_HUNGARIAN, SUBLANG_DEFAULT) },
+	{ _T("it"),     MAKELANGID(LANG_ITALIAN, SUBLANG_DEFAULT) },
+	{ _T("ja"),     MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT) },
+	{ _T("ko"),     MAKELANGID(LANG_KOREAN, SUBLANG_DEFAULT) },
+	{ _T("pl"),     MAKELANGID(LANG_POLISH, SUBLANG_DEFAULT) },
+	{ _T("pt-br"),  MAKELANGID(LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN) },
+	// SUBLANG_DEFAULT for Portuguese is Brazil, so Portugal needs its own sublanguage
+	{ _T("pt"),     MAKELANGID(LANG_PORTUGUESE, SUBLANG_PORTUGUESE) },
+	{ _T("ro"),     MAKELANGID(LANG_ROMANIAN, SUBLANG_DEFAULT) },
+	{ _T("ru"),     MAKELANGID(LANG_RUSSIAN, SUBLANG_DEFAULT) },
+	{ _T("sk"),     MAKELANGID(LANG_SLOVAK, SUBLANG_DEFAULT) },
+	{ _T("sl"),     MAKELANGID(LANG_SLOVENIAN, SUBLANG_DEFAULT) },
+	// LANG_SERBIAN shares its ID with LANG_CROATIAN and SUBLANG_DEFAULT would
+	// resolve to hr-HR. Use SUBLANG_SERBIAN_CYRILLIC if the sr translation is Cyrillic.
+	{ _T("sr"),     MAKELANGID(LANG_SERBIAN, SUBLANG_SERBIAN_LATIN) },
+	{ _T("sv"),     MAKELANGID(LANG_SWEDISH, SUBLANG_DEFAULT) },
+	{ _T("ta"),     MAKELANGID(LANG_TAMIL, SUBLANG_DEFAULT) },
+	{ _T("tr"),     MAKELANGID(LANG_TURKISH, SUBLANG_DEFAULT) },
+	{ _T("uk"),     MAKELANGID(LANG_UKRAINIAN, SUBLANG_DEFAULT) },
+	{ _T("zh-tw"),  MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL) },
+	{ _T("zh"),     MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED) },
+};
+
 // Returns the locale that matches the language selected in JPEGView,
-// not the Windows locale. Otherwise things get missy
+// not the Windows locale. Otherwise things get messy.
 static LCID GetDateLocale() {
-    LPCTSTR sLanguage = CSettingsProvider::This().Language();
-    if (sLanguage == NULL || _tcsicmp(sLanguage, _T("auto")) == 0)
-        return LOCALE_USER_DEFAULT;
+	LPCTSTR sLanguage = CSettingsProvider::This().Language();
+	if (sLanguage == NULL || _tcsicmp(sLanguage, _T("auto")) == 0)
+		return LOCALE_USER_DEFAULT;
 
-    // Define language-to-LANGID mapping
-    struct LanguageMapping {
-        LPCTSTR languageCode;
-        LANGID languageId;
-    };
+	for (const auto& mapping : kLanguageMappings) {
+		if (_tcsicmp(sLanguage, mapping.languageCode) == 0) {
+			return MAKELCID(mapping.languageId, SORT_DEFAULT);
+		}
+	}
 
-    static const LanguageMapping mappings[] = {
-        { _T("en"),     MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) },
-        // using ar will display Hijri calendar as default, making it use EGYPT fix that
-        { _T("ar"),     MAKELANGID(LANG_ARABIC, SUBLANG_ARABIC_EGYPT) },
-        { _T("be"),     MAKELANGID(LANG_BELARUSIAN, SUBLANG_DEFAULT) },
-        { _T("bg"),     MAKELANGID(LANG_BULGARIAN, SUBLANG_DEFAULT) },
-        { _T("cs"),     MAKELANGID(LANG_CZECH, SUBLANG_DEFAULT) },
-        { _T("de"),     MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT) },
-        { _T("el"),     MAKELANGID(LANG_GREEK, SUBLANG_DEFAULT) },
-        { _T("es-ar"),  MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_ARGENTINA) },
-        { _T("es"),     MAKELANGID(LANG_SPANISH, SUBLANG_DEFAULT) },
-        { _T("eu"),     MAKELANGID(LANG_BASQUE, SUBLANG_DEFAULT) },
-        { _T("fi"),     MAKELANGID(LANG_FINNISH, SUBLANG_DEFAULT) },
-        { _T("fr"),     MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT) },
-        { _T("hu"),     MAKELANGID(LANG_HUNGARIAN, SUBLANG_DEFAULT) },
-        { _T("it"),     MAKELANGID(LANG_ITALIAN, SUBLANG_DEFAULT) },
-        { _T("ja"),     MAKELANGID(LANG_JAPANESE, SUBLANG_DEFAULT) },
-        { _T("ko"),     MAKELANGID(LANG_KOREAN, SUBLANG_DEFAULT) },
-        { _T("pl"),     MAKELANGID(LANG_POLISH, SUBLANG_DEFAULT) },
-        { _T("pt-br"),  MAKELANGID(LANG_PORTUGUESE, SUBLANG_PORTUGUESE_BRAZILIAN) },
-        { _T("pt"),     MAKELANGID(LANG_PORTUGUESE, SUBLANG_DEFAULT) },
-        { _T("ro"),     MAKELANGID(LANG_ROMANIAN, SUBLANG_DEFAULT) },
-        { _T("ru"),     MAKELANGID(LANG_RUSSIAN, SUBLANG_DEFAULT) },
-        { _T("sk"),     MAKELANGID(LANG_SLOVAK, SUBLANG_DEFAULT) },
-        { _T("sl"),     MAKELANGID(LANG_SLOVENIAN, SUBLANG_DEFAULT) },
-        { _T("sr"),     MAKELANGID(LANG_SERBIAN, SUBLANG_DEFAULT) },
-        { _T("sv"),     MAKELANGID(LANG_SWEDISH, SUBLANG_DEFAULT) },
-        { _T("ta"),     MAKELANGID(LANG_TAMIL, SUBLANG_DEFAULT) },
-        { _T("tr"),     MAKELANGID(LANG_TURKISH, SUBLANG_DEFAULT) },
-        { _T("uk"),     MAKELANGID(LANG_UKRAINIAN, SUBLANG_DEFAULT) },
-        { _T("zh-tw"),  MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL) },
-        { _T("zh"),     MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_SIMPLIFIED) },
-    };
-
-    // Search for matching language
-    for (const auto& mapping : mappings) {
-        if (_tcsicmp(sLanguage, mapping.languageCode) == 0) {
-            return MAKELCID(mapping.languageId, SORT_DEFAULT);
-        }
-    }
-
-    return LOCALE_USER_DEFAULT;
+	return LOCALE_USER_DEFAULT;
 }
 
-CString SystemTimeToString(const SYSTEMTIME &time) {
-	TCHAR sBufferDate[64];
-	TCHAR sBufferDay[16];
-	TCHAR sBufferTime[64];
+CString SystemTimeToString(const SYSTEMTIME& time) {
+	TCHAR sBufferDate[64] = { 0 };
+	TCHAR sBufferDay[16] = { 0 };
+	TCHAR sBufferTime[64] = { 0 };
+
 	LCID locale = GetDateLocale();
 	if (::GetDateFormat(locale, DATE_SHORTDATE, &time, NULL, sBufferDate, 64) == 0) {
 		// The selected language has no usable Windows locale, fall back to the system locale
 		locale = LOCALE_USER_DEFAULT;
+		sBufferDate[0] = 0;
 		::GetDateFormat(locale, DATE_SHORTDATE, &time, NULL, sBufferDate, 64);
 	}
 	::GetDateFormat(locale, 0, &time, _T("ddd"), sBufferDay, 16);
-	
-	// Use custom format string for consistent 24-hour format
-	::GetTimeFormat(locale, TIME_NOSECONDS, &time, _T("HH:mm"), sBufferTime, 64);
-	
-	return CString(sBufferDay) + _T(" ") + sBufferDate + _T(" ") + sBufferTime;
+
+	// Pass no format string and let flags control the output. Combining flags
+	// like TIME_NOSECONDS with a custom format string is invalid and can fail
+	// with ERROR_INVALID_FLAGS. This keeps the locale's own time separator.
+	DWORD timeFlags = TIME_NOSECONDS;
+	if (kForce24HourTime)
+		timeFlags |= TIME_FORCE24HOURFORMAT | TIME_NOTIMEMARKER;
+	::GetTimeFormat(locale, timeFlags, &time, NULL, sBufferTime, 64);
+
+	// Join only the parts that succeeded, so a failed call can't leave
+	// garbage or double spaces in the result
+	CString result;
+	const LPCTSTR parts[] = { sBufferDay, sBufferDate, sBufferTime };
+	for (LPCTSTR part : parts) {
+		if (part[0] == 0)
+			continue;
+		if (!result.IsEmpty())
+			result += _T(" ");
+		result += part;
+	}
+	return result;
 }
 
 CSize GetImageRect(int nWidth, int nHeight, int nScreenWidth, int nScreenHeight, EAutoZoomMode eAutoZoomMode, double & dZoom) {
