@@ -839,26 +839,26 @@ void CFileList::FindFiles() {
     }
 
 	CFindFile fileFind;
-	BOOL bWorking = fileFind.FindFile(m_sDirectory + _T("\\*"));
+	if (fileFind.FindFile(m_sDirectory + _T("\\*"))) {
+		// WTL CFindFile: the first entry is already valid after FindFile(),
+		// FindNextFile() fetches the following one (unlike MFC).
+		// Drive roots (RAM disk, mounted ISO) have no "." / ".." entries.
+		do {
+			if (fileFind.IsDots() || fileFind.IsDirectory()) continue;
 
-	while (bWorking) {
-		bWorking = fileFind.FindNextFile();
+			CString fileName = fileFind.GetFileName();
+			int nDotPos = fileName.ReverseFind(_T('.'));
+			if (nDotPos != -1) {
+				CString ext = fileName.Mid(nDotPos + 1);
+				ext.MakeLower();
 
-		if (fileFind.IsDots() || fileFind.IsDirectory()) continue;
-
-		CString fileName = fileFind.GetFileName();
-		int nDotPos = fileName.ReverseFind(_T('.'));
-		if (nDotPos != -1) {
-			CString ext = fileName.Mid(nDotPos + 1);
-			ext.MakeLower();
-
-			if (validExtensions.find(ext) != validExtensions.end()) {
-				AddToFileList(m_fileList, fileFind, ext);
+				if (validExtensions.find(ext) != validExtensions.end()) {
+					AddToFileList(m_fileList, fileFind, ext);
+				}
 			}
-		}
+		} while (fileFind.FindNextFile());
+		fileFind.Close();
 	}
-
-	fileFind.Close();
 
 	m_fileList.sort();
 }
