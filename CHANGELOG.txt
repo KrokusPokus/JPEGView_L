@@ -1,5 +1,9 @@
 JPEGView Changelog
 ******************
+[1.4.0.9] 2026-10-31
+- Backported some improvements from mkImageViewer. AVX path should be a bit faster now
+- Fixed some issues with string handling. Might resolve #29.
+
 [1.4.0.8] 2026-10-28
 - Speed optimization when opening folders with a huge number of files
 - Increased maximum allowed file size for all image formats to 1 GiB
