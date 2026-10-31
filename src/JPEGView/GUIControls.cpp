@@ -156,8 +156,9 @@ bool CTextCtrl::EnterEditMode() {
 
 void CTextCtrl::TerminateEditMode(bool bAcceptNewText) {
 	if (m_pEdit) {
-		TCHAR newName[MAX_PATH];
-		m_pEdit->GetWindowText(newName, MAX_PATH);
+		// CString: a fixed MAX_PATH buffer would silently cut off long (file) names, e.g. when renaming
+		CString newName;
+		m_pEdit->GetWindowText(newName);
 		::RemoveProp(m_pEdit->m_hWnd, WINPROP_THIS);
 		::SetWindowLongPtr(m_pEdit->m_hWnd, GWLP_WNDPROC, (LONG_PTR)m_OrigEditProc);
 		m_pEdit->DestroyWindow();

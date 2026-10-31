@@ -18,12 +18,13 @@ CAppModule _Module;
 static HWND _HWNDOtherInstance = NULL;
 
 static BOOL CALLBACK EnumWindowsProc(HWND hwnd, LPARAM lParam) {
-	const int BUF_LEN = 255;
-	TCHAR buff[BUF_LEN + 1];
-	buff[BUF_LEN] = 0;
-	::GetWindowText(hwnd, (LPTSTR)&buff, BUF_LEN);
+	// Window titles contain the (possibly very long) file path, thus do not use a fixed size buffer:
+	// the " - JPEGView" suffix at the end would be cut off and the running instance would not be found.
+	int nTitleLen = ::GetWindowTextLength(hwnd);
+	std::vector<TCHAR> buff(nTitleLen + 2, 0);
+	::GetWindowText(hwnd, buff.data(), nTitleLen + 1);
 
-	if (_tcsstr(buff, _T(" - JPEGView")) != NULL) {
+	if (_tcsstr(buff.data(), _T(" - JPEGView")) != NULL) {
 		// An already existing instance was found -> send our file path to it and wait how it reacts.
 		// If it returns NULL, it doesn't want that file and we can open it ourselves.
 		// If it returns KEY_MAGIC, it will handle that file and we can close again.

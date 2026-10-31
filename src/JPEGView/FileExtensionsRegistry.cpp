@@ -31,8 +31,8 @@ private:
 static bool GetRegistryStringValue(HKEY key, LPCTSTR name, CString & outValue) {
 	DWORD type;
 	const int buffsize = 512;
-	TCHAR buff[buffsize];
-	DWORD size = buffsize * sizeof(TCHAR);
+	TCHAR buff[buffsize] = { 0 };
+	DWORD size = (buffsize - 1) * sizeof(TCHAR); // keep room for a terminating 0 (registry strings are not guaranteed to have one)
 	bool bOk = RegQueryValueEx(key, name, NULL, &type, (LPBYTE)&buff, &size) == ERROR_SUCCESS;
 	bOk = bOk && (type == REG_SZ || type == REG_EXPAND_SZ);
 	if (bOk) outValue = buff;

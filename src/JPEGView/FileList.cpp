@@ -5,6 +5,7 @@
 #include "DirectoryWatcher.h"
 #include "Shlwapi.h"
 #include <set>
+#include <vector>
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Helpers
@@ -327,14 +328,15 @@ bool CFileList::DriveHasRecycleBin(LPCTSTR filePath) {
 bool CFileList::DeleteFile(LPCTSTR fileNameWithPath) const {
 	if (fileNameWithPath != NULL) {
 		// append a double null character
-		TCHAR fileName[MAX_PATH + 1];
-		_tcscpy(fileName, fileNameWithPath);
-		fileName[_tcslen(fileName) + 1] = 0;
+		// (heap buffer: paths can be longer than MAX_PATH)
+		size_t nLen = _tcslen(fileNameWithPath);
+		std::vector<TCHAR> fileName(nLen + 2, 0);
+		_tcscpy_s(fileName.data(), nLen + 2, fileNameWithPath);
 
 		SHFILEOPSTRUCT fileOp{ 0 };
 		fileOp.hwnd = NULL;
 		fileOp.wFunc = FO_DELETE;
-		fileOp.pFrom = fileName;
+		fileOp.pFrom = fileName.data();
 		fileOp.pTo = NULL;
 		fileOp.fFlags = FOF_ALLOWUNDO | FOF_NOCONFIRMATION;
 		fileOp.hNameMappings = NULL;

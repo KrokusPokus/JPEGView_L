@@ -28,6 +28,17 @@ static void FileTimeToLocalSystemTime(const FILETIME & fileTime, SYSTEMTIME & sy
 	::SystemTimeToTzSpecificLocalTime(NULL, &systemTime, &systemTime);
 }
 
+// Returns the full path of the given path, works also for paths longer than MAX_PATH
+static CString GetFullPath(LPCTSTR strPath) {
+	DWORD nLen = ::GetFullPathName(strPath, 0, NULL, NULL); // required length including terminating 0
+	if (nLen == 0) return CString(strPath);
+	CString strFull;
+	LPTSTR pBuff = strFull.GetBuffer(nLen);
+	DWORD nCopied = ::GetFullPathName(strPath, nLen, pBuff, NULL);
+	strFull.ReleaseBuffer((nCopied > 0 && nCopied < nLen) ? nCopied : 0);
+	return strFull.IsEmpty() ? CString(strPath) : strFull;
+}
+
 // Creates an absolute path from a relative path, relative to given directory
 static CString MakeAbsolutePath(LPCTSTR strFileName, LPCTSTR strDirectory) {
 	// Check if path already absolute
@@ -37,10 +48,7 @@ static CString MakeAbsolutePath(LPCTSTR strFileName, LPCTSTR strDirectory) {
 	CString strFullName = CString(strDirectory) + _T('\\') + strFileName;
 	int nIndexFileTitle = strFullName.ReverseFind(_T('\\'));
 	CString strRelDirectory(strFullName, nIndexFileTitle);
-	LPTSTR notUsed;
-	TCHAR buffFullPathName[MAX_PATH];
-	::GetFullPathName(strRelDirectory, MAX_PATH, buffFullPathName, &notUsed);
-	return CString(buffFullPathName) + _T('\\') + ((LPCTSTR)strFullName + nIndexFileTitle + 1);
+	return GetFullPath(strRelDirectory) + _T('\\') + ((LPCTSTR)strFullName + nIndexFileTitle + 1);
 }
 
 // Finds the first number string in the given string, including leading zeros
@@ -332,9 +340,13 @@ int CBatchCopyDlg::CreateItemList() {
 }
 
 CString CBatchCopyDlg::GetPatternText() {
-	TCHAR strPattern[MAX_PATH];
-	((short*)strPattern)[0] = MAX_PATH;
+	// +1: GetLine does not terminate the buffer, numChars can be as large as the buffer size given
+	const int nBufLen = 4096;
+	TCHAR strPattern[nBufLen + 1];
+	((WORD*)strPattern)[0] = nBufLen;
 	int numChars = m_edtPattern.GetLine(0, strPattern);
+	if (numChars < 0) numChars = 0;
+	if (numChars > nBufLen) numChars = nBufLen;
 	strPattern[numChars] = 0;
 	return CString(strPattern);
 }
@@ -346,11 +358,9 @@ bool CBatchCopyDlg::IsCopyNeeded(LPCTSTR strName, LPCTSTR strDirectory) {
 		// no path given, file is in same directory thus rename
 		return false;
 	}
-	LPTSTR notUsed;
-	TCHAR buffFullPathName[MAX_PATH];
-	::GetFullPathName(strDirectory, MAX_PATH, buffFullPathName, &notUsed);
+	CString strFullPathName = GetFullPath(strDirectory);
 	int nPathLen = (int)(_tcsrchr(strNewName, _T('\\')) - strNewName);
-	return _tcsnicmp(strNewName, buffFullPathName, nPathLen) != 0;
+	return _tcsnicmp(strNewName, strFullPathName, nPathLen) != 0;
 }
 
 CString CBatchCopyDlg::ReplacePlaceholders(LPCTSTR strPattern, int nIndex, const CFileDesc & fileDesc, bool bReplaceMyPictures) {

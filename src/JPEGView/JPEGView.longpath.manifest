@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!-- Merged into the generated application manifest (see AdditionalManifestFiles in JPEGView.vcxproj).
+     longPathAware allows Win32 file APIs to handle paths longer than MAX_PATH (260 chars).
+     Windows 10 1607+ additionally needs the system policy "Enable Win32 long paths" (LongPathsEnabled=1);
+     without it the application behaves as before. -->
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <longPathAware xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">true</longPathAware>
+    </windowsSettings>
+  </application>
+</assembly>

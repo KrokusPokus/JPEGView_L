@@ -79,7 +79,7 @@ LRESULT CManageOpenWithDlg::OnCloseDialog(WORD /*wNotifyCode*/, WORD wID, HWND /
 		m_btnDelete.EnableWindow(TRUE);
 		m_lbMenuEntries.EnableWindow(TRUE);
 		
-		TCHAR title[127];
+		TCHAR title[127 + 1]; // +1 for the terminating 0 written below when GetLine returns the maximum
 		int numChars = m_edtTitle.GetLine(0, (LPTSTR)title, 127);
 		title[numChars] = 0;
 		
@@ -87,7 +87,7 @@ LRESULT CManageOpenWithDlg::OnCloseDialog(WORD /*wNotifyCode*/, WORD wID, HWND /
 		numChars = m_edtApplication.GetLine(0, (LPTSTR)application, MAX_PATH);
 		application[numChars] = 0;
 
-		TCHAR shortcut[63];
+		TCHAR shortcut[63 + 1];
 		numChars = m_edtShortcut.GetLine(0, (LPTSTR)shortcut, 63);
 		shortcut[numChars] = 0;
 

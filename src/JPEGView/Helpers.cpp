@@ -16,7 +16,7 @@ float ScreenScaling = -1.0f;
 TCHAR CReplacePipe::sm_buffer[MAX_SIZE_REPLACE_PIPE];
 
 CReplacePipe::CReplacePipe(LPCTSTR sText) {
-	_tcsncpy_s(sm_buffer, MAX_SIZE_REPLACE_PIPE, sText, MAX_SIZE_REPLACE_PIPE);
+	_tcsncpy_s(sm_buffer, MAX_SIZE_REPLACE_PIPE, sText, _TRUNCATE); // _TRUNCATE: a too long text must not trigger the invalid parameter handler
 	sm_buffer[MAX_SIZE_REPLACE_PIPE-1] = 0;
 	TCHAR* pPtr = sm_buffer;
 	while (*pPtr != 0) {
@@ -869,9 +869,9 @@ LPCTSTR ConvertTransitionEffectToString(ETransitionEffect effect) {
 }
 
 static bool IsInFileEndingList(LPCTSTR sFileEndings, LPCTSTR sEnding, int nStartOffset = 1, int nEndingOffset = -1) {
-	const int BUFFER_SIZE = 256;
-	TCHAR buffer[BUFFER_SIZE];
-	_tcsncpy_s(buffer, BUFFER_SIZE, sFileEndings, _TRUNCATE);
+	// heap copy: a long list of file endings must not be silently cut off
+	CString sBuffer(sFileEndings);
+	LPTSTR buffer = sBuffer.GetBuffer();
 	LPTSTR sStart = buffer, sCurrent = buffer;
 	while (*sCurrent != 0) {
 		while (*sCurrent != 0 && *sCurrent != _T(';')) {
@@ -934,9 +934,14 @@ bool IsRawImageFormat(LPCTSTR sExt)
 
 // Returns the short form of the path (including the file name)
 CString GetShortFilePath(LPCTSTR sPath) {
-	TCHAR shortPath[MAX_PATH];
-	if (::GetShortPathName(sPath, (LPTSTR)(&shortPath), MAX_PATH) != 0) {
-		return CString(shortPath);
+	DWORD nLen = ::GetShortPathName(sPath, NULL, 0); // required length including terminating 0
+	if (nLen > 0) {
+		CString sShortPath;
+		LPTSTR pBuff = sShortPath.GetBuffer(nLen);
+		DWORD nCopied = ::GetShortPathName(sPath, pBuff, nLen);
+		sShortPath.ReleaseBuffer((nCopied > 0 && nCopied < nLen) ? nCopied : 0);
+		if (!sShortPath.IsEmpty()) return sShortPath;
+		return CString(sPath);
 	} else {
 		int nError = ::GetLastError();
 		return CString(sPath);

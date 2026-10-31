@@ -345,9 +345,12 @@ CSettingsProvider::CSettingsProvider(void) {
 		m_sWallpaperPath = tempPath;
 	}
 	else {
-		TCHAR buffer[MAX_PATH];
-		if (::ExpandEnvironmentStrings(m_sWallpaperPath, (LPTSTR)buffer, MAX_PATH)) {
-			m_sWallpaperPath = buffer;
+		DWORD nLen = ::ExpandEnvironmentStrings(m_sWallpaperPath, NULL, 0); // required size including terminating 0
+		if (nLen > 0) {
+			CString sExpanded;
+			DWORD nCopied = ::ExpandEnvironmentStrings(m_sWallpaperPath, sExpanded.GetBuffer(nLen), nLen);
+			sExpanded.ReleaseBuffer((nCopied > 0 && nCopied <= nLen) ? (int)nCopied - 1 : 0);
+			if (!sExpanded.IsEmpty()) m_sWallpaperPath = sExpanded;
 		}
 	}
 

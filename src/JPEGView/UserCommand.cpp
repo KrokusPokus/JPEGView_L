@@ -63,13 +63,12 @@ static void SmartNameReplace(CString& strSource, LPCTSTR sOldText, LPCTSTR sNewT
 
 // replaces the defined placeholder strings in the input string
 static CString ReplacePlaceholders(CString sMsg, LPCTSTR sFileName, const CRect& selectionRect, bool bUseShortFileName, bool bExpandEnvironmentVariables) {
-	const int BUFFER_LEN = MAX_PATH;
-	TCHAR buffer[BUFFER_LEN];
+	CString sShortFileName; // must outlive the use of sFileName below
 	CString sNewMsg = sMsg;
 
 	if (bUseShortFileName) {
-		::GetShortPathName(sFileName, (LPTSTR)&buffer, BUFFER_LEN);
-		sFileName = (LPCTSTR)&buffer;
+		sShortFileName = Helpers::GetShortFilePath(sFileName); // handles paths longer than MAX_PATH, falls back to the long name
+		sFileName = (LPCTSTR)sShortFileName;
 	}
 
 	if (!selectionRect.IsRectNull()) {
