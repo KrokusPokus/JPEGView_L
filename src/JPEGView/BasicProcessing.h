@@ -65,6 +65,11 @@ public:
 	// Mirror 32 bit DIB vertically
 	static void* MirrorV32bpp(int nWidth, int nHeight, const void* pDIBPixels);
 
+	// Same as Rotate32bpp() and Mirror32bpp() for 24 bit BGR images with lines padded to 4 bytes (as delivered
+	// by the image readers). The padding bytes of the result are set to zero.
+	static void* Rotate24bpp(int nWidth, int nHeight, const void* pPixels, int nRotationAngleCW);
+	static void* Mirror24bpp(int nWidth, int nHeight, const void* pPixels, bool bHorizontally);
+
 	// Mirror 32 bit DIB vertically inplace
 	static void MirrorVInplace(int nWidth, int nHeight, int nStride, void* pDIBPixels);
 

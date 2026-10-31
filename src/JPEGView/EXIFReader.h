@@ -44,9 +44,10 @@ private:
 class CEXIFReader {
 public:
 	// The pApp1Block must point to the APP1 block of the EXIF data, including the APP1 block marker
+	// nBlockSize is the size of the buffer: nothing beyond it is read, whatever the data says.
 	// The class does not take ownership of the memory (no copy made), thus the APP1 block must not be deleted
 	// while the EXIF reader class is deleted.
-	CEXIFReader(void* pApp1Block, EImageFormat eImageFormat);
+	CEXIFReader(void* pApp1Block, int nBlockSize, EImageFormat eImageFormat);
 	~CEXIFReader(void);
 
 	// Parse date string in the EXIF date/time format
@@ -145,6 +146,7 @@ private:
 	uint8* m_pIFD1;
 	uint8* m_pLastIFD1;
 
-	void ReadGPSData(uint8* pTIFFHeader, uint8* pTagGPSIFD, int nApp1Size, bool bLittleEndian);
-	GPSCoordinate* ReadGPSCoordinate(uint8* pTIFFHeader, uint8* pTagLatOrLong, LPCTSTR reference, bool bLittleEndian);
+	// nTIFFSize: number of bytes of EXIF data from pTIFFHeader on (offsets in the data are checked against it)
+	void ReadGPSData(uint8* pTIFFHeader, uint32 nTIFFSize, uint8* pTagGPSIFD, bool bLittleEndian);
+	GPSCoordinate* ReadGPSCoordinate(uint8* pTIFFHeader, uint32 nTIFFSize, uint8* pTagLatOrLong, LPCTSTR reference, bool bLittleEndian);
 };

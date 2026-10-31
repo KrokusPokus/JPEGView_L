@@ -79,28 +79,41 @@ bool CProcessingThreadPool::Process(CProcessingRequest* pRequest) {
 	if (m_nNumThreads == 0) {
 		CProcessingThread::DoProcess(pRequest, 0, nTargetCY);
 	} else {
-		if (nTargetCX * nTargetCY < 100000 || nTargetCY < 2 * pRequest->StripPadding) { // https://github.com/sylikc/jpegview/pull/290
+		// Small jobs are processed on the calling thread. The work depends on the number of target pixels and,
+		// for downsampling, on the number of source pixels involved (e.g. 24 MP to a 300x200 thumbnail).
+		double dSourcePixels = 0;
+		if (pRequest->FullTargetSize.cx > 0 && pRequest->FullTargetSize.cy > 0) {
+			dSourcePixels = (double)pRequest->SourceSize.cx * nTargetCX / pRequest->FullTargetSize.cx *
+							pRequest->SourceSize.cy * nTargetCY / pRequest->FullTargetSize.cy;
+		}
+		double dWorkPixels = max((double)nTargetCX * nTargetCY, dSourcePixels);
+		if (dWorkPixels < 100000 || nTargetCY < 2 * pRequest->StripPadding) { // https://github.com/sylikc/jpegview/pull/290
 			CProcessingThread::DoProcess(pRequest, 0, nTargetCY);
 		} else {
-			// Important: All slices must have a height dividable by 'StripPadding', except the last one
-			int nNumThreadsUsed = m_nNumThreads + 1; // we also use the calling thread, thus +1
-			int nSliceCY;
-			while ((nSliceCY = ~(pRequest->StripPadding - 1) & (nTargetCY / nNumThreadsUsed)) < pRequest->StripPadding) {
-				nNumThreadsUsed--;
+			// Distribute the lines in blocks of StripPadding lines as evenly as possible: each thread gets
+			// nBlocks / nNumThreadsUsed blocks, the first (nBlocks % nNumThreadsUsed) threads one block more.
+			// All slices except the last one (processed by the calling thread) are multiples of StripPadding.
+			int nBlocks = (nTargetCY + pRequest->StripPadding - 1) / pRequest->StripPadding;
+			int nNumThreadsUsed = min(m_nNumThreads + 1, nBlocks); // we also use the calling thread, thus +1
+			if (pRequest->MaxThreads > 0) {
+				nNumThreadsUsed = min(nNumThreadsUsed, pRequest->MaxThreads);
 			}
-			assert(nNumThreadsUsed > 1);	// https://github.com/sylikc/jpegview/pull/290
-			int nLastCY = nTargetCY - (nNumThreadsUsed - 1)*nSliceCY;
+			if (nNumThreadsUsed <= 1) {
+				CProcessingThread::DoProcess(pRequest, 0, nTargetCY);
+				return pRequest->Success;
+			}
 			volatile LONG nRequestThreadCounter = nNumThreadsUsed - 1;
 			int nCurrCY = 0;
 			HANDLE eventFinished = ::CreateEvent(0, TRUE, FALSE, NULL);
 			CWrappedRequest** pAllWrappedRequests = new CWrappedRequest*[nNumThreadsUsed-1];
 			for (int i = 0; i < nNumThreadsUsed-1; i++) {
+				int nSliceCY = (nBlocks / nNumThreadsUsed + (i < nBlocks % nNumThreadsUsed ? 1 : 0)) * pRequest->StripPadding;
 				pAllWrappedRequests[i] = new CWrappedRequest(pRequest, nCurrCY, nSliceCY, eventFinished);
 				pAllWrappedRequests[i]->EventFinishedCounter = &nRequestThreadCounter;
 				m_threads[i]->StartProcess(pAllWrappedRequests[i]);
 				nCurrCY += nSliceCY;
 			}
-			CProcessingThread::DoProcess(pRequest, nCurrCY, nLastCY);
+			CProcessingThread::DoProcess(pRequest, nCurrCY, nTargetCY - nCurrCY);
 			::WaitForSingleObject(eventFinished, INFINITE);
 			::CloseHandle(eventFinished);
 			for (int i = 0; i < nNumThreadsUsed-1; i++) {
@@ -123,30 +136,40 @@ void CProcessingThread::StartProcess(CWrappedRequest* pRequest) {
 }
 
 void CProcessingThread::DoProcess(CProcessingRequest* pRequest, int nOffsetY, int nSizeY) {
+	if (!pRequest->ProcessSlice(nOffsetY, nSizeY)) {
+		pRequest->Success = false;
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+// CProcessingRequest
+///////////////////////////////////////////////////////////////////////////////////
+
+bool CProcessingRequest::ProcessSlice(int nOffsetY, int nSizeY) {
 	// Processing is done in strips to reduce memory consumption and increase cache hit rate.
 	// The following constant gives the number of pixels to process per strip.
 	const uint32 MAX_SRC_PIXELS_PER_STRIP = 1024 * 100;
-	uint32 nNumberOfPixelsInSource = (uint32)((pRequest->SourceSize.cx * (double)pRequest->ClippedTargetSize.cx / pRequest->FullTargetSize.cx) *
-		(pRequest->SourceSize.cy * (double)nSizeY / pRequest->FullTargetSize.cy));
+	uint32 nNumberOfPixelsInSource = (uint32)((SourceSize.cx * (double)ClippedTargetSize.cx / FullTargetSize.cx) *
+		(SourceSize.cy * (double)nSizeY / FullTargetSize.cy));
 	uint32 nStrips = 1 + nNumberOfPixelsInSource / MAX_SRC_PIXELS_PER_STRIP;
 	uint32 nStripHeight = nSizeY / nStrips;
-	uint32 minimalStripHeight = min(16, pRequest->StripPadding);
+	uint32 minimalStripHeight = min(16, StripPadding);
 
 	if (nStrips > 1) {
-		nStripHeight = nStripHeight & ~(pRequest->StripPadding - 1); // must be dividable by 'StripPadding', except last strip
+		nStripHeight = nStripHeight & ~(StripPadding - 1); // must be dividable by 'StripPadding', except last strip
 		nStripHeight = min(nSizeY, max(nStripHeight, minimalStripHeight));
 	}
 	int nSizeProcessed = 0;
 	int nCurrentSizeY = nStripHeight;
 	while (nSizeProcessed < nSizeY) {
 		int nCurrentOffsetY = nOffsetY + nSizeProcessed;
-		if (!pRequest->ProcessStrip(nCurrentOffsetY, nCurrentSizeY)) {
-			pRequest->Success = false;
-			break;
+		if (!ProcessStrip(nCurrentOffsetY, nCurrentSizeY)) {
+			return false;
 		}
 		nSizeProcessed += nCurrentSizeY;
 		nCurrentSizeY = min(nStripHeight, nSizeY - nSizeProcessed);
 	}
+	return true;
 }
 
 void CProcessingThread::ProcessRequest(CRequestBase& request) {

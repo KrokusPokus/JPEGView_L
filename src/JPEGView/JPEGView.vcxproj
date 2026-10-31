@@ -309,10 +309,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AboutDlg.cpp" />
-    <ClCompile Include="ApplyFilterAVX.cpp">
-      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-      <EnableEnhancedInstructionSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
-    </ClCompile>
     <ClCompile Include="AVIFWrapper.cpp" />
     <ClCompile Include="BasicProcessing.cpp" />
     <ClCompile Include="BatchCopyDlg.cpp" />
@@ -409,7 +405,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AboutDlg.h" />
-    <ClInclude Include="ApplyFilterAVX.h" />
     <ClInclude Include="AVIFWrapper.h" />
     <ClInclude Include="BasicProcessing.h" />
     <ClInclude Include="BatchCopyDlg.h" />

@@ -92,7 +92,7 @@ CJPEGImage::CJPEGImage(int nWidth, int nHeight, void* pPixels, void* pEXIFData, 
 		m_nEXIFSize = pEXIF[2]*256 + pEXIF[3] + 2;
 		m_pEXIFData = new char[m_nEXIFSize];
 		memcpy(m_pEXIFData, pEXIFData, m_nEXIFSize);
-		m_pEXIFReader = new CEXIFReader(m_pEXIFData, eImageFormat);
+		m_pEXIFReader = new CEXIFReader(m_pEXIFData, m_nEXIFSize, eImageFormat);
 	} else {
 		m_nEXIFSize = 0;
 		m_pEXIFData = NULL;
@@ -673,13 +673,11 @@ bool CJPEGImage::VerifyRotation(const CRotationParams& rotationParams) {
 bool CJPEGImage::Rotate(int nRotation) {
 	double dStartTickCount = Helpers::GetExactTickCount();
 
-	// Rotation can only be done in 32 bpp
-	if (!ConvertSrcTo4Channels()) {
-		return false;
-	}
-
+	// Rotation works on 3 and 4 channels, no conversion needed (saves memory and time)
 	InvalidateAllCachedPixelData();
-	void* pNewOriginalPixels = CBasicProcessing::Rotate32bpp(m_nOrigWidth, m_nOrigHeight, m_pOrigPixels, nRotation);
+	void* pNewOriginalPixels = (m_nOriginalChannels == 3)
+		? CBasicProcessing::Rotate24bpp(m_nOrigWidth, m_nOrigHeight, m_pOrigPixels, nRotation)
+		: CBasicProcessing::Rotate32bpp(m_nOrigWidth, m_nOrigHeight, m_pOrigPixels, nRotation);
 	if (pNewOriginalPixels == NULL) return false;
 	delete[] m_pOrigPixels;
 	m_pOrigPixels = pNewOriginalPixels;
@@ -698,13 +696,11 @@ bool CJPEGImage::Rotate(int nRotation) {
 bool CJPEGImage::Mirror(bool bHorizontally) {
 	double dStartTickCount = Helpers::GetExactTickCount();
 
-	// Rotation can only be done in 32 bpp
-	if (!ConvertSrcTo4Channels()) {
-		return false;
-	}
-
+	// Mirroring works on 3 and 4 channels, no conversion needed (saves memory and time)
 	InvalidateAllCachedPixelData();
-	void* pNewOriginalPixels = CBasicProcessing::Mirror32bpp(m_nOrigWidth, m_nOrigHeight, m_pOrigPixels, bHorizontally);
+	void* pNewOriginalPixels = (m_nOriginalChannels == 3)
+		? CBasicProcessing::Mirror24bpp(m_nOrigWidth, m_nOrigHeight, m_pOrigPixels, bHorizontally)
+		: CBasicProcessing::Mirror32bpp(m_nOrigWidth, m_nOrigHeight, m_pOrigPixels, bHorizontally);
 	if (pNewOriginalPixels == NULL) return false;
 	delete[] m_pOrigPixels;
 	m_pOrigPixels = pNewOriginalPixels;
@@ -976,11 +972,8 @@ void* CJPEGImage::GetDIBInternal(CSize fullTargetSize, CSize clippingSize, CPoin
 	}
 	// ApplyCorrectionLUTandLDC() could have failed, then recreate the DIBs
 	if (pDIB == NULL) {
-		// if the image is reprocessed more than once, it is worth to convert the original to 4 channels
-		// as this is faster for further processing
-		if (!m_bFirstReprocessing) {
-			ConvertSrcTo4Channels();
-		}
+		// The original is kept with 3 channels: resampling is equally fast for 3 and 4 channels, a conversion
+		// would cost time and memory (rotation and mirroring also work on 3 channels)
 
 		bParametersChanged = true;
 

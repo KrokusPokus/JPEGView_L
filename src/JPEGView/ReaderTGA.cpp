@@ -23,7 +23,8 @@
 static bool IsAlphaChannelValid(int width, int height, uint32* pImageData)
 {
 	uint32 pixel = 0;
-	for (int i = 0; i < width*height; i++)
+	const size_t numPixels = (size_t)width * height; // can exceed 2^31
+	for (size_t i = 0; i < numPixels; i++)
 	{
 		pixel = pixel | (*pImageData & ALPHA_OPAQUE);
 		pImageData++;
@@ -101,7 +102,6 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, Helpers::ETransparency
 	// check memory footprint
 	int targetChannels = (bits == 32) ? 4 : 3;
 	int targetStride = Helpers::DoPadding(width * targetChannels, 4);
-	uint32 numberOfBytesRequired = targetStride * height;
 
 	if ((double)width * height > MAX_IMAGE_PIXELS)
 	{
@@ -109,7 +109,31 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, Helpers::ETransparency
 		fclose(pFile);
 		return NULL;
 	}
-	
+	// 64 bit: width and height can be up to 65535 each, so the product overflows 32 bit (the buffer would be
+	// allocated far too small and the decoding below would write beyond it)
+	const size_t numberOfBytesRequired = (size_t)targetStride * height;
+
+	// The file must be able to hold the pixel data at all, before memory is allocated for it: uncompressed every
+	// pixel needs its bytes, with RLE one packet (1 byte + 1 pixel) covers at most 128 pixels.
+	const size_t numPixelsTotal = (size_t)width * height;
+	const size_t bytesPerSourcePixel = (bits + 7) / 8;
+	const size_t minDataBytes = (imageType == TGA_RLE_INDEXED || imageType == TGA_RLE_RGB || imageType == TGA_RLE_MONO)
+		? (numPixelsTotal + 127) / 128 * (1 + bytesPerSourcePixel)
+		: numPixelsTotal * bytesPerSourcePixel;
+	long long nHeaderEnd = _ftelli64(pFile);
+	if (nHeaderEnd < 0 || _fseeki64(pFile, 0, SEEK_END) != 0)
+	{
+		fclose(pFile);
+		return NULL;
+	}
+	long long nFileSize = _ftelli64(pFile);
+	if (nFileSize < 0 || _fseeki64(pFile, nHeaderEnd, SEEK_SET) != 0 ||
+		(unsigned long long)nFileSize < (unsigned long long)nHeaderEnd + length + (isIndexed ? 768 : 0) + minDataBytes)
+	{
+		fclose(pFile);
+		return NULL;
+	}
+
 	// Allocate memory which will hold our image data
 	byte* pImageData = new(std::nothrow) byte[numberOfBytesRequired];
 	if (pImageData == NULL)
@@ -136,7 +160,8 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, Helpers::ETransparency
 
 	byte* pImage = pImageData;
 
-	if(imageType == TGA_MONO)
+	// An RGB image with 8 bits per pixel is read as grey, like in the RLE path below (no other branch fills the image)
+	if(imageType == TGA_MONO || (imageType == TGA_RGB && bits == 8))
 	{
 		// this is always 8 bpp (checked above)
 		for(int y = 0; y < height; y++)
@@ -245,8 +270,8 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, Helpers::ETransparency
 
 		// Create some variables to hold the rleID, current colors read, channels, & stride.
 		byte rleID = 0;
-		int colorsRead = 0;
-		channels = bits / 8;
+		size_t colorsRead = 0; // byte offset in the target, can exceed 2^31
+		channels = (bits + 7) / 8; // bytes per pixel in the file (15 bits: 2 bytes)
 		int x = 0;
 		int padding = targetStride - targetChannels * width;
 
@@ -255,8 +280,9 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, Helpers::ETransparency
 		byte* pImage = pImageData;
 
 		// Load in all the pixel data
-		int numPixels = width*height;
-		while(i < numPixels)
+		const size_t numPixels = (size_t)width * height;
+		size_t nPixelsRead = 0;
+		while(nPixelsRead < numPixels)
 		{
 			// Read in the current color count + 1
 			fread(&rleID, sizeof(byte), 1, pFile);
@@ -281,7 +307,7 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, Helpers::ETransparency
 			}
 
 			// Go through and read all the unique colors found
-			while(rleID && i < numPixels)
+			while(rleID && nPixelsRead < numPixels)
 			{
 				if (!useSameColor)
 				{
@@ -308,6 +334,12 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, Helpers::ETransparency
 							pImage[colorsRead + 1] = pColors[0];
 							pImage[colorsRead + 2] = pColors[0];
 						}
+					} else if (bits == 16 || bits == 15) {
+						// 5 bits each for B, G and R, as in the uncompressed path
+						unsigned short pixel = (unsigned short)(pColors[0] | (pColors[1] << 8));
+						pImage[colorsRead + 0] = (byte)((pixel & 0x1f) << 3);
+						pImage[colorsRead + 1] = (byte)(((pixel >> 5) & 0x1f) << 3);
+						pImage[colorsRead + 2] = (byte)(((pixel >> 10) & 0x1f) << 3);
 					} else {
 						pImage[colorsRead + 0] = pColors[0];
 						pImage[colorsRead + 1] = pColors[1];
@@ -325,7 +357,7 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, Helpers::ETransparency
 
 				// Increase the current pixels read, decrease the amount
 				// of pixels left, and increase the starting index for the next pixel.
-				i++;
+				nPixelsRead++;
 				rleID--;
 				colorsRead += targetChannels;
 			}
@@ -353,7 +385,7 @@ CJPEGImage* CReaderTGA::ReadTgaImage(LPCTSTR strFileName, Helpers::ETransparency
 		else
 		{
 			// no valid alpha channel - set all A to 255
-			for (int i = 0; i < width*height; i++)
+			for (size_t n = 0, numPixels = (size_t)width * height; n < numPixels; n++)
 			{
 				*pImage32 = *pImage32 | ALPHA_OPAQUE;
 				pImage32++;

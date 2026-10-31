@@ -80,6 +80,7 @@ private:
 		bool IsActive; // true if this request is active (i.e. requested but not ready or ready and in use).
 		bool OutOfMemory; // true if the image failed loading due to out of memory
 		bool ExceptionError; // true if the image failed loading due to an unhandled exception
+		bool ReadAheadSkipped; // true if this read ahead was not done because memory is short (no image, no error)
 		int AccessTimeStamp; // LRU handling
 		CImageLoadThread* HandlingThread; // thread that is loading the image, NULL when image is ready
 		HANDLE EventFinished; // event fired when image has finished loading
@@ -95,6 +96,7 @@ private:
 			IsActive = true;
 			OutOfMemory = false;
 			ExceptionError = false;
+			ReadAheadSkipped = false;
 			AccessTimeStamp = -1;
 			HandlingThread = NULL;
 			EventFinished = ::CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -119,10 +121,19 @@ private:
 	CImageLoadThread* SearchThreadForNewRequest(void);
 	void RemoveUnusedImages(bool bRemoveAlsoReadAhead);
 	CImageRequest* StartRequestAndWaitUntilReady(LPCTSTR sFileName, int nFrameIndex, const CProcessParams & processParams);
-	CImageRequest* StartNewRequest(LPCTSTR sFileName, int nFrameIndex, const CProcessParams & processParams);
+	// bReadAhead: pre-caching of a neighbour (skipped by the load thread while memory is short)
+	CImageRequest* StartNewRequest(LPCTSTR sFileName, int nFrameIndex, const CProcessParams & processParams, bool bReadAhead = false);
 	void StartNewRequestBundle(CFileList* pFileList, EReadAheadDirection eDirection, const CProcessParams & processParams, int nNumRequests, CImageRequest* pLastReadyRequest);
 	CImageRequest* FindRequest(LPCTSTR strFileName, int nFrameIndex);
 	void ClearOldestInactiveRequest();
+
+	// Called before waiting for pKeep, so that it does not wait behind images nobody needs now:
+	//  - drops all requests the load thread has not started yet (except pKeep); StartNewRequestBundle() queues the
+	//    still needed neighbours again afterwards, behind pKeep;
+	//  - asks a running request to stop before resampling if its file is not in the read ahead range around
+	//    sFileName (a running neighbour that is needed anyway is not stopped: its work would be lost).
+	// A stopped request still completes (without image, ReadAheadSkipped) and is removed then.
+	void CancelPendingReadAhead(CImageRequest* pKeep, CFileList* pFileList, EReadAheadDirection eDirection, LPCTSTR sFileName);
 	void DeleteElementAt(std::list<CImageRequest*>::iterator iteratorAt); // also deletes the request and the image in the request
 	void DeleteElement(CImageRequest* pRequest);
 	bool IsDestructivelyProcessed(CJPEGImage* pImage);

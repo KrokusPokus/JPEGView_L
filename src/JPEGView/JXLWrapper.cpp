@@ -138,10 +138,10 @@ bool JxlReader::DecodeJpegXlOneShot(const uint8_t* jxl, size_t size, std::vector
 				JxlDecoderImageOutBufferSize(cache.decoder.get(), &format, &buffer_size)) {
 				return false;
 			}
-			if (buffer_size != cache.info.xsize * cache.info.ysize * 4) {
+			if (buffer_size != (size_t)cache.info.xsize * cache.info.ysize * 4) {
 				return false;
 			}
-			pixels->resize(cache.info.xsize * cache.info.ysize * 4);
+			pixels->resize((size_t)cache.info.xsize * cache.info.ysize * 4);
 			void* pixels_buffer = static_cast<void*>(pixels->data());
 			size_t pixels_buffer_size = pixels->size() * sizeof(uint8_t);
 			if (JXL_DEC_SUCCESS != JxlDecoderSetImageOutBuffer(cache.decoder.get(), &format,

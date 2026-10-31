@@ -6,6 +6,8 @@
 #include "FileList.h"
 #include "ProcessParams.h"
 #include "BasicProcessing.h"
+#include <algorithm>
+#include <vector>
 
 CJPEGProvider::CJPEGProvider(HWND handlerWnd, int nNumThreads, int nNumBuffers) {
 	m_hHandlerWnd = handlerWnd;
@@ -69,6 +71,8 @@ CJPEGImage* CJPEGProvider::RequestImage(CFileList* pFileList, EReadAheadDirectio
 
 	// wait for request if not yet ready
 	if (!pRequest->Ready) {
+		// Queued read ahead requests would be processed first (one load thread, first in first out)
+		CancelPendingReadAhead(pRequest, pFileList, eDirection, strFileName);
 #ifdef DEBUG
 		::OutputDebugString(_T("Waiting for request: ")); ::OutputDebugString(pRequest->FileName); ::OutputDebugString(_T("\n"));
 #endif
@@ -86,6 +90,13 @@ CJPEGImage* CJPEGProvider::RequestImage(CFileList* pFileList, EReadAheadDirectio
 #ifdef DEBUG
 		::OutputDebugString(_T("Found in cache: ")); ::OutputDebugString(pRequest->FileName); ::OutputDebugString(_T("\n"));
 #endif
+	}
+
+	if (pRequest->ReadAheadSkipped) {
+		// The read ahead of this image was skipped by the load thread because memory was short, but the image is
+		// wanted now: load it as a normal request
+		DeleteElement(pRequest);
+		pRequest = StartRequestAndWaitUntilReady(strFileName, nFrameIndex, processParams);
 	}
 
 	// set before removing unused images!
@@ -195,6 +206,11 @@ void CJPEGProvider::OnImageLoadCompleted(int nHandle) {
 	for (iter = m_requestList.begin( ); iter != m_requestList.end( ); iter++ ) {
 		if ((*iter)->Handle == nHandle) {
 			GetLoadedImageFromWorkThread(*iter);
+			if ((*iter)->ReadAheadSkipped && !(*iter)->InUse) {
+				// nothing was loaded, free the buffer for the next request
+				DeleteElementAt(iter);
+				break;
+			}
 			if ((*iter)->Deleted) {
 				// this request was deleted, delete image now
 				ClearRequest((*iter)->Image);
@@ -271,9 +287,9 @@ void CJPEGProvider::StartNewRequestBundle(CFileList* pFileList, EReadAheadDirect
 					// The read ahead threads need this flag to be deleted - we can speculatively process the image with good hit rate
 					CProcessParams paramsCopied = processParams;
 					paramsCopied.ProcFlags = SetProcessingFlag(paramsCopied.ProcFlags, PFLAG_NoProcessingAfterLoad, false);
-					StartNewRequest(sFileName, nFrameIndex, paramsCopied);
+					StartNewRequest(sFileName, nFrameIndex, paramsCopied, true);
 				} else {
-					StartNewRequest(sFileName, nFrameIndex, processParams);
+					StartNewRequest(sFileName, nFrameIndex, processParams, true);
 				}
 			} else {
 				pRequest->IsActive = true;
@@ -283,7 +299,7 @@ void CJPEGProvider::StartNewRequestBundle(CFileList* pFileList, EReadAheadDirect
 	}
 }
 
-CJPEGProvider::CImageRequest* CJPEGProvider::StartNewRequest(LPCTSTR sFileName, int nFrameIndex, const CProcessParams & processParams) {
+CJPEGProvider::CImageRequest* CJPEGProvider::StartNewRequest(LPCTSTR sFileName, int nFrameIndex, const CProcessParams & processParams, bool bReadAhead) {
 #ifdef DEBUG
 	::OutputDebugString(_T("Start new request: ")); ::OutputDebugString(sFileName); ::OutputDebugString(_T("\n"));
 #endif
@@ -291,7 +307,7 @@ CJPEGProvider::CImageRequest* CJPEGProvider::StartNewRequest(LPCTSTR sFileName, 
 	m_requestList.push_back(pRequest);
 	pRequest->HandlingThread = SearchThreadForNewRequest();
 	pRequest->Handle = pRequest->HandlingThread->AsyncLoad(pRequest->FileName, nFrameIndex,
-		processParams, m_hHandlerWnd, pRequest->EventFinished);
+		processParams, m_hHandlerWnd, pRequest->EventFinished, bReadAhead);
 	return pRequest;
 }
 
@@ -304,6 +320,7 @@ void CJPEGProvider::GetLoadedImageFromWorkThread(CImageRequest* pRequest) {
 		pRequest->Image = imageData.Image;
 		pRequest->OutOfMemory = imageData.IsRequestFailedOutOfMemory;
 		pRequest->ExceptionError = imageData.IsRequestFailedException;
+		pRequest->ReadAheadSkipped = imageData.IsReadAheadSkipped;
 		pRequest->Ready = true;
 		pRequest->HandlingThread = NULL;
 	}
@@ -371,6 +388,75 @@ void CJPEGProvider::RemoveUnusedImages(bool bRemoveAlsoActiveRequests) {
 			}
 		}
 	} while (bRemoved); // repeat until no element could be removed anymore
+}
+
+void CJPEGProvider::CancelPendingReadAhead(CImageRequest* pKeep, CFileList* pFileList, EReadAheadDirection eDirection,
+										   LPCTSTR sFileName) {
+	std::vector<int> handles;
+	for (std::list<CImageRequest*>::iterator iter = m_requestList.begin(); iter != m_requestList.end(); ++iter) {
+		if (*iter != pKeep && !(*iter)->Ready) {
+			handles.push_back((*iter)->Handle);
+		}
+	}
+	if (handles.empty()) {
+		return;
+	}
+
+	// 1. Not yet started: dropping costs nothing, needed neighbours are queued again after pKeep
+	for (int i = 0; i < m_nNumThread; i++) {
+		std::vector<int> cancelled = m_pWorkThreads[i]->CancelPendingLoads(handles);
+		for (size_t n = 0; n < cancelled.size(); n++) {
+			for (std::list<CImageRequest*>::iterator iter = m_requestList.begin(); iter != m_requestList.end(); ++iter) {
+				if ((*iter)->Handle == cancelled[n]) {
+					DeleteElementAt(iter);
+					break;
+				}
+			}
+		}
+	}
+
+	// 2. The running request (at most one): only stop it if it is not needed around the new image.
+	//    Compared by file name, which keeps all frames of the file and is on the safe side.
+	std::vector<LPCTSTR> neighbours;
+	bool bNeighboursKnown = false;
+	if (pFileList != NULL && (eDirection == FORWARD || eDirection == BACKWARD)) {
+		// the same neighbours StartNewRequestBundle() will request (m_nNumBuffers - 1 of them, alternating)
+		int nRange = m_nNumBuffers / 2 + 1;
+		for (int i = 1; i <= nRange; i++) {
+			neighbours.push_back(pFileList->PeekNextPrev(i, true, false));
+			neighbours.push_back(pFileList->PeekNextPrev(i, false, false));
+		}
+		neighbours.push_back(pFileList->GetFileMarkedForToggle());
+		bNeighboursKnown = true;
+	}
+	std::vector<int> candidates;
+	for (std::list<CImageRequest*>::iterator iter = m_requestList.begin(); iter != m_requestList.end(); ++iter) {
+		CImageRequest* pRequest = *iter;
+		if (pRequest == pKeep || pRequest->Ready || std::find(handles.begin(), handles.end(), pRequest->Handle) == handles.end()) {
+			continue;
+		}
+		if (sFileName != NULL && _tcsicmp(pRequest->FileName, sFileName) == 0) {
+			continue;
+		}
+		bool bNeeded = false;
+		if (bNeighboursKnown) {
+			for (size_t n = 0; n < neighbours.size(); n++) {
+				if (neighbours[n] != NULL && _tcsicmp(pRequest->FileName, neighbours[n]) == 0) {
+					bNeeded = true;
+					break;
+				}
+			}
+		}
+		if (!bNeeded) {
+			candidates.push_back(pRequest->Handle);
+		}
+	}
+	if (candidates.empty()) {
+		return;
+	}
+	for (int i = 0; i < m_nNumThread; i++) {
+		m_pWorkThreads[i]->AbortRunningLoad(candidates);
+	}
 }
 
 void CJPEGProvider::ClearOldestInactiveRequest() {

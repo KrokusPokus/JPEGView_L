@@ -31,11 +31,15 @@ public:
 	bool IsRequestFailedOutOfMemory;
 	// True if the request failed due to an unhandled exception
 	bool IsRequestFailedException;
+	// True if the request was a read ahead that has not been started because less than
+	// Helpers::READ_AHEAD_MIN_FREE_PERCENT of the memory are available (the image is not loaded, it is no error)
+	bool IsReadAheadSkipped;
 
-	CImageData(CJPEGImage* pImage, bool isRequestFailedOutOfMemory, bool isRequestFailedException) {
+	CImageData(CJPEGImage* pImage, bool isRequestFailedOutOfMemory, bool isRequestFailedException, bool isReadAheadSkipped = false) {
 		Image = pImage;
 		IsRequestFailedOutOfMemory = isRequestFailedOutOfMemory;
 		IsRequestFailedException = isRequestFailedException;
+		IsReadAheadSkipped = isReadAheadSkipped;
 	}
 };
 
@@ -52,7 +56,10 @@ public:
 	// received or the event has been signaled.
 	// The file to load is given by its filename (with path) and the frame index (for multiframe images). The
 	// frame index needs to be zero when the image only has one frame.
-	int AsyncLoad(LPCTSTR strFileName, int nFrameIndex, const CProcessParams & processParams, HWND targetWnd, HANDLE eventFinished);
+	// bReadAhead: pre-caching of a neighbour image. It is skipped (CImageData::IsReadAheadSkipped) while less than
+	// Helpers::READ_AHEAD_MIN_FREE_PERCENT of the memory are available.
+	int AsyncLoad(LPCTSTR strFileName, int nFrameIndex, const CProcessParams & processParams, HWND targetWnd, HANDLE eventFinished,
+		bool bReadAhead = false);
 
 	// Get loaded image, CImageData::Image is null if not (yet) available - use handle returned by AsyncLoad().
 	// Call after having received the WM_IMAGE_LOAD_COMPLETED message to retrieve the loaded image.
@@ -62,6 +69,15 @@ public:
 	// Releases the cached image file if an image of the specified name is cached
 	void ReleaseFile(LPCTSTR strFileName);
 
+	// Cancels the load requests with the given handles that have not been started yet and removes them from the
+	// request queue (no message is posted, the event is not signaled). Returns the handles that were cancelled.
+	std::vector<int> CancelPendingLoads(const std::vector<int>& handles);
+
+	// If the running load request has one of the given handles, asks it to stop before rotation and resampling.
+	// It completes as usual (message, event) without image (CImageData::IsReadAheadSkipped), or with the image if it
+	// was already past that point. Returns the handle of the request that was asked, or -1.
+	int AbortRunningLoad(const std::vector<int>& handles);
+
 	// Gets the request handle value used for the last request
 	static int GetCurHandleValue() { return m_curHandle; }
 
@@ -70,8 +86,11 @@ private:
 	// Request for loading an image
 	class CRequest : public CRequestBase {
 	public:
-		CRequest(LPCTSTR strFileName, int nFrameIndex, HWND wndTarget, const CProcessParams& processParams, HANDLE eventFinished) 
+		CRequest(LPCTSTR strFileName, int nFrameIndex, HWND wndTarget, const CProcessParams& processParams, HANDLE eventFinished,
+			bool bReadAhead)
 			: CRequestBase(eventFinished), ProcessParams(processParams) {
+			ReadAhead = bReadAhead;
+			ReadAheadSkipped = false;
 			FileName = strFileName;
 			FrameIndex = nFrameIndex;
 			TargetWnd = wndTarget;
@@ -87,6 +106,8 @@ private:
 		int RequestHandle;
 		CJPEGImage* Image;
 		CProcessParams ProcessParams;
+		bool ReadAhead;  // pre-caching of a neighbour, not the image the user waits for
+		bool ReadAheadSkipped;  // read ahead not done because memory is short
 		bool OutOfMemory;  // load caused an out of memory condition
 		bool ExceptionError;  // an unhandled exception caused the load to fail
 	};

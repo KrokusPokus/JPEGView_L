@@ -235,8 +235,9 @@ CImageLoadThread::~CImageLoadThread(void) {
 	DeleteCachedZip();
 }
 
-int CImageLoadThread::AsyncLoad(LPCTSTR strFileName, int nFrameIndex, const CProcessParams & processParams, HWND targetWnd, HANDLE eventFinished) {
-	CRequest* pRequest = new CRequest(strFileName, nFrameIndex, targetWnd, processParams, eventFinished);
+int CImageLoadThread::AsyncLoad(LPCTSTR strFileName, int nFrameIndex, const CProcessParams & processParams, HWND targetWnd, HANDLE eventFinished,
+	bool bReadAhead) {
+	CRequest* pRequest = new CRequest(strFileName, nFrameIndex, targetWnd, processParams, eventFinished, bReadAhead);
 
 	ProcessAsync(pRequest);
 
@@ -248,6 +249,7 @@ CImageData CImageLoadThread::GetLoadedImage(int nHandle) {
 	CJPEGImage* imageFound = NULL;
 	bool bFailedMemory = false;
 	bool bFailedException = false;
+	bool bReadAheadSkipped = false;
 	std::list<CRequestBase*>::iterator iter;
 	for (iter = m_requestList.begin( ); iter != m_requestList.end( ); iter++ ) {
 		CRequest* pRequest = (CRequest*)(*iter);
@@ -255,12 +257,45 @@ CImageData CImageLoadThread::GetLoadedImage(int nHandle) {
 			imageFound = pRequest->Image;
 			bFailedMemory = pRequest->OutOfMemory;
 			bFailedException = pRequest->ExceptionError;
+			bReadAheadSkipped = pRequest->ReadAheadSkipped;
 			// only mark as deleted
 			pRequest->Deleted = true;
 			break;
 		}
 	}
-	return CImageData(imageFound, bFailedMemory, bFailedException);
+	return CImageData(imageFound, bFailedMemory, bFailedException, bReadAheadSkipped);
+}
+
+std::vector<int> CImageLoadThread::CancelPendingLoads(const std::vector<int>& handles) {
+	std::vector<int> cancelled;
+	Helpers::CAutoCriticalSection criticalSection(m_csList);
+	for (std::list<CRequestBase*>::iterator iter = m_requestList.begin(); iter != m_requestList.end(); ) {
+		CRequestBase* pBase = *iter;
+		// the request picked by the worker thread (running) is never touched, nor are the ones already processed
+		if (pBase->Type == 0 && pBase != m_pCurrent && !pBase->Processed && !pBase->Deleted) {
+			int nHandle = ((CRequest*)pBase)->RequestHandle;
+			if (std::find(handles.begin(), handles.end(), nHandle) != handles.end()) {
+				cancelled.push_back(nHandle);
+				delete pBase;
+				iter = m_requestList.erase(iter);
+				continue;
+			}
+		}
+		++iter;
+	}
+	return cancelled;
+}
+
+int CImageLoadThread::AbortRunningLoad(const std::vector<int>& handles) {
+	Helpers::CAutoCriticalSection criticalSection(m_csList);
+	if (m_pCurrent != NULL && m_pCurrent->Type == 0 && !m_pCurrent->Processed && !m_pCurrent->Deleted) {
+		int nHandle = ((CRequest*)m_pCurrent)->RequestHandle;
+		if (std::find(handles.begin(), handles.end(), nHandle) != handles.end()) {
+			m_pCurrent->AbortRequested = true;
+			return nHandle;
+		}
+	}
+	return -1;
 }
 
 void CImageLoadThread::ReleaseFile(LPCTSTR strFileName) {
@@ -295,6 +330,13 @@ void CImageLoadThread::ProcessRequest(CRequestBase& request) {
 	}
 
 	CRequest& rq = (CRequest&)request;
+
+	// Pre-caching stops while memory is short; the image is loaded anyway when the user goes to it
+	if (rq.ReadAhead && !Helpers::StillEnoughFree()) {
+		rq.ReadAheadSkipped = true;
+		return;
+	}
+
 	double dStartTime = Helpers::GetExactTickCount(); 
 	// Get image format and read the image
 	switch (GetImageFormat(rq.FileName)) {
@@ -417,6 +459,15 @@ void CImageLoadThread::ProcessRequest(CRequestBase& request) {
 			ProcessReadGDIPlusRequest(&rq);
 			break;
 	}
+	// The owner does not need the image any more (read ahead out of range): skip rotation and resampling,
+	// which take the most time after decoding, and free the memory right away
+	if (rq.Image != NULL && rq.AbortRequested) {
+		delete rq.Image;
+		rq.Image = NULL;
+		rq.ReadAheadSkipped = true; // no image and no error: the provider just forgets the request
+		return;
+	}
+
 	// then process the image if read was successful
 	if (rq.Image != NULL) {
 		rq.Image->SetLoadTickCount(Helpers::GetExactTickCount() - dStartTime); 
@@ -1178,6 +1229,16 @@ static BOOL StringEndsWithIgnoreCase(CString& str, CString& end)
 	return find.CompareNoCase(end) == 0;
 }
 
+// The 7z.dll is loaded once per load thread and kept, instead of loading and unloading it for every image of an archive.
+// The archive itself must still be reopened for each extraction. Throws BitException if the dll can not be loaded.
+static Bit7zLibrary& GetBit7zLibrary() {
+	thread_local std::unique_ptr<Bit7zLibrary> pLib;
+	if (!pLib) {
+		pLib.reset(new Bit7zLibrary{ "7z.dll" });
+	}
+	return *pLib;
+}
+
 void CImageLoadThread::ProcessReadZipRequest(CRequest* request) {
 	bool bSuccess = false;
 	bool bIsSameArchive = false;
@@ -1243,7 +1304,7 @@ Note on "request->FrameIndex":
 	if (!bIsSameArchive) {
 		if (use7z) {
 			try {
-				Bit7zLibrary lib{ "7z.dll" };
+				Bit7zLibrary& lib = GetBit7zLibrary();
 				zip7 = new BitArchiveReader(lib, bufFilename, BitFormat::Auto);
 
 				for (const auto& item : *zip7) {
@@ -1314,7 +1375,7 @@ Note on "request->FrameIndex":
 					//const tstring name = ConvertLPCWSTRToString(entryName); //not needed, as can access by index
 					pBuffer = new(std::nothrow) char[nFileSize];
 					//somehow, has to reopen, else extract fails!
-					Bit7zLibrary lib{ "7z.dll" };
+					Bit7zLibrary& lib = GetBit7zLibrary();
 					zip7 = new BitArchiveReader(lib, bufFilename, BitFormat::Auto);
 					zip7->extractTo((byte_t*)pBuffer, nFileSize, z.index);
 					delete zip7;

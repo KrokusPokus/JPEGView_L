@@ -307,6 +307,8 @@ static CPUType ProbeSSEorAVX2() {
 		__cpuid(abcd, 1);
 		if ((abcd[2] & 0x18000000) != 0x18000000) // AVX and OSXSAVE bits
 			return CPU_SSE;
+		if ((abcd[2] & 0x00001000) == 0) // FMA bit: the AVX2 code uses fused multiply-add (_mm256_fmadd_ps)
+			return CPU_SSE;
 		if ((abcd[2] & 0x04000000) == 0) // XSAVE bit, support for xgetbv
 			return CPU_SSE;
 
@@ -527,7 +529,17 @@ void* FindJPEGMarker(void* pJPEGStream, int nStreamLength, unsigned char nMarker
 
 void* FindEXIFBlock(void* pJPEGStream, int nStreamLength) {
 	uint8* pEXIFBlock = (uint8*)Helpers::FindJPEGMarker(pJPEGStream, nStreamLength, 0xE1);
-	if (pEXIFBlock != NULL && strncmp((const char*)(pEXIFBlock + 4), "Exif", 4) != 0) {
+	if (pEXIFBlock == NULL) {
+		return NULL;
+	}
+	// The segment (marker, length, "Exif\0\0", data) must be completely inside of the stream: the length comes from
+	// the file, and CJPEGImage copies as many bytes as it says
+	const int nAvailable = nStreamLength - (int)(pEXIFBlock - (uint8*)pJPEGStream);
+	if (nAvailable < 10) {
+		return NULL;
+	}
+	const int nSegmentSize = pEXIFBlock[2]*256 + pEXIFBlock[3] + 2;
+	if (nSegmentSize < 10 || nSegmentSize > nAvailable || memcmp(pEXIFBlock + 4, "Exif", 4) != 0) {
 		return NULL;
 	}
 	return pEXIFBlock;
@@ -589,9 +601,14 @@ CString GetJPEGComment(void* pJPEGStream, int nStreamLength) {
 	if (pCommentSeg == NULL) {
 		return CString("");
 	}
+	// marker (2), length (2), comment: the comment must be completely inside of the stream (the length comes from the file)
+	const int nAvailable = nStreamLength - (int)(pCommentSeg - (uint8*)pJPEGStream);
+	if (nAvailable < 4) {
+		return CString("");
+	}
 	pCommentSeg += 2;
 	int nCommentLen = pCommentSeg[0]*256 + pCommentSeg[1] - 2;
-	if (nCommentLen <= 0) {
+	if (nCommentLen <= 0 || nCommentLen > nAvailable - 4) {
 		return CString("");
 	}
 
@@ -1163,6 +1180,16 @@ bool CanReadAhead(CJPEGImage* pImage) {
 	return true;
 }
 
+bool StillEnoughFree() {
+	MEMORYSTATUSEX memStatus;
+	memStatus.dwLength = sizeof(memStatus);
+	if (!::GlobalMemoryStatusEx(&memStatus) || memStatus.ullTotalPhys == 0) {
+		return true; // not known: no limit, as before
+	}
+	// ullAvailPhys includes the standby list (cached file data that can be reused immediately)
+	return memStatus.ullAvailPhys * 100 >= memStatus.ullTotalPhys * READ_AHEAD_MIN_FREE_PERCENT;
+}
+
 // Based on: https://github.com/sdneon/jpegview.git
 	void BlendAlpha(uint32* pImage32, int nWidth, int nHeight, Helpers::ETransparencyMode nTransparencyMode)
 	{
@@ -1171,7 +1198,7 @@ bool CanReadAhead(CJPEGImage* pImage) {
 			if (nTransparencyMode == Helpers::TP_BLEND_INVERSE) {
 				nTransparency = ~(nTransparency & 0xffffff);
 			}
-			for (int i = 0; i < nWidth * nHeight; ++i) {
+			for (size_t i = 0, n = (size_t)nWidth * nHeight; i < n; ++i) {
 				*pImage32 = AlphaBlendBackground(*pImage32, nTransparency);
 				pImage32++;
 			}

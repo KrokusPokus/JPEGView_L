@@ -11,6 +11,7 @@ CWorkThread::CWorkThread(bool bCoInitialize)
 	: m_csList{ 0 }
 {
 	m_bTerminate = false;
+	m_pCurrent = NULL;
 	m_bCoInitialize = bCoInitialize;
 	::InitializeCriticalSection(&m_csList);
 	m_wakeUp = ::CreateEvent(0, TRUE, FALSE, NULL);
@@ -112,6 +113,8 @@ void CWorkThread::ThreadFunc(void* arg) {
 				nNumUnprocessedRequests++;
 			}
 		}
+		// A request that is picked here is not removed from the queue by others (see CImageLoadThread::CancelPendingLoads)
+		thisPtr->m_pCurrent = requestHandled;
 
 		::LeaveCriticalSection(&thisPtr->m_csList);
 
@@ -119,6 +122,9 @@ void CWorkThread::ThreadFunc(void* arg) {
 		if (requestHandled != NULL) {
 			thisPtr->ProcessRequest(*requestHandled);
 			requestHandled->Processed = true;
+			::EnterCriticalSection(&thisPtr->m_csList);
+			thisPtr->m_pCurrent = NULL;
+			::LeaveCriticalSection(&thisPtr->m_csList);
 
 			// signal end of processing
 			if (requestHandled->EventFinished != NULL) {

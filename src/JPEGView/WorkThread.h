@@ -9,6 +9,7 @@ public:
 		EventFinishedCounter = NULL;
 		Processed = false;
 		Deleted = false;
+		AbortRequested = false;
 		Type = 0;
 	}
 
@@ -17,6 +18,7 @@ public:
 		EventFinishedCounter = NULL;
 		Processed = false;
 		Deleted = false;
+		AbortRequested = false;
 		Type = 0;
 	}
 	
@@ -27,6 +29,7 @@ public:
 	volatile LONG* EventFinishedCounter; // if not NULL, this counter is decremented after having handled the request and the event is not fired until it gets zero
 	volatile bool Processed; // Set to true when processing is finished
 	volatile bool Deleted; // Marks requests for deletion from the request queue
+	volatile bool AbortRequested; // The owner asks a running request to stop early (ProcessRequest() checks it where it can stop)
 };
 
 
@@ -66,6 +69,7 @@ protected:
 	virtual void AfterFinishProcess(CRequestBase& request) {}
 
 	std::list<CRequestBase*> m_requestList; // list of requests, also contains processed requests not yet removed by client
+	CRequestBase* m_pCurrent; // request currently picked for processing by the worker thread (set under m_csList), else NULL
 	CRITICAL_SECTION m_csList; // the critical section protecting the request list (m_requestList)
 	HANDLE m_wakeUp; // wake up event for the tread (it sleeps while there is nothing to process)
 	HANDLE m_hThread; // working thread

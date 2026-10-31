@@ -81,33 +81,44 @@ CFileDesc::CFileDesc(const CString & sName, const FILETIME* lastModTime, const F
 }
 
 bool CFileDesc::SortAscending(const CFileDesc& other) const {
+	// The sort key; if it is equal (same date or size is common, e.g. the pages of an extracted archive), the name
+	// decides, and if that is equal too (natural, case-insensitive order), the full path: the order is always unique.
 	if (sm_eSorting == Helpers::FS_CreationTime || sm_eSorting == Helpers::FS_LastModTime) {
 		const FILETIME* pTime = (sm_eSorting == Helpers::FS_LastModTime) ? &m_lastModTime : &m_creationTime;
 		const FILETIME* pTimeOther = (sm_eSorting == Helpers::FS_LastModTime) ? &(other.m_lastModTime) : &(other.m_creationTime);
-		if (pTime->dwHighDateTime < pTimeOther->dwHighDateTime) {
-			return true;
-		} else if (pTime->dwHighDateTime > pTimeOther->dwHighDateTime) {
-			return false;
-		} else {
+		if (pTime->dwHighDateTime != pTimeOther->dwHighDateTime) {
+			return pTime->dwHighDateTime < pTimeOther->dwHighDateTime;
+		} else if (pTime->dwLowDateTime != pTimeOther->dwLowDateTime) {
 			return pTime->dwLowDateTime < pTimeOther->dwLowDateTime;
 		}
 	} else if (sm_eSorting == Helpers::FS_Random) {
-		return m_nRandomOrderNumber < other.m_nRandomOrderNumber;
+		if (m_nRandomOrderNumber != other.m_nRandomOrderNumber) {
+			return m_nRandomOrderNumber < other.m_nRandomOrderNumber;
+		}
 	} else if (sm_eSorting == Helpers::FS_FileSize) {
-		return m_fileSize < other.m_fileSize;
-	} else {
-		if (UseLogicalStringCompare()) {
-			// If the filename contains numbers, we want to sort the files
-			// according to the numbers to place 'File9' before 'File10'
-			return StrCmpLogicalW(m_sTitle, other.m_sTitle) < 0;
-		} else {
-			return _tcsicoll(m_sTitle, other.m_sTitle) < 0;
+		if (m_fileSize != other.m_fileSize) {
+			return m_fileSize < other.m_fileSize;
 		}
 	}
+	// File name sorting, and the tie-breaker of the other sortings
+	int nByName;
+	if (UseLogicalStringCompare()) {
+		// If the filename contains numbers, we want to sort the files
+		// according to the numbers to place 'File9' before 'File10'
+		nByName = StrCmpLogicalW(m_sTitle, other.m_sTitle);
+	} else {
+		nByName = _tcsicoll(m_sTitle, other.m_sTitle);
+	}
+	if (nByName != 0) {
+		return nByName < 0;
+	}
+	return m_sName.Compare(other.m_sName) < 0;
 }
 
 bool CFileDesc::operator < (const CFileDesc& other) const {
-	return SortAscending(other) ^ (!sm_bSortAscending);
+	// Descending: "other before this". Not "not this before other", that is true in both directions for equal
+	// entries and breaks the rules std::list::sort() relies on.
+	return sm_bSortAscending ? SortAscending(other) : other.SortAscending(*this);
 }
 
 

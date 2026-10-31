@@ -459,6 +459,11 @@ void CResizeFilter::CalculateXMMFilterKernels() {
 }
 
 // GF version with 8 x float32
+// Size in bytes of an AVX kernel with nFilterLen elements: 32 byte header, elements padded to a multiple of 32 bytes
+static size_t AVXKernelSize(int nFilterLen) {
+	return 32 + ((nFilterLen * sizeof(float) + 31) & ~(size_t)31);
+}
+
 void CResizeFilter::CalculateAVXFilterKernels() {
 	CalculateFilterKernels();
 	if (m_nTargetSize == 0) {
@@ -466,12 +471,12 @@ void CResizeFilter::CalculateAVXFilterKernels() {
 	}
 
 	// Get size of kernel array - this is not trivial as the kernels have different sizes and
-	// are packed
-	int nTotalKernelElements = 0;
+	// are packed. Each kernel has a 32 byte header and its elements are padded to a multiple of 32 bytes.
+	// (a static function, no lambda or template: this code must not be shared with AVX2 compiled code)
+	size_t nSizeOfKernels = 0;
 	for (int i = 0; i < m_kernels.NumKernels; i++) {
-		nTotalKernelElements += m_kernels.Kernels[i].FilterLen;
+		nSizeOfKernels += AVXKernelSize(m_kernels.Kernels[i].FilterLen);
 	}
-	uint32 nSizeOfKernels = m_kernels.NumKernels * 64 + sizeof(AVXKernelElement)* nTotalKernelElements;
 
 	m_kernelsAVX.NumKernels = m_kernels.NumKernels;
 	m_kernelsAVX.Indices = new AVXFilterKernel*[m_nTargetSize];
@@ -489,11 +494,9 @@ void CResizeFilter::CalculateAVXFilterKernels() {
 		pCurKernelAVX->FilterLen = nCurFilterLen;
 		pCurKernelAVX->FilterOffset = m_kernels.Kernels[i].FilterOffset;
 		for (int j = 0; j < nCurFilterLen; j++) {
-			for (int k = 0; k < 8; k++) {
-				pCurKernelAVX->Kernel[j].valueRepeated[k] = (((float)(m_kernels.Kernels[i].Kernel[j])) / (float)FP_ONE);	// so output should be [0.0...1.0]
-			}
+			pCurKernelAVX->Kernel[j] = (((float)(m_kernels.Kernels[i].Kernel[j])) / (float)FP_ONE);	// so output should be [0.0...1.0]
 		}
-		pCurKernelAVX = (AVXFilterKernel*) ((PTR_INTEGRAL_TYPE)pCurKernelAVX + 64 + sizeof(AVXKernelElement)*nCurFilterLen);
+		pCurKernelAVX = (AVXFilterKernel*) ((PTR_INTEGRAL_TYPE)pCurKernelAVX + AVXKernelSize(nCurFilterLen));
 	}
 
 	for (int i = 0; i < m_nTargetSize; i++) {
@@ -518,9 +521,18 @@ void CResizeFilter::CalculateFilterParams(EFilterType eFilter) {
 	} else if ((eFilter == Filter_Downsampling_No_Aliasing) || (eFilter == Filter_Downsampling_Hermite) || (eFilter == Filter_Downsampling_Mitchell) || (eFilter == Filter_Downsampling_Catrom) || (eFilter == Filter_Downsampling_Lanczos2)) {
 		double dFactor = (double)m_nSourceSize/m_nTargetSize;
 		m_dMultX = 1.0/dFactor;
-		m_nFilterLen = (int) (5*dFactor);
-		m_nFilterLen = min(MAX_FILTER_LEN, m_nFilterLen);
-		m_nFilterOffset = (m_nFilterLen - 1)/2;
+		// The kernel is evaluated at (i - m_nFilterOffset - frac) * m_dMultX for i in [0, m_nFilterLen) and frac in [0, 1)
+		// and is nonzero only for |x| < support radius. Choose the shortest window covering all nonzero taps:
+		// offset = floor(R*f) (first nonzero tap is at i >= 0) and len = offset + 1 + ceil(R*f) (last one at i < len).
+		// (the former length of 5*f cut the kernel at a reduction factor of about 12.8, which caused aliasing)
+		double dSupport = (eFilter == Filter_Downsampling_Hermite) ? 1.0 : 2.0;
+		double dRadius = dSupport*dFactor;
+		m_nFilterOffset = (int)floor(dRadius);
+		m_nFilterLen = m_nFilterOffset + 1 + (int)ceil(dRadius);
+		if (m_nFilterLen > MAX_FILTER_LEN) {
+			m_nFilterLen = MAX_FILTER_LEN;
+			m_nFilterOffset = (m_nFilterLen - 1)/2;
+		}
 		m_dSharpen = 1 + m_dSharpen*7;
 	} else if (eFilter == Filter_Downsampling_Narrow) {
 		int nStdFilterLen = 4;
@@ -711,7 +723,7 @@ void CGaussFilter::CalculateKernels() {
 
 FilterKernel CGaussFilter::CalculateKernel(double dRadius) {
 	// Gauss filter is symmetric, calculate the central element in kernel[0] and one half of the filter
-	const int cnNumElems = 1 + ((MAX_FILTER_LEN - 1) >> 1);
+	const int cnNumElems = 1 + ((MAX_GAUSS_FILTER_LEN - 1) >> 1);
 	double kernel[cnNumElems];
 	double dInnerFactor = 1.0/(2*dRadius*dRadius);
 	double dSum = 0.0; // Sum of both halves of the kernel

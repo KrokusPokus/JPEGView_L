@@ -363,6 +363,13 @@ namespace Helpers {
 /*GF*/	int NumConcurrentThreads(void);				// Used in "SettingsProvider.cpp" to set "m_nNumCores"
 /*GF*/	CString FormatFileSize(__int64 filesize);
 /*GF*/	bool CanReadAhead(CJPEGImage* pImage);		// Used in StartNewRequestBundle()
+
+	// Read ahead (pre-caching of neighbour images) stops while less than this share of the physical memory is available
+	const int READ_AHEAD_MIN_FREE_PERCENT = 25;
+
+	// True if at least READ_AHEAD_MIN_FREE_PERCENT of the physical memory is available (a snapshot only: other processes
+	// may take the memory a moment later). Also true if the memory cannot be determined.
+	bool StillEnoughFree();
 /*GF*/
 /*GF*/	bool isRunningUnderWine();
 /*GF*/	CString GetUnixPathFromWine(LPCTSTR szDosPath);

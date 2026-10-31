@@ -18,8 +18,14 @@ public:
 		//StripPadding = 8;
 		// For linear processing, we use double the data width, so can process only half as many pixels at once.
 		StripPadding = 4;
+		MaxThreads = 0;
 		Success = true;
 	}
+
+	// Process one slice of the image (rows offsetY to offsetY + sizeY - 1) on the calling thread. Each thread of
+	// the pool processes one slice. The default implementation splits the slice into strips and calls
+	// ProcessStrip() for each of them.
+	virtual bool ProcessSlice(int offsetY, int sizeY);
 
 	// Process one strip of the image, starting at row offsetY and having the specified y-size
 	virtual bool ProcessStrip(int offsetY, int sizeY) = 0;
@@ -33,6 +39,7 @@ public:
 	CPoint FullTargetOffset;
 	CSize ClippedTargetSize;
 	int StripPadding; // Height of strip is padded to multiple of this
+	int MaxThreads; // maximal number of threads used for this request, 0: all threads of the pool
 
 	// Processing thread can signal failure by setting this flag to false. Must not be set to true by processing threads!
 	bool Success;
@@ -54,6 +61,9 @@ public:
 	// The processing work is distributed to the thread pool threads. The pRequest->ProcessStrip()
 	// method is called to process a strip of the image.
 	bool Process(CProcessingRequest* pRequest);
+
+	// Number of threads processing a request: the pool threads and the calling thread
+	int NumberOfThreads() const { return m_nNumThreads + 1; }
 private:
 	static CProcessingThreadPool* sm_instance;
 

@@ -47,13 +47,14 @@ CHistogram::CHistogram(const CJPEGImage & image, bool bUseOrigPixels)
 		pSourcePixels = (const uint8*)image.DIBPixels();
 	}
 	
-	int nNumPixels = nWidth * nHeight;
-	int nGrid = (int) (0.5 + sqrt(1.0 + nNumPixels/NUM_VALUES));
+	int64_t nNumPixels = (int64_t)nWidth * nHeight; // can exceed 2^31
+	int nGrid = (int) (0.5 + sqrt(1.0 + (double)(nNumPixels/NUM_VALUES)));
 	int nPixPerLine = max(1, nWidth / nGrid);
 	int nLines = max(1, nHeight / nGrid);
 	int nLineSize = Helpers::DoPadding(nWidth * nChannels, 4);
 	for (int j = 0; j < nLines; j++) {
-		const uint8* pSrc = pSourcePixels + nLineSize*j*nGrid;
+		// 64 bit offset: images can have more than 2 GiB of pixel data
+		const uint8* pSrc = pSourcePixels + (size_t)nLineSize*j*nGrid;
 		if (nChannels == 3) {
 			for (int i = 0; i < nPixPerLine; i++) {
 				m_ChannelB[pSrc[0]]++; m_nBMean += pSrc[0];
