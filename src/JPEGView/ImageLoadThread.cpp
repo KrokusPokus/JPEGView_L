@@ -204,7 +204,7 @@ static CJPEGImage* ConvertGDIPlusBitmapToJPEGImage(Gdiplus::Bitmap* pBitmap, int
 				eImageFormat == IF_GIF && nFrameCount > 1, nFrameIndex, nFrameCount, nFrameTimeMs);
 		}
 		pBitmap->UnlockBits(&bmData);
-	} else if (lastStatus == Gdiplus::ValueOverflow) {
+	} else if (lastStatus == Gdiplus::ValueOverflow || lastStatus == Gdiplus::OutOfMemory) {
 		isOutOfMemory = true;
 	}
 

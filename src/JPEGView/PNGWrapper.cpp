@@ -132,6 +132,18 @@ void* PngReader::ReadNextFrame(void** exif_chunk, png_uint_32* exif_size)
 #endif
 	png_read_image(cache.png_ptr, cache.rows_frame);
 
+	if (cache.p_image == NULL) {
+		// Not animated: the frame buffer has no row padding (4 channels, 8 bit), hand it over without copying
+		void* pixels = cache.p_frame;
+		cache.p_frame = NULL;
+		cache.frame_index++;
+		cache.frame_index %= cache.frame_count;
+		if (cache.transform != NULL && pixels != NULL) {
+			ICCProfileTransform::DoTransform(cache.transform, pixels, pixels, cache.width, cache.height);
+		}
+		return pixels;
+	}
+
 #ifdef PNG_APNG_SUPPORTED
 	if (cache.dop == PNG_fcTL_DISPOSE_OP_PREVIOUS)
 		memcpy(cache.p_temp, cache.p_image, cache.size);
@@ -169,12 +181,13 @@ void* PngReader::ReadNextFrame(void** exif_chunk, png_uint_32* exif_size)
 
 bool PngReader::BeginReading(void* buffer, size_t sizebytes, bool& outOfMemory)
 {
-	unsigned int    width, height, channels, rowbytes, size, j;
+	unsigned int    width, height, channels, rowbytes, j;
+	size_t          size; // 64 bit: images can have more than 4 GiB of pixel data
 	png_bytepp      rows_image;
 	png_bytepp      rows_frame;
-	unsigned char*  p_image;
-	unsigned char*  p_frame;
-	unsigned char*  p_temp;
+	unsigned char*  p_image = NULL;
+	unsigned char*  p_frame = NULL;
+	unsigned char*  p_temp = NULL;
 
 
 	png_structp png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
@@ -244,13 +257,24 @@ bool PngReader::BeginReading(void* buffer, size_t sizebytes, bool& outOfMemory)
 			return false;
 		}
 		rowbytes = (unsigned int)png_get_rowbytes(png_ptr, info_ptr);
-		size = height * rowbytes;
-		p_image = (unsigned char*)malloc(size);
+		size = (size_t)height * rowbytes;
+		// Not animated: only one buffer is needed (the decoded frame is handed over to the caller as is).
+		// Animated: image (composed canvas), frame and temp buffer. This keeps huge still images at 1x memory.
+		bool bSingle = true;
+#ifdef PNG_APNG_SUPPORTED
+		if (png_get_valid(png_ptr, info_ptr, PNG_INFO_acTL))
+			bSingle = false;
+#endif
 		p_frame = (unsigned char*)malloc(size);
-		p_temp = (unsigned char*)malloc(size);
-		rows_image = (png_bytepp)malloc(height * sizeof(png_bytep));
-		rows_frame = (png_bytepp)malloc(height * sizeof(png_bytep));
-		if (p_image && p_frame && p_temp && rows_image && rows_frame)
+		rows_frame = (png_bytepp)malloc((size_t)height * sizeof(png_bytep));
+		rows_image = NULL;
+		if (!bSingle)
+		{
+			p_image = (unsigned char*)malloc(size);
+			p_temp = (unsigned char*)malloc(size);
+			rows_image = (png_bytepp)malloc((size_t)height * sizeof(png_bytep));
+		}
+		if (p_frame && rows_frame && (bSingle || (p_image && p_temp && rows_image)))
 		{
 			png_uint_32     frames = 1;
 			png_uint_32     x0 = 0;
@@ -267,11 +291,12 @@ bool PngReader::BeginReading(void* buffer, size_t sizebytes, bool& outOfMemory)
 			if (png_get_valid(png_ptr, info_ptr, PNG_INFO_acTL))
 				png_get_acTL(png_ptr, info_ptr, &frames, &plays);
 #endif
-			for (j = 0; j < height; j++)
-				rows_image[j] = p_image + j * rowbytes;
+			if (rows_image != NULL)
+				for (j = 0; j < height; j++)
+					rows_image[j] = p_image + (size_t)j * rowbytes;
 
 			for (j = 0; j < height; j++)
-				rows_frame[j] = p_frame + j * rowbytes;
+				rows_frame[j] = p_frame + (size_t)j * rowbytes;
 
 #ifdef PNG_APNG_SUPPORTED
 			cache.bop = bop;
@@ -300,6 +325,7 @@ bool PngReader::BeginReading(void* buffer, size_t sizebytes, bool& outOfMemory)
 			cache.frame_count = frames;
 			return frames > 0;
 		}
+		outOfMemory = true;
 		free(p_image);
 		free(rows_image);
 		free(rows_frame);

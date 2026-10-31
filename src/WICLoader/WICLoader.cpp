@@ -99,9 +99,15 @@ static HRESULT CopyWICBitmapToBuffer(IWICBitmapSource *piBitmapSource, byte* tar
 	IFS(piFormatConverter->GetSize(&width, &height));
 
 	if (SUCCEEDED(hr)) {
+		// CopyPixels takes the buffer size as UINT, so images with 4 GiB or more must be copied in bands
 		UINT stride = width * 4;
-		WICRect rc = { 0, 0, (int)width, (int)height };
-		IFS(piFormatConverter->CopyPixels(&rc, stride, stride * height, targetBuffer));
+		const UINT maxBandBytes = 256 * 1024 * 1024;
+		UINT bandHeight = max(1u, maxBandBytes / stride);
+		for (UINT y = 0; y < height && SUCCEEDED(hr); y += bandHeight) {
+			UINT h = min(bandHeight, height - y);
+			WICRect rc = { 0, (int)y, (int)width, (int)h };
+			hr = piFormatConverter->CopyPixels(&rc, stride, stride * h, targetBuffer + (size_t)y * stride);
+		}
 	}
 
 	RELEASE_INTERFACE(piFormatConverter);

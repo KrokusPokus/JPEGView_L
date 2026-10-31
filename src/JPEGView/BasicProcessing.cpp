@@ -1131,7 +1131,7 @@ void* CBasicProcessing::PointSampleWithRotation(CSize fullTargetSize, CPoint ful
 				int32 nCurRealX = nCurX >> 16;
 				int32 nCurRealY = nCurY >> 16;
 				if (nCurRealX >= 0 && nCurRealX < sourceSize.cx && nCurRealY >= 0 && nCurRealY < sourceSize.cy) {
-					pSrc = (uint8*)pPixels + nPaddedSourceWidth * nCurRealY + nCurRealX * 3;
+					pSrc = (uint8*)pPixels + (ptrdiff_t)nPaddedSourceWidth * nCurRealY + nCurRealX * 3;
 					uint32 d = i*4;
 					pDst[d] = pSrc[0];
 					pDst[d+1] = pSrc[1];
@@ -1148,7 +1148,7 @@ void* CBasicProcessing::PointSampleWithRotation(CSize fullTargetSize, CPoint ful
 				int32 nCurRealX = nCurX >> 16;
 				int32 nCurRealY = nCurY >> 16;
 				if (nCurRealX >= 0 && nCurRealX < sourceSize.cx && nCurRealY >= 0 && nCurRealY < sourceSize.cy) {
-					pSrc = (uint8*)pPixels + nPaddedSourceWidth * nCurRealY + nCurRealX * 4;
+					pSrc = (uint8*)pPixels + (ptrdiff_t)nPaddedSourceWidth * nCurRealY + nCurRealX * 4;
 					*((uint32*)pDst + i) = *((uint32*)pSrc);
 				} else {
 					*((uint32*)pDst + i) = nBackColor;
@@ -1262,7 +1262,7 @@ void* CBasicProcessing::PointSampleTrapezoid(CSize fullTargetSize, const CTrapez
 	fTx2 = fTx2 + fullTargetOffset.y*fIncrementTx2;
 	int nSourceSizeXFP16 = sourceSize.cx << 16;
 	for (int j = 0; j < clippedTargetSize.cy; j++) {
-		pSrc = (uint8*)pPixels + nPaddedSourceWidth * (pTableY[j] >> 16);
+		pSrc = (uint8*)pPixels + (size_t)nPaddedSourceWidth * (pTableY[j] >> 16);
 		int nIncrementX = (int)(nSourceSizeXFP16/(fTx2 - fTx1 + 1)) + 1;
 		int nStartX = (int)((fullTargetOffset.x - fTx1)*nIncrementX);
 		int nCurX = nStartX;
@@ -1435,7 +1435,7 @@ void* RotateHQ_Core(CPoint targetOffset, CSize targetSize, double dRotation, CSi
 			int32 nFracX = nCurX & 0xFFFF;
 			int32 nFracY = nCurY & 0xFFFF;
 			if (nCurRealX >= -1 && nCurRealX <= sourceSize.cx && nCurRealY >= -1 && nCurRealY <= sourceSize.cy) {
-				pSrc = (uint8*)pSourcePixels + nPaddedSourceWidth * nCurRealY + nCurRealX * nChannels;
+				pSrc = (uint8*)pSourcePixels + (ptrdiff_t)nPaddedSourceWidth * nCurRealY + nCurRealX * nChannels;
 				if (nCurRealX > 0 && nCurRealX < sourceSize.cx - 2 && nCurRealY > 0 && nCurRealY < sourceSize.cy - 2) {
 					InterpolateBicubic(pSrc, pDst + i*4, pKernels, nFracX, nFracY, nPaddedSourceWidth, nChannels);
 				} else {
@@ -1577,7 +1577,7 @@ void* TrapezoidHQ_Core(CPoint targetOffset, CSize targetSize, const CTrapezoid& 
 		int nCurX = nStartX;
 		int nCurY = pTableY[j] >> 16;
 		int nCurYFrac = pTableY[j] & 0xFFFF;
-		InterpolateBicubicY((uint8*)pSourcePixels + nPaddedSourceWidth * nCurY, nChannels, nPaddedSourceWidth, pLine, sourceSize.cx,
+		InterpolateBicubicY((uint8*)pSourcePixels + (ptrdiff_t)nPaddedSourceWidth * nCurY, nChannels, nPaddedSourceWidth, pLine, sourceSize.cx,
 			pKernels, nCurY, nCurYFrac, trapezoid.Height() + 1);
 		for (int i = 0; i < targetSize.cx; i++) {
 			int nCurXInt = nCurX >> 16;

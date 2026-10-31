@@ -1461,7 +1461,7 @@ CJPEGImage* CJPEGImage::CreateThumbnailImage() {
 	}
 	void* pPixels = NULL;
 	int nWidth, nHeight;
-	if (m_nOrigWidth*m_nOrigHeight < 120000) {
+	if ((long long)m_nOrigWidth*m_nOrigHeight < 120000) {
 		// take a copy of the original pixels
 		nWidth = m_nOrigWidth;
 		nHeight = m_nOrigHeight;
