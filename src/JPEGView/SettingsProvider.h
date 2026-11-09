@@ -29,6 +29,8 @@ public:
 	double MagentaGreen() { return m_dMagentaGreen; }
 	double YellowBlue() { return m_dYellowBlue; }
 	bool HighQualityResampling() { return m_bHQRS; }
+	// Strong downscaling (target <= 1/4 of the original) uses a cached half size version of the image as source
+	bool IntermediateDownsampling() { return m_bIntermediateDownsampling; }
 	bool DefaultSelectionMode() { return m_bDefaultSelectionMode; }
 	bool ShowFileName() { return m_bShowFileName; }
 	bool ShowFileInfo() { return m_bShowFileInfo; }
@@ -212,6 +214,7 @@ private:
 	double m_dMagentaGreen;
 	double m_dYellowBlue;
 	bool m_bHQRS;
+	bool m_bIntermediateDownsampling;
 	bool m_bDefaultSelectionMode;
 	bool m_bShowFileName;
 	bool m_bShowFileInfo;

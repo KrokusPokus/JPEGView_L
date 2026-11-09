@@ -182,6 +182,8 @@ CSettingsProvider::CSettingsProvider(void) {
 	}
 
 
+	m_bIntermediateDownsampling = GetBool(_T("IntermediateDownsampling"), true);
+
 	CString sSingleInstanceMode = GetString(_T("SingleInstance"), _T("PerFolder"));
 	if (sSingleInstanceMode.CompareNoCase(_T("Never")) == 0) {
 		m_eSingleInstanceMode = Helpers::SI_Never;

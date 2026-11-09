@@ -301,6 +301,11 @@ HighQualityResampling=true
 ; The legacy methods "BestQuality", "NoAliasing" and "Narrow" are technically still available but should be avoided for quality reasons.
 DownSamplingFilter=Catrom
 
+; If true, strong downscaling (target size <= 1/4 of the original) uses a cached half size version of the image
+; (created with Catrom) as source. The result is nearly identical but panning/zooming is much faster for large images.
+; Needs additional memory of 1/4 of the (4 channel) image size. Set to false to always resample from the original image.
+IntermediateDownsampling=true
+
 ; If true, JPEG images are auto rotated according to EXIF image orientation tag if present.
 AutoRotateEXIF=true
 

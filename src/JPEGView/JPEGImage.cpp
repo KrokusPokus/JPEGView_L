@@ -123,6 +123,8 @@ CJPEGImage::CJPEGImage(int nWidth, int nHeight, void* pPixels, void* pEXIFData, 
 	m_pHistogramThumbnail = NULL;
 	m_pGrayImage = NULL;
 	m_pSmoothGrayImage = NULL;
+	m_pHalfSizePixels = NULL;
+	m_HalfSize = CSize(0, 0);
 	
 	m_pLUTAllChannels = NULL;
 	m_pLUTRGB = NULL;
@@ -172,6 +174,7 @@ CJPEGImage::CJPEGImage(int nWidth, int nHeight, void* pPixels, void* pEXIFData, 
 CJPEGImage::~CJPEGImage(void) {
 	delete[] m_pOrigPixels;
 	m_pOrigPixels = NULL;
+	FreeHalfSizePixels();
 	delete[] m_pDIBPixels;
 	m_pDIBPixels = NULL;
 	delete[] m_pDIBPixelsLUTProcessed;
@@ -588,23 +591,36 @@ void* CJPEGImage::Resample(CSize fullTargetSize, CSize clippingSize, CPoint targ
 
 	if (fullTargetSize.cx > 65535 || fullTargetSize.cy > 65535) return NULL;
 
-	if (GetProcessingFlag(eProcFlags, PFLAG_HighQualityResampling) && 
+	if (GetProcessingFlag(eProcFlags, PFLAG_HighQualityResampling) &&
 		!(eResizeType == NoResize) && (filter>0)) {
+		// For strong downscaling, the cached half size image is used as source (nearly the same result, much faster)
+		CSize sourceSize(m_nOrigWidth, m_nOrigHeight);
+		const void* pSourcePixels = m_pOrigPixels;
+		int nSourceChannels = m_nOriginalChannels;
+		if (eResizeType == DownSample) {
+			const void* pHalfSize = GetHalfSizeSource(fullTargetSize);
+			if (pHalfSize != NULL) {
+				sourceSize = m_HalfSize;
+				pSourcePixels = pHalfSize;
+				nSourceChannels = 4;
+			}
+		}
+
 		if (SupportsSIMD(cpu)) {
 			if (eResizeType == UpSample) {
-				return CBasicProcessing::SampleUp_HQ_SIMD(fullTargetSize, targetOffset, clippingSize, 
+				return CBasicProcessing::SampleUp_HQ_SIMD(fullTargetSize, targetOffset, clippingSize,
 					CSize(m_nOrigWidth, m_nOrigHeight), m_pOrigPixels, m_nOriginalChannels, ToSIMDArchitecture(cpu));
 			} else {
 				return CBasicProcessing::SampleDown_HQ_SIMD(fullTargetSize, targetOffset, clippingSize,
-					CSize(m_nOrigWidth, m_nOrigHeight), m_pOrigPixels, m_nOriginalChannels, dSharpen, filter, ToSIMDArchitecture(cpu));
+					sourceSize, pSourcePixels, nSourceChannels, dSharpen, filter, ToSIMDArchitecture(cpu));
 			}
 		} else {
 			if (eResizeType == UpSample) {
-				return CBasicProcessing::SampleUp_HQ(fullTargetSize, targetOffset, clippingSize, 
+				return CBasicProcessing::SampleUp_HQ(fullTargetSize, targetOffset, clippingSize,
 					CSize(m_nOrigWidth, m_nOrigHeight), m_pOrigPixels, m_nOriginalChannels);
 			} else {
-				return CBasicProcessing::SampleDown_HQ(fullTargetSize, targetOffset, clippingSize, 
-					CSize(m_nOrigWidth, m_nOrigHeight), m_pOrigPixels, m_nOriginalChannels, dSharpen, filter);
+				return CBasicProcessing::SampleDown_HQ(fullTargetSize, targetOffset, clippingSize,
+					sourceSize, pSourcePixels, nSourceChannels, dSharpen, filter);
 			}
 		}
 	} else {
@@ -617,6 +633,41 @@ void* CJPEGImage::Resample(CSize fullTargetSize, CSize clippingSize, CPoint targ
 				CSize(m_nOrigWidth, m_nOrigHeight), m_pOrigPixels, m_nOriginalChannels);
 		}
 	}
+}
+
+const void* CJPEGImage::GetHalfSizeSource(CSize fullTargetSize) {
+	if (!CSettingsProvider::This().IntermediateDownsampling() || m_pOrigPixels == NULL) {
+		FreeHalfSizePixels(); // release the memory when switched off
+		return NULL;
+	}
+
+	// Only use the intermediate image if the remaining reduction is at least by factor 2 in both directions
+	// (target <= 1/4 of the original). Below, the Catmull-Rom pre-filter of the intermediate image is not
+	// transparent anymore in the pass band of the target and resampling from the original is better.
+	CSize halfSize((m_nOrigWidth + 1) / 2, (m_nOrigHeight + 1) / 2);
+	if (fullTargetSize.cx * 2 > halfSize.cx || fullTargetSize.cy * 2 > halfSize.cy) {
+		return NULL;
+	}
+
+	if (m_pHalfSizePixels != NULL && m_HalfSize == halfSize) {
+		return m_pHalfSizePixels;
+	}
+	FreeHalfSizePixels();
+
+	// Catmull-Rom has a flat pass band and good stop band for 2:1 and only tiny negative lobes (about 5% overshoot,
+	// clipped when stored as 8 bit). The user selected filter is applied in the second step only.
+	Helpers::CPUType cpu = CSettingsProvider::This().AlgorithmImplementation();
+	CSize origSize(m_nOrigWidth, m_nOrigHeight);
+	m_pHalfSizePixels = SupportsSIMD(cpu)
+		? CBasicProcessing::SampleDown_HQ_SIMD(halfSize, CPoint(0, 0), halfSize, origSize, m_pOrigPixels,
+			m_nOriginalChannels, 0.0, Filter_Downsampling_Catrom, ToSIMDArchitecture(cpu))
+		: CBasicProcessing::SampleDown_HQ(halfSize, CPoint(0, 0), halfSize, origSize, m_pOrigPixels,
+			m_nOriginalChannels, 0.0, Filter_Downsampling_Catrom);
+	if (m_pHalfSizePixels == NULL) {
+		return NULL; // e.g. out of memory: fall back to the original pixels
+	}
+	m_HalfSize = halfSize;
+	return m_pHalfSizePixels;
 }
 
 void* CJPEGImage::InternalResize(void* pixels, int channels, EResizeFilter filter, CSize targetSize, CSize sourceSize) {
@@ -1452,6 +1503,7 @@ void CJPEGImage::InvalidateAllCachedPixelData() {
 	m_pThumbnail = NULL;
 	delete m_pHistogramThumbnail;
 	m_pHistogramThumbnail = NULL;
+	FreeHalfSizePixels(); // derived from the original pixels
 	m_ClippingSize = CSize(0, 0);
 }
 

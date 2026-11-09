@@ -204,7 +204,7 @@ public:
 	void* OriginalPixels() { return  m_pOrigPixels; }
 	const void* OriginalPixels() const { return m_pOrigPixels; }
 	// remove original pixels from class - OriginalPixels() will return NULL afterwards
-	void DetachOriginalPixels() { m_pOrigPixels = NULL; }
+	void DetachOriginalPixels() { m_pOrigPixels = NULL; FreeHalfSizePixels(); }
 
 	// returns the number of channels in the OriginalPixels (3 or 4, corresponding to 24 bpp and 32 bpp)
 	int OriginalChannels() const { return m_nOriginalChannels; }
@@ -394,6 +394,12 @@ private:
 	void* m_pDIBPixels;
 	void* m_pLastDIB; // one of the pointers above
 
+	// Half size version of the original pixels (32 bpp BGRA, size m_HalfSize), downsampled with Catmull-Rom.
+	// Used as source for strong downscaling instead of the original pixels (see GetHalfSizeSource()).
+	// Created on demand, NULL if not available.
+	void* m_pHalfSizePixels;
+	CSize m_HalfSize;
+
 	// Cached gray and smoothed gray image for unsharp masking
 	int16* m_pGrayImage;
 	int16* m_pSmoothGrayImage;
@@ -501,6 +507,12 @@ private:
 	static CSize GetSizeAfterFreeRotation(const CSize& sourceSize, double dRotation, bool bAutoCrop, bool bKeepAspectRatio, CPoint & offset);
 
 	// Get if from source to target size it is down or upsampling
+	// Returns the half size intermediate image if it shall be used as downsampling source for the given target size,
+	// creating it if needed. Returns NULL if the original pixels shall be used.
+	const void* GetHalfSizeSource(CSize fullTargetSize);
+
+	void FreeHalfSizePixels() { delete[] static_cast<uint8*>(m_pHalfSizePixels); m_pHalfSizePixels = NULL; m_HalfSize = CSize(0, 0); }
+
 	EResizeType GetResizeType(CSize targetSize, CSize sourceSize);
 
 	// Gets the rotation from EXIF if available

@@ -107,7 +107,7 @@ public:
 				CSize(ClippedTargetSize.cx, sizeY),
 				SourceSize, SourcePixels,
 				Channels, SIMD == CBasicProcessing::SSE,
-				(uint8*)TargetPixels + ClippedTargetSize.cx * 4 * offsetY);
+				(uint8*)TargetPixels + (size_t)ClippedTargetSize.cx * 4 * offsetY);
 		} else
 			return NULL != SampleDown_HQ_MMX_SSE_Core(FullTargetSize,
 				CPoint(FullTargetOffset.x, FullTargetOffset.y + offsetY),
@@ -115,7 +115,7 @@ public:
 				SourceSize, SourcePixels,
 				Channels, Sharpen,
 				Filter, SIMD == CBasicProcessing::SSE,
-				(uint8*)TargetPixels + ClippedTargetSize.cx * 4 * offsetY);
+				(uint8*)TargetPixels + (size_t)ClippedTargetSize.cx * 4 * offsetY);
 	}
 
 	int Channels;
@@ -1931,8 +1931,8 @@ static void RotateBlock(const float* pSrc, float* pTgt, int nWidth, int nHeight,
 	int nIncTargetChannel = nPaddedHeight;
 	int nIncTargetLine = nIncTargetChannel * 3;
 	int nIncSource = nPaddedWidth * 3 - nBlockWidth * 3;
-	const float* pSource = pSrc + nPaddedWidth * 3 * nYStart + nXStart * 3;
-	float* pTarget = pTgt + nPaddedHeight * 3 * nXStart + nYStart;
+	const float* pSource = pSrc + (size_t)nPaddedWidth * 3 * nYStart + nXStart * 3;
+	float* pTarget = pTgt + (size_t)nPaddedHeight * 3 * nXStart + nYStart;
 	float* pStartYPtr = pTarget;
 	int nLoopX = Helpers::DoPadding(nBlockWidth, simdPixelsPerRegister) / simdPixelsPerRegister;
 	int nTargetIncrement = ((simdPixelsPerRegister - 1) * nIncTargetLine) + nIncTargetChannel;
@@ -1960,8 +1960,8 @@ static void RotateBlockToDIB(const float* pSrc, uint8* pTgt, int nWidth, int nHe
 	int nPaddedHeight = Helpers::DoPadding(nHeight, simdPixelsPerRegister);
 	int nIncTargetLine = nHeight * 4;
 	int nIncSource = nPaddedWidth * 3 - nBlockWidth * 3;
-	const float* pSource = pSrc + nPaddedWidth * 3 * nYStart + nXStart * 3;
-	uint8* pTarget = pTgt + nHeight * 4 * nXStart + nYStart * 4;
+	const float* pSource = pSrc + (size_t)nPaddedWidth * 3 * nYStart + nXStart * 3;
+	uint8* pTarget = pTgt + (size_t)nHeight * 4 * nXStart + nYStart * 4;
 	uint8* pStartYPtr = pTarget;
 	int nLoopX = Helpers::DoPadding(nBlockWidth, simdPixelsPerRegister) / simdPixelsPerRegister;
 	int nTargetIncrement = simdPixelsPerRegister * nIncTargetLine - 2;
@@ -2017,7 +2017,7 @@ static void* RotateToDIB(const CXMMImage* pSourceImg, int simdPixelsPerRegister,
 
 	const float* pSource = (const float*) pSourceImg->AlignedPtr();
 	if (pTarget == NULL) {
-		pTarget = new(std::nothrow) uint8[pSourceImg->GetHeight() * 4 * Helpers::DoPadding(pSourceImg->GetWidth(), simdPixelsPerRegister)];
+		pTarget = new(std::nothrow) uint8[(size_t)pSourceImg->GetHeight() * 4 * Helpers::DoPadding(pSourceImg->GetWidth(), simdPixelsPerRegister)];
 		if (pTarget == NULL) return NULL;
 	}
 
@@ -3008,7 +3008,7 @@ void* CBasicProcessing::SampleDown_HQ_SIMD(CSize fullTargetSize, CPoint fullTarg
 		return NULL;
 	}
 	int padding = (simd == AVX2) ? 8 : 4;
-	uint8* pTarget = new(std::nothrow) uint8[clippedTargetSize.cx * 4 * Helpers::DoPadding(clippedTargetSize.cy, padding)];
+	uint8* pTarget = new(std::nothrow) uint8[(size_t)clippedTargetSize.cx * 4 * Helpers::DoPadding(clippedTargetSize.cy, padding)];
 	if (pTarget == NULL) return NULL;
 	CProcessingThreadPool& threadPool = CProcessingThreadPool::This();
 	CRequestUpDownSampling request(pPixels, sourceSize,
@@ -3025,7 +3025,7 @@ void* CBasicProcessing::SampleUp_HQ_SIMD(CSize fullTargetSize, CPoint fullTarget
 		return NULL;
 	}
 	int padding = (simd == AVX2) ? 8 : 4;
-	uint8* pTarget = new(std::nothrow) uint8[clippedTargetSize.cx * 4 * Helpers::DoPadding(clippedTargetSize.cy, padding)];
+	uint8* pTarget = new(std::nothrow) uint8[(size_t)clippedTargetSize.cx * 4 * Helpers::DoPadding(clippedTargetSize.cy, padding)];
 	if (pTarget == NULL) return NULL;
 	CProcessingThreadPool& threadPool = CProcessingThreadPool::This();
 	CRequestUpDownSampling request(pPixels, sourceSize,
