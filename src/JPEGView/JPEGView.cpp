@@ -7,6 +7,9 @@
 #include "MainDlg.h"
 #include "SettingsProvider.h"
 
+// Dark mode support, implemented in DarkMode.cpp
+namespace DarkMode { void Initialize(); }
+
 #ifdef DEBUG
 #include <dbghelp.h>
 #endif
@@ -209,6 +212,9 @@ int WINAPI _tWinMain(HINSTANCE hInstance, HINSTANCE /*hPrevInstance*/, LPTSTR lp
 	_tsetlocale(LC_NUMERIC, _T("C"));
 
 	srand(::GetTickCount());
+
+	// Install the dark mode hook and switch Windows to dark mode before any window is created
+	DarkMode::Initialize();
 
 	// this resolves ATL window thunking problem when Microsoft Layer for Unicode (MSLU) is used
 	::DefWindowProc(NULL, 0, 0, 0L);
