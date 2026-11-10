@@ -155,6 +155,7 @@ JPEGView is currently translated/localized to 28 languages:
 
 | INI Option | Language |
 | ---------- | -------- |
+| ar | Arabic (العربية) |
 | be | Belarusian |
 | bg | Bulgarian |
 | cs | Czech |
