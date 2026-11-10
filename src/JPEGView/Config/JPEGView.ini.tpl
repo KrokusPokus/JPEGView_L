@@ -135,6 +135,10 @@ AllowFileDeletion=true
 ;  'zh-tw' Chinese, Traditional (Taiwan)
 Language=auto
 
+; Enable dark mode for JPEGView's title bar and dialogs [true/false, Default: true]
+; Set to false to use the standard Windows (light) window colors.
+DarkMode=true
+
 ; Background color, R G B, each component must be in [0..255], e.g. "128 128 128" for a middle gray
 BackgroundColor=0 0 0
 
