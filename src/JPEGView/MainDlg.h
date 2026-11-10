@@ -346,7 +346,7 @@ private:
 	bool m_bSelectZoom;  // keeps track of select-to-zoom mode when CTRL+SHIFT+LMouse
 
 	void ExploreFile();
-	bool OpenFileWithDialog(bool bFullScreen, bool bAfterStartup);
+	bool OpenFileWithDialog(bool bAfterStartup);
 	void OpenFile(LPCTSTR sFileName, bool bAfterStartup);
 	bool SaveImage(bool bFullSize);
 	bool SaveImageNoPrompt(LPCTSTR sFileName, bool bFullSize);

@@ -5,6 +5,7 @@
 #include "SettingsProvider.h"
 #include "HelpersGUI.h"
 #include "KeyMap.h"
+#include "FileOpenDialog.h"
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Class implementation
@@ -174,7 +175,7 @@ LRESULT CManageOpenWithDlg::OnEditEntry(WORD /*wNotifyCode*/, WORD wID, HWND /*h
 }
 
 LRESULT CManageOpenWithDlg::OnBrowse(WORD /*wNotifyCode*/, WORD wID, HWND /*hWndCtl*/, BOOL& /*bHandled*/) {
-	CFileDialog fileDlg(TRUE, _T(".exe"), _T(""), 
+	CSystemFileDialog fileDlg(true, _T(".exe"), _T(""), 
 		OFN_EXPLORER | OFN_ENABLESIZING | OFN_HIDEREADONLY | OFN_DONTADDTORECENT,
 		Helpers::CReplacePipe(CString(CNLS::GetString(_T("Applications"))) + _T(" (*.exe)|*.exe|") +
 		CNLS::GetString(_T("All Files")) + _T("|*.*|")), m_hWnd);

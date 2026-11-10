@@ -18,4 +18,8 @@ namespace DarkMode {
 	// of the main window. The main window paints its client area itself, so only its title bar and menus are themed.
 	void RegisterMainWindow(HWND hWnd);
 
+	// Marks a dialog that paints its complete background itself (e.g. the help screen). Dark mode then only themes its
+	// title bar, scroll bars and controls, but does not erase the background. Must be called from WM_INITDIALOG.
+	void SetSelfPainting(HWND hWnd);
+
 }

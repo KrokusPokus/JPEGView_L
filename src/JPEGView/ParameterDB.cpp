@@ -4,6 +4,7 @@
 #include "HistogramCorr.h"
 #include "Helpers.h"
 #include "NLS.h"
+#include "FileOpenDialog.h"
 #include <math.h>
 #include <shlobj.h>
 
@@ -441,7 +442,7 @@ bool CParameterDB::MergeParamDB(LPCTSTR sParamDBName) {
 }
 
 void CParameterDB::BackupParamDB(HWND hWnd) {
-	CFileDialog fileDlg(FALSE, _T(".db"), _T("ParamDBBackup.db"), 
+	CSystemFileDialog fileDlg(false, _T(".db"), _T("ParamDBBackup.db"), 
 			OFN_EXPLORER | OFN_ENABLESIZING | OFN_HIDEREADONLY | OFN_NOREADONLYRETURN,
 			Helpers::CReplacePipe(CString(_T("Param DB (*.db)|*.db|")) +
 			CNLS::GetString(_T("All Files")) + _T("|*.*|")), hWnd);
@@ -461,7 +462,7 @@ void CParameterDB::BackupParamDB(HWND hWnd) {
 }
 
 void CParameterDB::RestoreParamDB(HWND hWnd) {
-	CFileDialog fileDlg(TRUE, _T(".db"), _T("ParamDBBackup.db"), 
+	CSystemFileDialog fileDlg(true, _T(".db"), _T("ParamDBBackup.db"), 
 		OFN_EXPLORER | OFN_ENABLESIZING | OFN_HIDEREADONLY,
 		Helpers::CReplacePipe(CString(_T("Param DB (*.db)|*.db|")) +
 		CNLS::GetString(_T("All Files")) + _T("|*.*|")), hWnd);

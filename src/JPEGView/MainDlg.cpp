@@ -549,7 +549,7 @@ LRESULT CMainDlg::OnPaint(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, B
 			if (CSettingsProvider::This().SkipFileOpenDialogOnStartup())
 				m_isBeforeFileSelected = false;
 			else {
-				OpenFileWithDialog(true, true);
+				OpenFileWithDialog(true);
 				Invalidate(TRUE);
 			}
 		}
@@ -1890,7 +1890,7 @@ void CMainDlg::ExecuteCommand(int nCommand) {
 			this->ShowWindow(SW_MINIMIZE);
 			break;
 		case IDM_OPEN:
-			OpenFileWithDialog(false, false);
+			OpenFileWithDialog(false);
 			break;
 		case IDM_EXPLORE:
 			if (m_pCurrentImage != NULL && m_pCurrentImage->IsClipboardImage()) {
@@ -3227,11 +3227,11 @@ void CMainDlg::ExploreFile() {
 	}
 }
 
-bool CMainDlg::OpenFileWithDialog(bool bFullScreen, bool bAfterStartup) {
+bool CMainDlg::OpenFileWithDialog(bool bAfterStartup) {
 	StopMovieMode();
 	StopAnimation();
 	MouseOn();
-	CFileOpenDialog dlgOpen(this->m_hWnd, m_pFileList->Current(), CFileList::GetSupportedFileEndings(), bFullScreen);
+	CFileOpenDialog dlgOpen(this->m_hWnd, m_pFileList->Current(), CFileList::GetSupportedFileEndings());
 	if (IDOK == dlgOpen.DoModal(this->m_hWnd)) {
 		m_isBeforeFileSelected = false;
 		OpenFile(dlgOpen.m_szFileName, bAfterStartup);
@@ -3331,7 +3331,7 @@ bool CMainDlg::SaveImage(bool bFullSize) {
 		sExtension = CSettingsProvider::This().DefaultSaveFormat();
 	}
 	// NOTE: this list is used in the "Edit with" registry entry in JPEGView.Setup, update that when this updates
-	CFileDialog fileDlg(FALSE, sExtension, sCurrentFile, 
+	CSystemFileDialog fileDlg(false, sExtension, sCurrentFile, 
 			OFN_EXPLORER | OFN_ENABLESIZING | OFN_HIDEREADONLY | OFN_NOREADONLYRETURN | OFN_OVERWRITEPROMPT,
 			Helpers::CReplacePipe(CString(_T("JPEG (*.jpg;*.jpeg)|*.jpg;*.jpeg|BMP (*.bmp)|*.bmp|PNG (*.png)|*.png|TIFF (*.tiff;*.tif)|*.tiff;*.tif|WEBP (*.webp)|*.webp|WEBP lossless (*.webp)|*.webp|QOI (*.qoi)|*.qoi|")) +
 			CNLS::GetString(_T("All Files")) + _T("|*.*|")), m_hWnd);

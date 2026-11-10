@@ -4,6 +4,7 @@
 #include "MainDlg.h"
 #include "HelpDisplayCtl.h"
 #include "MultiMonitorSupport.h"
+#include "DarkMode.h"
 
 ///////////////////////////////////////////////////////////////////////////////////
 // Class implementation
@@ -21,6 +22,9 @@ LRESULT CHelpDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	HICON hIconSmall = (HICON)::LoadImage(_Module.GetResourceInstance(), MAKEINTRESOURCE(IDR_MAINFRAME),
 		IMAGE_ICON, ::GetSystemMetrics(SM_CXSMICON), ::GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR | LR_SHARED);
 	SetIcon(hIconSmall, FALSE);
+
+	// The help screen paints its background itself, dark mode must not erase it (would flicker)
+	DarkMode::SetSelfPainting(m_hWnd);
 
 	CRect windowRect, clientRect;
 	GetWindowRect(&windowRect);

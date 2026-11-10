@@ -5,7 +5,8 @@
 //
 // Dark mode is applied to the title bar and menus of the main window and to the title bar and the controls of JPEGView's own
 // dialogs. The main window paints its client area itself and is not touched. The common file dialogs (open/save) are drawn by
-// Windows and are left alone. Windows 10 version 1903 or later is required, on older Windows versions nothing happens.
+// Windows and are left alone, they follow the Windows color setting by themselves (see CSystemFileDialog).
+// Windows 10 version 1903 or later is required, on older Windows versions nothing happens.
 //
 // Microsoft only documents the dark title bar (DWMWA_USE_IMMERSIVE_DARK_MODE) and the use of the standard color messages
 // (WM_CTLCOLOR*, LVM_SETBKCOLOR, ...). There is no documented way to make the standard controls (buttons, combo boxes, scroll bars)
@@ -42,8 +43,10 @@ namespace {
 
 	const TCHAR* const DARK_MODE_APPLIED_PROPERTY = _T("JPEGViewDarkModeApplied");
 	const TCHAR* const DARK_MODE_REFRESH_PENDING_PROPERTY = _T("JPEGViewDarkModeRefreshPending");
+	const TCHAR* const SELF_PAINTING_PROPERTY = _T("JPEGViewDarkModeSelfPainting");
 	const UINT_PTR DIALOG_SUBCLASS_ID = 1;
 	const UINT_PTR MAIN_WINDOW_SUBCLASS_ID = 2;
+	const UINT_PTR LIST_VIEW_SUBCLASS_ID = 3;
 
 	// Values of the PreferredAppMode parameter of SetPreferredAppMode
 	const int PREFERRED_APP_MODE_ALLOW_DARK = 1;	// the standard controls and menus follow the Windows color setting
@@ -154,8 +157,8 @@ namespace {
 		return data.bFound;
 	}
 
-	// The open/save dialogs are drawn by the Windows shell and can not be themed with the means used here
-	// (they stay light or end up half themed), so they are left completely alone.
+	// The open/save dialogs are drawn by the Windows shell and follow the Windows color setting by themselves.
+	// Theming them with the means used here would break them, so they are left completely alone.
 	bool IsCommonFileDialog(HWND hWnd) {
 		if (::GetDlgItem(hWnd, edt1) != NULL || ::GetDlgItem(hWnd, cmb13) != NULL) {
 			return true;
@@ -201,24 +204,69 @@ namespace {
 		::SendMessage(hWnd, EM_SETCHARFORMAT, SCF_DEFAULT, (LPARAM)&charFormat);
 	}
 
+	bool IsClass(HWND hWnd, LPCTSTR sClassName) {
+		TCHAR sName[64];
+		return ::GetClassName(hWnd, sName, ARRAYSIZE(sName)) > 0 && _tcsicmp(sName, sClassName) == 0;
+	}
+
+	// Subclass of list views: the header control sends its custom draw notifications to the list view (its parent),
+	// the header text color can only be set there. The 'ItemsView' theme of the header ignores the text color otherwise.
+	LRESULT CALLBACK ListViewSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
+		UINT_PTR /*uIdSubclass*/, DWORD_PTR /*dwRefData*/) {
+		switch (uMsg) {
+		case WM_NOTIFY: {
+			LPNMHDR pNMHdr = (LPNMHDR)lParam;
+			if (pNMHdr->code == NM_CUSTOMDRAW && pNMHdr->hwndFrom == ListView_GetHeader(hWnd)) {
+				LPNMCUSTOMDRAW pCustomDraw = (LPNMCUSTOMDRAW)lParam;
+				if (pCustomDraw->dwDrawStage == CDDS_PREPAINT) {
+					return CDRF_NOTIFYITEMDRAW;
+				}
+				if (pCustomDraw->dwDrawStage == CDDS_ITEMPREPAINT) {
+					::SetTextColor(pCustomDraw->hdc, DARK_TEXT);
+					return CDRF_DODEFAULT;
+				}
+			}
+			break;
+		}
+		case WM_NCDESTROY:
+			::RemoveWindowSubclass(hWnd, ListViewSubclassProc, LIST_VIEW_SUBCLASS_ID);
+			break;
+		default:
+			break;
+		}
+		return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+	}
+
 	BOOL CALLBACK ApplyDarkModeToChildProc(HWND hWnd, LPARAM /*lParam*/) {
 		AllowDarkModeForWindow(hWnd);
-		if (s_pSetWindowTheme != NULL) {
-			s_pSetWindowTheme(hWnd, L"DarkMode_Explorer", NULL);
-		}
 
 		TCHAR sClassName[64];
-		if (::GetClassName(hWnd, sClassName, ARRAYSIZE(sClassName)) > 0) {
-			if (_tcsicmp(sClassName, _T("SysListView32")) == 0) {
-				::SendMessage(hWnd, LVM_SETBKCOLOR, 0, (LPARAM)DARK_EDIT_BACKGROUND);
-				::SendMessage(hWnd, LVM_SETTEXTBKCOLOR, 0, (LPARAM)DARK_EDIT_BACKGROUND);
-				::SendMessage(hWnd, LVM_SETTEXTCOLOR, 0, (LPARAM)DARK_TEXT);
-			} else if (_tcsicmp(sClassName, _T("SysTreeView32")) == 0) {
-				::SendMessage(hWnd, TVM_SETBKCOLOR, 0, (LPARAM)DARK_EDIT_BACKGROUND);
-				::SendMessage(hWnd, TVM_SETTEXTCOLOR, 0, (LPARAM)DARK_TEXT);
-			} else if (_tcsnicmp(sClassName, _T("RichEdit"), 8) == 0) {
-				ApplyDarkModeToRichEdit(hWnd);
-			}
+		if (::GetClassName(hWnd, sClassName, ARRAYSIZE(sClassName)) == 0) {
+			return TRUE;
+		}
+
+		// Edit fields and combo boxes are only dark with the theme of the common file dialog ('CFD'), the header of
+		// list views only with the 'ItemsView' theme. All other controls use the theme of Windows Explorer.
+		LPCWSTR sTheme = L"DarkMode_Explorer";
+		if (_tcsicmp(sClassName, _T("Edit")) == 0 || _tcsicmp(sClassName, _T("ComboBox")) == 0) {
+			sTheme = L"DarkMode_CFD";
+		} else if (_tcsicmp(sClassName, _T("SysHeader32")) == 0) {
+			sTheme = L"ItemsView";
+		}
+		if (s_pSetWindowTheme != NULL) {
+			s_pSetWindowTheme(hWnd, sTheme, NULL);
+		}
+
+		if (_tcsicmp(sClassName, _T("SysListView32")) == 0) {
+			::SendMessage(hWnd, LVM_SETBKCOLOR, 0, (LPARAM)DARK_EDIT_BACKGROUND);
+			::SendMessage(hWnd, LVM_SETTEXTBKCOLOR, 0, (LPARAM)DARK_EDIT_BACKGROUND);
+			::SendMessage(hWnd, LVM_SETTEXTCOLOR, 0, (LPARAM)DARK_TEXT);
+			::SetWindowSubclass(hWnd, ListViewSubclassProc, LIST_VIEW_SUBCLASS_ID, 0);
+		} else if (_tcsicmp(sClassName, _T("SysTreeView32")) == 0) {
+			::SendMessage(hWnd, TVM_SETBKCOLOR, 0, (LPARAM)DARK_EDIT_BACKGROUND);
+			::SendMessage(hWnd, TVM_SETTEXTCOLOR, 0, (LPARAM)DARK_TEXT);
+		} else if (_tcsnicmp(sClassName, _T("RichEdit"), 8) == 0) {
+			ApplyDarkModeToRichEdit(hWnd);
 		}
 		return TRUE;
 	}
@@ -249,6 +297,9 @@ namespace {
 
 		switch (uMsg) {
 		case WM_ERASEBKGND: {
+			if (::GetProp(hWnd, SELF_PAINTING_PROPERTY) != NULL) {
+				break; // the dialog paints its background itself, leave it to the dialog
+			}
 			HDC hDC = (HDC)wParam;
 			RECT rect;
 			::GetClientRect(hWnd, &rect);
@@ -262,7 +313,9 @@ namespace {
 			HDC hDC = (HDC)wParam;
 			::SetTextColor(hDC, DARK_TEXT);
 			::SetBkColor(hDC, DARK_BACKGROUND);
-			::SetBkMode(hDC, TRANSPARENT);
+			// Read-only and disabled edit fields also send WM_CTLCOLORSTATIC. They do not erase their background
+			// before drawing the text, with a transparent background a changed text would be drawn over the old one.
+			::SetBkMode(hDC, IsClass((HWND)lParam, _T("Edit")) ? OPAQUE : TRANSPARENT);
 			return (LRESULT)s_hBackgroundBrush;
 		}
 		case WM_CTLCOLOREDIT:
@@ -286,6 +339,7 @@ namespace {
 		case WM_NCDESTROY:
 			::RemoveProp(hWnd, DARK_MODE_APPLIED_PROPERTY);
 			::RemoveProp(hWnd, DARK_MODE_REFRESH_PENDING_PROPERTY);
+			::RemoveProp(hWnd, SELF_PAINTING_PROPERTY);
 			::RemoveWindowSubclass(hWnd, DialogSubclassProc, DIALOG_SUBCLASS_ID);
 			break;
 		default:
@@ -408,6 +462,14 @@ namespace {
 		AllowDarkModeForWindow(hWnd);
 		ApplyTitleBar(hWnd, IsDarkModeActive());
 		::SetWindowSubclass(hWnd, MainWindowSubclassProc, MAIN_WINDOW_SUBCLASS_ID, 0);
+	}
+
+	void SetSelfPainting(HWND hWnd) {
+		// Same condition as in CbtHookProc, so the dialog gets subclassed and the property is removed again on WM_NCDESTROY
+		if (!s_bEnabled || hWnd == NULL || !IsDarkModeActive()) {
+			return;
+		}
+		::SetProp(hWnd, SELF_PAINTING_PROPERTY, (HANDLE)1);
 	}
 
 } // namespace DarkMode

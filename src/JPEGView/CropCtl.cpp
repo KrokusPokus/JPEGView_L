@@ -12,6 +12,7 @@
 #include "SettingsProvider.h"
 #include "NLS.h"
 #include "FileList.h"
+#include "FileOpenDialog.h"
 #include <math.h>
 
 // for VS, __cplusplus is always 199711L, must read _MSVC_LANG instead https://learn.microsoft.com/en-us/cpp/preprocessor/predefined-macros?view=msvc-170
@@ -585,7 +586,7 @@ void CCropCtl::CropLossless() {
 
 	CString sCurrentFile = m_pMainDlg->CurrentFileName(false);
 
-	CFileDialog fileDlg(FALSE, _T(".jpg"), sCurrentFile, 
+	CSystemFileDialog fileDlg(false, _T(".jpg"), sCurrentFile, 
 			OFN_EXPLORER | OFN_ENABLESIZING | OFN_HIDEREADONLY | OFN_NOREADONLYRETURN | OFN_OVERWRITEPROMPT,
 			Helpers::CReplacePipe(CString(_T("JPEG (*.jpg;*.jpeg)|*.jpg;*.jpeg|")) +
 			CNLS::GetString(_T("All Files")) + _T("|*.*|")), m_pMainDlg->GetHWND());

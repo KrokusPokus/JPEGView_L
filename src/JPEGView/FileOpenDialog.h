@@ -1,24 +1,35 @@
 #pragma once
 
-#define MYWM_POSTINIT WM_USER+1
+#include <vector>
 
-class CFileOpenDialog : public CFileDialog
+// Open/save file dialog without hook procedure and without dialog template.
+// GetOpenFileName()/GetSaveFileName() show the modern (Vista style) file dialog only in this case, the old
+// Explorer style dialog used before (WTL CFileDialog, always installs a hook) does not support dark mode.
+// The interface (m_ofn, m_szFileName, DoModal) is the same as the one of WTL CFileDialog.
+class CSystemFileDialog
 {
 public:
-	// The file extensions must be separated by pipe (|)
-	CFileOpenDialog(HWND parentWindow, LPCTSTR sInitialFileName, LPCTSTR sFileEndings, bool bFullScreen);
+	// The filter is separated by '\0' and terminated by a double '\0' (use Helpers::CReplacePipe)
+	CSystemFileDialog(bool bOpenFileDialog, LPCTSTR sDefaultExtension, LPCTSTR sFileName, DWORD nFlags,
+		LPCTSTR sFilter, HWND hWndParent);
 
-	BEGIN_MSG_MAP(CFileOpenDialog)
-		MESSAGE_HANDLER(WM_INITDIALOG, OnInitDialog)
-		MESSAGE_HANDLER(MYWM_POSTINIT, OnPostInitDialog)
-	END_MSG_MAP()
+	// Returns IDOK or IDCANCEL
+	INT_PTR DoModal(HWND hWndParent);
 
-	LRESULT OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
-	LRESULT OnPostInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/);
+	OPENFILENAME m_ofn;
+	TCHAR m_szFileName[MAX_PATH];
+	TCHAR m_szFileTitle[MAX_PATH];
 
 private:
-	void SizeDialog();
+	bool m_bOpenFileDialog;
+	CString m_sDefaultExtension;
+	std::vector<TCHAR> m_filter;
+};
 
-	bool m_bFullScreen;
-	static bool m_bSized;
+// The JPEGView 'Open image' dialog
+class CFileOpenDialog : public CSystemFileDialog
+{
+public:
+	// The file extensions must be separated by semicolon
+	CFileOpenDialog(HWND parentWindow, LPCTSTR sInitialFileName, LPCTSTR sFileEndings);
 };

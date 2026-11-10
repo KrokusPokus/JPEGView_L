@@ -2,67 +2,55 @@
 #include "FileOpenDialog.h"
 #include "NLS.h"
 #include "Helpers.h"
-#include "SettingsProvider.h"
-#include "MultiMonitorSupport.h"
-#include "dlgs.h"
 
-bool CFileOpenDialog::m_bSized = false;
+CSystemFileDialog::CSystemFileDialog(bool bOpenFileDialog, LPCTSTR sDefaultExtension, LPCTSTR sFileName, DWORD nFlags,
+	LPCTSTR sFilter, HWND hWndParent) {
+	m_bOpenFileDialog = bOpenFileDialog;
 
-// Command code to set the thumbnail view on the file open dialog
-const unsigned int ODM_VIEW_THUMBS= 0x702d;
+	// The filter and the default extension are copied, the callers pass temporary strings
+	if (sFilter != NULL) {
+		LPCTSTR pEnd = sFilter;
+		while (*pEnd != 0 || *(pEnd + 1) != 0) {
+			pEnd++;
+		}
+		m_filter.assign(sFilter, pEnd + 2);
+	}
+	// The default extension must not contain the period
+	if (sDefaultExtension != NULL) {
+		m_sDefaultExtension = (sDefaultExtension[0] == _T('.')) ? sDefaultExtension + 1 : sDefaultExtension;
+	}
 
-CFileOpenDialog::CFileOpenDialog(HWND parentWindow, LPCTSTR sInitialFileName, LPCTSTR sFileEndings, bool bFullScreen) : 
-CFileDialog(TRUE, _T("jpg"), sInitialFileName, 
-			OFN_EXPLORER | OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST,
+	m_szFileName[0] = 0;
+	m_szFileTitle[0] = 0;
+	if (sFileName != NULL) {
+		_tcsncpy_s(m_szFileName, MAX_PATH, sFileName, _TRUNCATE);
+	}
+
+	memset(&m_ofn, 0, sizeof(m_ofn));
+	m_ofn.lStructSize = sizeof(m_ofn);
+	m_ofn.hwndOwner = hWndParent;
+	m_ofn.lpstrFile = m_szFileName;
+	m_ofn.nMaxFile = MAX_PATH;
+	m_ofn.lpstrFileTitle = m_szFileTitle;
+	m_ofn.nMaxFileTitle = MAX_PATH;
+	m_ofn.lpstrDefExt = m_sDefaultExtension.IsEmpty() ? NULL : (LPCTSTR)m_sDefaultExtension;
+	m_ofn.lpstrFilter = m_filter.empty() ? NULL : &m_filter[0];
+	m_ofn.nFilterIndex = 1;
+	// No OFN_ENABLEHOOK and no OFN_ENABLETEMPLATE, else Windows falls back to the old dialog
+	m_ofn.Flags = (nFlags | OFN_EXPLORER) & ~(OFN_ENABLEHOOK | OFN_ENABLETEMPLATE | OFN_ENABLETEMPLATEHANDLE);
+}
+
+INT_PTR CSystemFileDialog::DoModal(HWND hWndParent) {
+	if (hWndParent != NULL) {
+		m_ofn.hwndOwner = hWndParent;
+	}
+	BOOL bResult = m_bOpenFileDialog ? ::GetOpenFileName(&m_ofn) : ::GetSaveFileName(&m_ofn);
+	return bResult ? IDOK : IDCANCEL;
+}
+
+CFileOpenDialog::CFileOpenDialog(HWND parentWindow, LPCTSTR sInitialFileName, LPCTSTR sFileEndings) :
+CSystemFileDialog(true, _T("jpg"), sInitialFileName,
+			OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST,
 			Helpers::CReplacePipe(CString(CNLS::GetString(_T("Images"))) + _T(" (") + sFileEndings + _T(")|") + sFileEndings + _T("|") +
 			CNLS::GetString(_T("All Files")) + _T("|*.*|")), parentWindow) {
-	m_bFullScreen = bFullScreen;
 }
-
-LRESULT CFileOpenDialog::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/) {
-	if (!m_bSized) {
-		HWND wndParent = this->GetParent();
-		// moving the window out of the visible range prevents flickering
-		::SetWindowPos(wndParent, 0, 20000, 20000, 0, 0, SWP_NOACTIVATE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOREDRAW);
-	}
-
-	// Will be processed after the dialog is really initialized
-	::PostMessage(m_hWnd, MYWM_POSTINIT, 0, 0);
-
-	return 0;
-}
-
-LRESULT CFileOpenDialog::OnPostInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam*/, BOOL& /*bHandled*/) {
-	HWND wndParent = this->GetParent(); // real dialog is parent of us
-
-	SizeDialog();
-
-	// Get the shell window hosting the list view of the files and send a WM_COMMAND to it to
-	// switch to thumbnail view
-	// http://msdn.microsoft.com/msdnmag/issues/04/03/CQA/
-	HWND hLst2 = ::GetDlgItem(wndParent, lst2);
-	if (hLst2 != NULL) {
-		::SendMessage(hLst2, WM_COMMAND, ODM_VIEW_THUMBS, 0);
-	}
-	return 0;
-}
-
-void CFileOpenDialog::SizeDialog() {
-	if (!m_bSized || m_bFullScreen) {
-		HWND wndParent = this->GetParent(); // real dialog is parent of us
-
-		CSettingsProvider& sp = CSettingsProvider::This();
-		CRect monitorRect = CMultiMonitorSupport::GetMonitorRect(sp.DisplayMonitor());
-		int nScreenX = monitorRect.Width();
-		int nScreenY = monitorRect.Height();
-		int nSizeX = nScreenX*90/100;
-		int nSizeY = nScreenY*90/100;
-		::MoveWindow(wndParent, monitorRect.left + (nScreenX - nSizeX) / 2, monitorRect.top + (nScreenY - nSizeY) / 2,
-			nSizeX, nSizeY, TRUE);
-		if (!m_bFullScreen) {
-			m_bSized = true;
-		}
-	}
-}
-
-
