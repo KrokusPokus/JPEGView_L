@@ -87,3 +87,4 @@ Shift+F12               IDM_ALWAYS_ON_TOP
 7						IDM_SLIDESHOW_7
 8						IDM_SLIDESHOW_8
 9						IDM_SLIDESHOW_9
+I                       IDM_TOGGLE_INFO_OVERLAY
