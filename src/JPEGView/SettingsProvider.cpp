@@ -359,6 +359,15 @@ CSettingsProvider::CSettingsProvider(void) {
 	m_bSkipFileOpenDialogOnStartup = GetBool(_T("SkipFileOpenDialogOnStartup"), false);
 
 	m_sLanguage = GetString(_T("Language"), _T("auto"));
+
+	CString sDarkMode = GetString(_T("DarkMode"), _T("auto"));
+	if (sDarkMode.CompareNoCase(_T("true")) == 0) {
+		m_eDarkMode = DarkMode::DM_On;
+	} else if (sDarkMode.CompareNoCase(_T("false")) == 0) {
+		m_eDarkMode = DarkMode::DM_Off;
+	} else {
+		m_eDarkMode = DarkMode::DM_Auto;
+	}
 	m_sGPSMapProvider = GetString(_T("GPSMapProvider"), _T("https://opentopomap.org/#marker=15/{lat}/{lng}"));
 
 	m_sACCExclude = GetString(_T("ACCExclude"), _T("")); 

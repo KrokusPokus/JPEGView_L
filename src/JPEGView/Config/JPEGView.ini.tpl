@@ -135,9 +135,13 @@ AllowFileDeletion=true
 ;  'zh-tw' Chinese, Traditional (Taiwan)
 Language=auto
 
-; Enable dark mode for JPEGView's title bar and dialogs [true/false, Default: true]
-; Set to false to use the standard Windows (light) window colors.
-DarkMode=true
+; Dark mode for the title bar, the menus and the dialogs of JPEGView [auto/true/false, Default: auto]
+;  'auto'  Follow the Windows color setting (Settings > Personalization > Colors > Choose your default app mode)
+;  'true'  Always use dark mode
+;  'false' Never use dark mode, use the standard Windows (light) window colors
+; Requires Windows 10 version 1903 or later, the setting is ignored on older Windows versions.
+; The file open/save dialogs are drawn by Windows and may stay light. Changing this setting requires a restart.
+DarkMode=auto
 
 ; Background color, R G B, each component must be in [0..255], e.g. "128 128 128" for a middle gray
 BackgroundColor=0 0 0

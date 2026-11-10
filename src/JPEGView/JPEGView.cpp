@@ -6,9 +6,7 @@
 #include "resource.h"
 #include "MainDlg.h"
 #include "SettingsProvider.h"
-
-// Dark mode support, implemented in DarkMode.cpp
-namespace DarkMode { void Initialize(); }
+#include "DarkMode.h"
 
 #ifdef DEBUG
 #include <dbghelp.h>

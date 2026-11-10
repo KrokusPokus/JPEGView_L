@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Helpers.h"
+#include "DarkMode.h"
 #include "FileList.h"
 #include "UserCommand.h"
 #include "ProcessParams.h"
@@ -47,6 +48,7 @@ public:
 	float ScaleFactorNavPanel() { return m_fScaleFactorNavPanel; }
 	bool KeepParams() { return m_bKeepParams; }
 	LPCTSTR Language() { return m_sLanguage; }
+	DarkMode::EMode DarkModeSetting() { return m_eDarkMode; }
 	Helpers::CPUType AlgorithmImplementation() { return m_eCPUAlgorithm; }
 	int NumberOfCoresToUse() { return m_nNumCores; }
 	EFilterType DownsamplingFilter() { return m_eDownsamplingFilter; }
@@ -231,6 +233,7 @@ private:
 	float m_fScaleFactorNavPanel;
 	bool m_bKeepParams;
 	CString m_sLanguage;
+	DarkMode::EMode m_eDarkMode;
 	Helpers::CPUType m_eCPUAlgorithm;
 	int m_nNumCores;
 	EFilterType m_eDownsamplingFilter;

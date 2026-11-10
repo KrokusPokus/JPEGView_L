@@ -3,6 +3,7 @@ JPEGView Changelog
 [1.4.0.10] 2026-??
 - Fix regression: Issue #30 (Opening files in a root folder might fail)
 - Uses half size resolution source when downscaling to <25% to speed up repeated downscales.
+- Added dark mode for the title bar, the context menu and the dialogs (Windows 10 1903 or later). New INI setting DarkMode=auto/true/false, by default JPEGView follows the Windows color setting
 
 [1.4.0.9] 2026-10-31
 - Backported some improvements from mkImageViewer. AVX path should be a bit faster now

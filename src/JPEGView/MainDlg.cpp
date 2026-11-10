@@ -346,6 +346,9 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	// There is no point doing a full UpdateWindowTitle() at this point since we don't know any file path yet, so just do SetWindowText() instead
 	this->SetWindowText(_T("JPEGView"));
 
+	// The main window paints its client area itself, dark mode only affects the title bar and the menus
+	DarkMode::RegisterMainWindow(m_hWnd);
+
 	// set the scaling of the screen (DPI) compared to 96 DPI (design value)
 	CPaintDC dc(this->m_hWnd);
 	HelpersGUI::ScreenScaling = ::GetDeviceCaps(dc, LOGPIXELSX)/96.0f;

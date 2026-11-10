@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -450,6 +450,7 @@
     <ClInclude Include="CropCtl.h" />
     <ClInclude Include="CropSizeDlg.h" />
     <ClInclude Include="dcraw_mod.h" />
+    <ClInclude Include="DarkMode.h" />
     <ClInclude Include="DesktopWallpaper.h" />
     <ClInclude Include="DirectoryWatcher.h" />
     <ClInclude Include="EXIFDisplay.h" />
