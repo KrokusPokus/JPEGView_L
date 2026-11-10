@@ -2,6 +2,7 @@ JPEGView Changelog
 ******************
 [1.4.0.10] 2026-??
 - Fix regression: Issue #30 (Opening files in a root folder might fail)
+- Uses half size resolution source when downscaling to <25% to speed up repeated downscales.
 
 [1.4.0.9] 2026-10-31
 - Backported some improvements from mkImageViewer. AVX path should be a bit faster now
