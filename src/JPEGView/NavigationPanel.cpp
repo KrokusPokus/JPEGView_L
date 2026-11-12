@@ -27,11 +27,16 @@ CNavigationPanel::CNavigationPanel(HWND hWnd, INotifiyMouseCapture* pNotifyMouse
 	m_keyMap = keyMap;
 	m_pFullScreenMode = pFullScreenMode;
 
-	AddUserPaintButton(ID_btnHome, GetTooltip(keyMap, _T("Show first image in folder"), IDM_FIRST), &PaintHomeBtn);
+	bool bShowFirstLastButtons = CSettingsProvider::This().ShowNavPanelFirstLastButtons();
+	if (bShowFirstLastButtons) {
+		AddUserPaintButton(ID_btnHome, GetTooltip(keyMap, _T("Show first image in folder"), IDM_FIRST), &PaintHomeBtn);
+	}
 	AddUserPaintButton(ID_btnPrev, GetTooltip(keyMap, _T("Show previous image"), IDM_PREV), &PaintPrevBtn);
 	AddGap(ID_gap1, 4);
 	AddUserPaintButton(ID_btnNext, GetTooltip(keyMap, _T("Show next image"), IDM_NEXT), &PaintNextBtn);
-	AddUserPaintButton(ID_btnEnd, GetTooltip(keyMap, _T("Show last image in folder"), IDM_LAST), &PaintEndBtn);
+	if (bShowFirstLastButtons) {
+		AddUserPaintButton(ID_btnEnd, GetTooltip(keyMap, _T("Show last image in folder"), IDM_LAST), &PaintEndBtn);
+	}
 	AddGap(ID_gap2, 8);
 	if (CSettingsProvider::This().AllowFileDeletion()) {
 		AddUserPaintButton(ID_btnDelete, GetTooltip(keyMap, _T("Delete image file"),

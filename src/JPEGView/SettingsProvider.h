@@ -40,6 +40,7 @@ public:
 	bool ShowHistogram() { return m_bShowHistogram; }
 	bool ShowJPEGComments() { return m_bShowJPEGComments; }
 	bool ShowNavPanel() { return m_bShowNavPanel; }
+	bool ShowNavPanelFirstLastButtons() { return m_bShowNavPanelFirstLastButtons; }
 	bool ShowBottomPanel() { return m_bShowBottomPanel; }
 	bool ShowZoomNavigator() { return m_bShowZoomNavigator; }
 	bool ShowFullScreen() { return m_bShowFullScreen; }
@@ -225,6 +226,7 @@ private:
 	bool m_bShowHistogram;
 	bool m_bShowJPEGComments;
 	bool m_bShowNavPanel;
+	bool m_bShowNavPanelFirstLastButtons;
 	bool m_bShowBottomPanel;
 	bool m_bShowZoomNavigator;
 	bool m_bShowFullScreen;

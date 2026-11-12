@@ -517,6 +517,7 @@ void CSettingsProvider::ReadWriteableINISettings() {
 	m_eAutoZoomMode = GetAutoZoomMode(_T("AutoZoomMode"), Helpers::ZM_FitToScreenNoZoom);
 	m_eAutoZoomModeFullscreen = GetAutoZoomMode(_T("AutoZoomModeFullscreen"), m_eAutoZoomMode);
 	m_bShowNavPanel = GetBool(_T("ShowNavPanel"), true);
+	m_bShowNavPanelFirstLastButtons = GetBool(_T("ShowNavPanelFirstLastButtons"), true);
 
 	m_bHQRS = GetBool(_T("HighQualityResampling"), true);
 	m_bDefaultSelectionMode = GetBool(_T("DefaultSelectionMode"), true);	// [GF] Note: This values is missing from SaveSettings().
