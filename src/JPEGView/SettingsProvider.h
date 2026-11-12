@@ -40,6 +40,7 @@ public:
 	bool ShowHistogram() { return m_bShowHistogram; }
 	bool ShowJPEGComments() { return m_bShowJPEGComments; }
 	bool ShowNavPanel() { return m_bShowNavPanel; }
+	bool ShowNavPanelFirstLastButtons() { return m_bShowNavPanelFirstLastButtons; }
 	bool ShowBottomPanel() { return m_bShowBottomPanel; }
 	bool ShowZoomNavigator() { return m_bShowZoomNavigator; }
 	bool ShowFullScreen() { return m_bShowFullScreen; }
@@ -89,7 +90,7 @@ public:
 	bool CropWithoutPromptLosslessJPEG() { return m_bCropWithoutPromptLosslessJPEG; }
 	Helpers::EDeleteConfirmation DeleteConfirmation() { return m_eDeleteConfirmation; }
 	bool AllowFileDeletion() { return m_bAllowFileDeletion; }
-	bool WrapAroundFolder() { return m_bWrapAroundFolder && m_eNavigation == Helpers::NM_LoopDirectory; }
+	bool WrapAroundFolder() { return m_bWrapAroundFolder; }
 	bool ExchangeXButtons() { return m_bExchangeXButtons; }
 	bool AutoRotateEXIF() { return m_bAutoRotateEXIF; }
 	bool UseEmbeddedColorProfiles() { return m_bUseEmbeddedColorProfiles; }
@@ -225,6 +226,7 @@ private:
 	bool m_bShowHistogram;
 	bool m_bShowJPEGComments;
 	bool m_bShowNavPanel;
+	bool m_bShowNavPanelFirstLastButtons;
 	bool m_bShowBottomPanel;
 	bool m_bShowZoomNavigator;
 	bool m_bShowFullScreen;

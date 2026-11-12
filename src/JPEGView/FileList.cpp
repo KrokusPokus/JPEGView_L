@@ -396,9 +396,13 @@ CFileList* CFileList::Next() {
 				if (pNextList != this) {
 					return m_bWrapAroundFolder ? GotoFirstShown() : this; // stop here, do not wrap around
 				}
+				if (!m_bWrapAroundFolder) {
+					return this; // end of the file list, do not wrap within the folder
+				}
 			}
 			if (pNextList != this) {
-				// leave current iterator on m_iterStart and return the new list
+				// enter the next folder from its beginning, so repeated loop cycles work
+				pNextList->m_iter = pNextList->m_iterStart = pNextList->m_fileList.begin();
 				return pNextList;
 			}
 		}
@@ -407,13 +411,14 @@ CFileList* CFileList::Next() {
 		// current filelist is empty, try to go to another folder
 		CFileList* pNextList = WrapToNextImage();
 		if (pNextList != NULL) {
+			pNextList->m_iter = pNextList->m_iterStart = pNextList->m_fileList.begin();
 			return pNextList;
 		}
 	}
 	return this;
 }
 
-CFileList* CFileList::Prev() {
+CFileList* CFileList::Prev(bool bAllowWrap) {
 	m_nMarkedIndexShow = -1;
 	if (m_iter == m_iterStart) {
 		if (sm_eMode == Helpers::NM_LoopDirectory) {
@@ -426,9 +431,15 @@ CFileList* CFileList::Prev() {
 				m_iter--;
 			}
 			return this;
-		} else {
-			return WrapToPrevImage();
 		}
+		// In the folder list navigation modes m_iterStart can point to an image in
+		// the middle of the folder (the image the application was started with).
+		// The files in front of it belong to this folder and must stay reachable.
+		if (m_iter != m_fileList.begin()) {
+			m_iter--;
+			return this;
+		}
+		return WrapToPrevImage(bAllowWrap);
 	}
 	if (m_fileList.size() > 0) {
 		if (m_iter == m_fileList.begin()) {
@@ -441,15 +452,37 @@ CFileList* CFileList::Prev() {
 	return this;
 }
 
-void CFileList::First() {
+CFileList* CFileList::First() {
 	m_nMarkedIndexShow = -1;
-	m_iter = m_iterStart = m_fileList.begin();
+	CFileList* pFirst = this;
+	while (pFirst->m_prev != NULL) {
+		pFirst = pFirst->m_prev;
+	}
+	pFirst->m_nMarkedIndexShow = -1;
+	pFirst->m_iter = pFirst->m_iterStart = pFirst->m_fileList.begin();
+	return pFirst;
 }
 
-void CFileList::Last() {
+CFileList* CFileList::Last() {
 	m_nMarkedIndexShow = -1;
-	MoveIterToLast();
-	m_iterStart = m_fileList.begin();
+	CFileList* pLast = this;
+	if (sm_eMode != Helpers::NM_LoopDirectory) {
+		// The folders of the chain are created lazily. Go to the first folder
+		// of the loop and walk it to its end, so the result does not depend on
+		// how far the loop has already been traversed.
+		while (pLast->m_prev != NULL) {
+			pLast = pLast->m_prev;
+		}
+		CFileList* pNext = pLast->WrapToNextImage();
+		while (pNext != NULL) {
+			pLast = pNext;
+			pNext = pLast->WrapToNextImage();
+		}
+	}
+	pLast->m_nMarkedIndexShow = -1;
+	pLast->MoveIterToLast();
+	pLast->m_iterStart = pLast->m_fileList.begin();
+	return pLast;
 }
 
 CFileList* CFileList::AwayFromCurrent() {
@@ -521,7 +554,7 @@ LPCTSTR CFileList::PeekNextPrev(int nIndex, bool bForward, bool bToggle) {
 		std::list<CFileDesc>::iterator thisIter = m_iter;
 		LPCTSTR sFileName;
 		if (nIndex != 0) {
-			CFileList* pFL = bForward ? Next() : Prev();
+			CFileList* pFL = bForward ? Next() : Prev(false);
 			sFileName = pFL->PeekNextPrev(nIndex-1, bForward, bToggle);
 		} else {
 			sFileName = Current();
@@ -695,7 +728,8 @@ CFileList* CFileList::WrapToNextImage() {
 		// to handle the wrap around, two iterations are needed (in case the current folder is the last in the list)
 		std::list<CString>::iterator iter;
 		bool bFound = false;
-		for (int nStep = 0; nStep < 2; nStep++) {
+		const int nPasses = m_bWrapAroundFolder ? 2 : 1;
+		for (int nStep = 0; nStep < nPasses; nStep++) {
 			for (iter = dirList.begin( ); iter != dirList.end( ); iter++ ) {
 				if (iter->CompareNoCase(sThisDirTitle) == 0) {
 					bFound = true;
@@ -770,12 +804,35 @@ CFileList* CFileList::FindFileRecursively (const CString& sDirectory, const CStr
 	}
 }
 
-CFileList* CFileList::WrapToPrevImage() {
+CFileList* CFileList::WrapToPrevImage(bool bAllowWrap) {
 	// This is much easier than going to next image as we never go back to new unknown folders
 	if (m_prev != NULL) {
-		return m_prev;
+		CFileList* pPrev = m_prev;
+		pPrev->m_nMarkedIndexShow = -1;
+		// Enter the previous folder at the position that precedes this folder in the loop
+		if (pPrev->m_iterStart == pPrev->m_fileList.begin()) {
+			pPrev->MoveIterToLast();
+		} else {
+			pPrev->m_iter = pPrev->m_iterStart;
+			pPrev->m_iter--;
+		}
+		return pPrev;
 	}
-	return this;
+
+	if (!bAllowWrap || !m_bWrapAroundFolder || sm_eMode == Helpers::NM_LoopDirectory) {
+		return this;
+	}
+
+	// Start of the chain: wrap around to the last image of the last folder
+	CFileList* pLast = this;
+	CFileList* pNext = pLast->WrapToNextImage();
+	while (pNext != NULL) {
+		pLast = pNext;
+		pNext = pLast->WrapToNextImage();
+	}
+	pLast->MoveIterToLast();
+	pLast->m_iterStart = pLast->m_fileList.begin();
+	return pLast;
 }
 
 void CFileList::NextInFolder() {
@@ -788,20 +845,19 @@ void CFileList::NextInFolder() {
 }
 
 CFileList* CFileList::GotoFirstShown() {
-	if (sm_eMode == Helpers::NM_LoopDirectory)
+	if (sm_eMode == Helpers::NM_LoopDirectory) {
 		return this;
+	}
 
-	LPCTSTR thisFile, prevFile;
-	LPCTSTR firstFile = Current();
-	CFileList* pThis = this;
-	do {
-		thisFile = pThis->Current();
-		CFileList* pPrev = pThis->Prev();
-		pThis = pPrev;
-		prevFile = pThis->Current();
-	} while (thisFile != NULL && prevFile != NULL && firstFile != NULL && _tcscmp(thisFile, prevFile) != 0 && _tcscmp(prevFile, firstFile) != 0);
-
-	return pThis;
+	// Walk back to the first folder of the chain and go to its first image.
+	// Do not use Prev() here: with wrap around enabled it can cycle inside a
+	// folder instead of reaching the beginning of the chain.
+	CFileList* pFirst = this;
+	while (pFirst->m_prev != NULL) {
+		pFirst = pFirst->m_prev;
+	}
+	pFirst->m_iter = pFirst->m_iterStart = pFirst->m_fileList.begin();
+	return pFirst;
 }
 
 CFileList* CFileList::TryCreateFileList(const CString& directory, int nNewLevel) {

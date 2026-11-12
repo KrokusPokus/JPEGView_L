@@ -3577,14 +3577,14 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 			if (m_pCurrentImage && m_pCurrentImage->ContainerHasMultipleImages()) {
 				nFrameIndex = 0;
 			} else {
-				m_pFileList->First();
+				m_pFileList = m_pFileList->First();
 			}
 			break;
 		case POS_Last:
 			if (m_pCurrentImage && m_pCurrentImage->ContainerHasMultipleImages()) {
 				nFrameIndex = m_pCurrentImage->NumberOfFrames() - 1;
 			} else {
-				m_pFileList->Last();
+				m_pFileList = m_pFileList->Last();
 			}
 			break;
 		case POS_Next:
