@@ -80,11 +80,11 @@ public:
 	CFileList* Next();
 	// Move to previous file in list. The filelist object of the prev item is returned.
 	CFileList* Prev();
-	// Move to first file (according to sort order): of the current folder, or in LoopSameFolderLevel mode
-	// of the first sibling folder containing images. The filelist object of that file is returned.
+	// Move to first file (according to sort order): of the current folder, or in the LoopSameFolderLevel and
+	// LoopSubFolders modes of the first folder of the loop containing images. The filelist object of that file is returned.
 	CFileList* First();
-	// Move to last file (according to sort order): of the current folder, or in LoopSameFolderLevel mode
-	// of the last sibling folder containing images. The filelist object of that file is returned.
+	// Move to last file (according to sort order): of the current folder, or in the LoopSameFolderLevel and
+	// LoopSubFolders modes of the last folder of the loop containing images. The filelist object of that file is returned.
 	CFileList* Last();
 	// Returns if navigation wraps around from the last to the first file and vice versa in the current navigation mode
 	bool WrapsAround() const;
@@ -158,15 +158,15 @@ private:
 	bool m_bDeleteHistory;
 	bool m_bIsSlideShowList;
 	bool m_bWrapAroundFolder;
-	int m_nLevel;
+	int m_nLevel; // LoopSubFolders: depth of this folder below the start folder of the loop
 	CString m_sInitialFile;
 	CString m_sDirectory;
 	// filelists for several folders are chained
 	CFileList* m_next;
 	CFileList* m_prev;
-	// LoopSameFolderLevel: the chain is a cache of the sibling folders loaded so far, in folder order.
-	// These flags are true if it is known that no other sibling folder with images lies between
-	// this folder and m_next (m_prev), so the folders on disk need not be enumerated again.
+	// LoopSameFolderLevel and LoopSubFolders: the chain is a cache of the folders of the loop loaded so far,
+	// in folder order. These flags are true if it is known that no other folder of the loop with images lies
+	// between this folder and m_next (m_prev), so the folders on disk need not be enumerated again.
 	bool m_bNextIsAdjacent;
 	bool m_bPrevIsAdjacent;
 	std::list<CFileDesc> m_fileList;
@@ -182,21 +182,20 @@ private:
 
 	void MoveIterToLast();
 	void NextInFolder();
-	CFileList* GotoFirstShown();
 	std::list<CFileDesc>::iterator FindFile(const CString& sName);
-	CFileList* FindFileRecursively (const CString& sDirectory, const CString& sFindAfter, 
-		bool bSearchThisFolder, int nLevel, int nRecursion);
-	CFileList* TryCreateFileList(const CString& directory, int nNewLevel);
-	CFileList* WrapToNextImage();
-	CFileList* WrapToPrevImage();
-	// LoopSameFolderLevel: all sibling folders form one file list, see Next()
 	bool UsesStartFileAsLoopStart() const;
-	CFileList* NextInSiblingFolders();
-	CFileList* PrevInSiblingFolders();
+	// LoopSameFolderLevel and LoopSubFolders: all folders of the loop form one file list, see NextInFolderList()
+	CFileList* NextInFolderList();
+	CFileList* PrevInFolderList();
+	CFileList* AdjacentFolder(bool bForward);
+	CFileList* OuterFolder(bool bFirst);
 	bool GetSiblingFolders(CString& sParentDir, std::list<CString>& dirList) const;
 	CFileList* AdjacentSiblingFolder(bool bForward);
 	CFileList* OuterSiblingFolder(bool bFirst);
-	CFileList* GetSiblingFolderList(const CString& sDirectory);
+	CFileList* AdjacentSubFolder(bool bForward);
+	CFileList* OuterSubFolder(bool bFirst);
+	CString RootDirectory() const;
+	CFileList* GetFolderList(const CString& sDirectory, int nLevel);
 	void InsertAfter(CFileList* pList, bool bAdjacent);
 	void InsertBefore(CFileList* pList, bool bAdjacent);
 	void Unlink();
