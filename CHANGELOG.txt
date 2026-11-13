@@ -1,6 +1,6 @@
 JPEGView Changelog
 ******************
-[1.4.0.11] TBD
+[1.4.0.11] 2026-11-13
 - Added INI-Setting "ShowNavPanelFirstLastButtons" to switch the display of the 'Show first/last image in folder' buttons from the navigation panel. (fix for issue #38)
 - Improved folder navigation modes (fix for issue #39)
 
