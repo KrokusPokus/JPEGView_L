@@ -1,5 +1,9 @@
 JPEGView Changelog
 ******************
+[1.4.0.11] TBD
+- Added INI-Setting "ShowNavPanelFirstLastButtons" to switch the display of the 'Show first/last image in folder' buttons from the navigation panel. (fix for issue #38)
+- Improved folder navigation modes (fix for issue #39)
+
 [1.4.0.10] 2026-11-11
 - Fixed regression: Issue #30 (Opening files in a root folder might fail)
 - Uses half size resolution cache when downscaling to <25%
