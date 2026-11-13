@@ -216,9 +216,8 @@ static LPCTSTR* GetSupportedFileEndingList() {
 	return sFileEndings;
 }
 
-CFileList::CFileList(const CString & sInitialFile, CDirectoryWatcher & directoryWatcher, 
-	Helpers::ESorting eInitialSorting, bool isSortedAscending, bool bWrapAroundFolder, int nLevel, bool forceSorting)
-	: m_directoryWatcher(directoryWatcher) {
+CFileList::CFileList(const CString & sInitialFile,
+	Helpers::ESorting eInitialSorting, bool isSortedAscending, bool bWrapAroundFolder, int nLevel, bool forceSorting) {
 
 	CFileDesc::SetSorting(eInitialSorting, isSortedAscending);
 	m_bDeleteHistory = true;
@@ -242,8 +241,6 @@ CFileList::CFileList(const CString & sInitialFile, CDirectoryWatcher & directory
 	}
 	m_bIsSlideShowList = !bIsDirectory && !bImageFile && TryReadingSlideShowList(sInitialFile);
 	m_nMarkedIndexShow = -1;
-
-	m_directoryWatcher.SetCurrentDirectory(m_sDirectory);
 
 	if (!m_bIsSlideShowList) {
 		if (bImageFile || bIsDirectory) {
@@ -998,7 +995,7 @@ CFileList* CFileList::GetFolderList(const CString& sDirectory, int nLevel) {
 			return (pList->m_fileList.size() > 0) ? pList : NULL;
 		}
 	}
-	CFileList* pNewList = new CFileList(sDirectory + _T('\\'), m_directoryWatcher, CFileDesc::GetSorting(), CFileDesc::IsSortedAscending(), m_bWrapAroundFolder, nLevel);
+	CFileList* pNewList = new CFileList(sDirectory + _T('\\'), CFileDesc::GetSorting(), CFileDesc::IsSortedAscending(), m_bWrapAroundFolder, nLevel);
 	if (pNewList->m_fileList.size() == 0) {
 		delete pNewList;
 		return NULL;

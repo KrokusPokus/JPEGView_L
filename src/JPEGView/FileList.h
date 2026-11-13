@@ -2,8 +2,6 @@
 
 #include "Helpers.h"
 
-class CDirectoryWatcher;
-
 // Entry in the file list, allowing sorting by different sort criteria
 class CFileDesc 
 {
@@ -59,7 +57,9 @@ public:
 	// (must end with backslash in this case) or a text file containing file names to display.
 	// Supported text file encodings are ANSI, Unicode or UTF-8.
 	// nLevel is increased when recursively create lists for sub-folders
-	CFileList(const CString & sInitialFile, CDirectoryWatcher & directoryWatcher, 
+	// The list does not touch the directory watcher: it also creates lists of other folders while searching
+	// the next folder of the loop. The owner watches CurrentDirectory() of the list it shows.
+	CFileList(const CString & sInitialFile,
 		Helpers::ESorting eInitialSorting, bool isSortedAscending, bool bWrapAroundFolder, int nLevel = 0, bool forceSorting = false);
 	~CFileList();
 
@@ -177,8 +177,6 @@ private:
 	CString m_sMarkedFile;
 	CString m_sMarkedFileCurrent;
 	int m_nMarkedIndexShow;
-
-	CDirectoryWatcher & m_directoryWatcher;
 
 	void MoveIterToLast();
 	void NextInFolder();

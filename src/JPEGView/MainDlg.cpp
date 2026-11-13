@@ -472,9 +472,10 @@ LRESULT CMainDlg::OnInitDialog(UINT /*uMsg*/, WPARAM /*wParam*/, LPARAM /*lParam
 	::ShowCursor(m_bMouseOn);
 
 	// intitialize list of files to show with startup file (and folder)
-	m_pFileList = new CFileList(m_sStartupFile, *m_pDirectoryWatcher,
+	m_pFileList = new CFileList(m_sStartupFile,
 		(m_eForcedSorting == Helpers::FS_Undefined) ? sp.Sorting() : m_eForcedSorting, sp.IsSortedAscending(), sp.WrapAroundFolder(),
 		0, m_eForcedSorting != Helpers::FS_Undefined);
+	WatchCurrentDirectory();
 	m_pFileList->SetNavigationMode(sp.Navigation());
 
 	// create thread pool for processing requests on multiple CPU cores
@@ -3287,7 +3288,8 @@ void CMainDlg::OpenFile(LPCTSTR sFileName, bool bAfterStartup) {
 	}
 
 	m_sStartupFile = sFileName;
-	m_pFileList = new CFileList(m_sStartupFile, *m_pDirectoryWatcher, eOldSorting, oOldAscending, CSettingsProvider::This().WrapAroundFolder());
+	m_pFileList = new CFileList(m_sStartupFile, eOldSorting, oOldAscending, CSettingsProvider::This().WrapAroundFolder());
+	WatchCurrentDirectory();
 	// free current image and all read ahead images
 	InitParametersForNewImage();
 	m_pJPEGProvider->NotifyNotUsed(m_pCurrentImage);
@@ -3541,6 +3543,11 @@ void CMainDlg::GotoImage(EImagePosition ePos) {
 	GotoImage(ePos, 0);
 }
 
+void CMainDlg::WatchCurrentDirectory() {
+	LPCTSTR sDirectory = m_pFileList->CurrentDirectory();
+	m_pDirectoryWatcher->SetCurrentDirectory((sDirectory != NULL) ? sDirectory : _T(""));
+}
+
 void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 	// Timer handling for slideshows
 	if (ePos == POS_Next || ePos == POS_NextSlideShow) {
@@ -3668,6 +3675,10 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 			m_pFileList = m_pFileList->AwayFromCurrent();
 			break;
 	}
+
+	// The folder may have changed: another file list of the loop (LoopSameFolderLevel, LoopSubFolders),
+	// or the same list switched to the folder of the marked file (POS_Toggle)
+	WatchCurrentDirectory();
 
 	if (bCheckIfSameImage && (m_pFileList == pOldFileList && (nOldFrameIndex == nFrameIndex || bNoWrapAroundEdgeFrame) && !m_pFileList->ChangedSinceCheckpoint())) {
 		if (m_bMovieMode && m_bAutoExit) {

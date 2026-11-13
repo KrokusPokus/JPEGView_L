@@ -86,11 +86,17 @@ void CDirectoryWatcher::SetCurrentDirectory(LPCTSTR directoryName)
 
 	::EnterCriticalSection(&m_lock);
 
+	// Already watched: do not set up the change notifications again, this is called on every image change.
+	// If watching it failed (e.g. folder not reachable), try again.
+	bool bAlreadyWatched = !fullName.IsEmpty() && fullName.CompareNoCase(m_sCurrentDirectory) == 0 &&
+		fullName.CompareNoCase(m_sWatchedDirectory) == 0;
 	m_sCurrentDirectory = fullName;
 
 	::LeaveCriticalSection(&m_lock);
 
-	::SetEvent(m_newDirectoryEvent);
+	if (!bAlreadyWatched) {
+		::SetEvent(m_newDirectoryEvent);
+	}
 }
 
 
@@ -110,10 +116,14 @@ void CDirectoryWatcher::ThreadFunc(void* arg) {
 		int numHandles = bSetupNewDirectory ? 2 : 4;
 
 		::EnterCriticalSection(&thisPtr->m_lock);
+		if (bSetupNewDirectory) {
+			thisPtr->m_sWatchedDirectory.Empty();
+		}
 		if (bSetupNewDirectory && !thisPtr->m_sCurrentDirectory.IsEmpty()) {
 			waitHandles[2] = ::FindFirstChangeNotification(thisPtr->m_sCurrentDirectory, FALSE, FILE_NOTIFY_CHANGE_FILE_NAME);
 			if (waitHandles[2] != NULL && waitHandles[2] != INVALID_HANDLE_VALUE)
 			{
+				thisPtr->m_sWatchedDirectory = thisPtr->m_sCurrentDirectory;
 				numHandles++;
 				waitHandles[3] = ::FindFirstChangeNotification(thisPtr->m_sCurrentDirectory, FALSE, FILE_NOTIFY_CHANGE_LAST_WRITE);
 				if (waitHandles[3] != NULL && waitHandles[3] != INVALID_HANDLE_VALUE) {

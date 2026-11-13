@@ -25,6 +25,7 @@ private:
 	bool m_bTerminate;
 
 	CString m_sCurrentDirectory;
+	CString m_sWatchedDirectory; // directory the thread watches successfully, empty if none
 	CString m_sCurrentFile;
 	BOOL m_bModificationTimeValid;
 	FILETIME m_modificationTimeCurrentFile;
