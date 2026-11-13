@@ -68,6 +68,22 @@ static bool UseLogicalStringCompare() {
 	return s_bUseLogicalStringCompare;
 }
 
+// Order of folder names for the folder navigation modes: the same name order as the files
+// (natural, case-insensitive, full name as tie-breaker), reversed when sorting descending.
+// Folders are always ordered by name, also when the files are sorted by date, size or randomly.
+static bool FolderNameAscending(const CString& sName, const CString& sOther) {
+	int nByName = UseLogicalStringCompare() ? StrCmpLogicalW(sName, sOther) : _tcsicoll(sName, sOther);
+	if (nByName != 0) {
+		return nByName < 0;
+	}
+	return sName.Compare(sOther) < 0;
+}
+
+static bool FolderNameLess(const CString& sName, const CString& sOther) {
+	// Descending: "other before this", see CFileDesc::operator < for why not "not this before other"
+	return CFileDesc::IsSortedAscending() ? FolderNameAscending(sName, sOther) : FolderNameAscending(sOther, sName);
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 // CFileDesc
 ///////////////////////////////////////////////////////////////////////////////////
@@ -689,7 +705,7 @@ CFileList* CFileList::WrapToNextImage() {
 		if (dirList.size() == 0) {
 			return NULL; // no sibling folders
 		}
-		dirList.sort(); // sort is alphabetically
+		dirList.sort(FolderNameLess);
 
 		// now find the current folder and take the next in list
 		// to handle the wrap around, two iterations are needed (in case the current folder is the last in the list)
@@ -737,7 +753,7 @@ CFileList* CFileList::FindFileRecursively (const CString& sDirectory, const CStr
 	}
 
 	if (dirList.size() > 0) {
-		dirList.sort();
+		dirList.sort(FolderNameLess);
 
 		bool bStart = sFindAfter.GetLength() == 0;
 		std::list<CString>::iterator iter;
