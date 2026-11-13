@@ -3563,7 +3563,7 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 	// if we are at the last image,
 	// if we're at the last index of a multi-framed image (not animation)
 	// don't wrap around to index 0
-	bool bNoWrapAroundEdgeFrame = !CSettingsProvider::This().WrapAroundFolder() &&
+	bool bNoWrapAroundEdgeFrame = !m_pFileList->WrapsAround() &&
 		(m_pCurrentImage == NULL ? false : m_pCurrentImage->NumberOfFrames() > 1 && !m_pCurrentImage->IsAnimation());
 
 	int nFrameIndex = 0;
@@ -3577,14 +3577,14 @@ void CMainDlg::GotoImage(EImagePosition ePos, int nFlags) {
 			if (m_pCurrentImage && m_pCurrentImage->ContainerHasMultipleImages()) {
 				nFrameIndex = 0;
 			} else {
-				m_pFileList->First();
+				m_pFileList = m_pFileList->First();
 			}
 			break;
 		case POS_Last:
 			if (m_pCurrentImage && m_pCurrentImage->ContainerHasMultipleImages()) {
 				nFrameIndex = m_pCurrentImage->NumberOfFrames() - 1;
 			} else {
-				m_pFileList->Last();
+				m_pFileList = m_pFileList->Last();
 			}
 			break;
 		case POS_Next:

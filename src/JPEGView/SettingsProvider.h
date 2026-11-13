@@ -90,7 +90,8 @@ public:
 	bool CropWithoutPromptLosslessJPEG() { return m_bCropWithoutPromptLosslessJPEG; }
 	Helpers::EDeleteConfirmation DeleteConfirmation() { return m_eDeleteConfirmation; }
 	bool AllowFileDeletion() { return m_bAllowFileDeletion; }
-	bool WrapAroundFolder() { return m_bWrapAroundFolder && m_eNavigation == Helpers::NM_LoopDirectory; }
+	// what it means depends on the navigation mode, which can be changed at runtime, see CFileList::WrapsAround()
+	bool WrapAroundFolder() { return m_bWrapAroundFolder; }
 	bool ExchangeXButtons() { return m_bExchangeXButtons; }
 	bool AutoRotateEXIF() { return m_bAutoRotateEXIF; }
 	bool UseEmbeddedColorProfiles() { return m_bUseEmbeddedColorProfiles; }

@@ -226,6 +226,7 @@ CFileList::CFileList(const CString & sInitialFile, CDirectoryWatcher & directory
 	m_sInitialFile = sInitialFile;
 	m_nLevel = nLevel;
 	m_next = m_prev = NULL;
+	m_bNextIsAdjacent = m_bPrevIsAdjacent = false;
 	int nPos = sInitialFile.ReverseFind(_T('\\'));
 	m_sDirectory = (nPos > 0) ? sInitialFile.Left(nPos) : _T(""); // the backslash is stripped away!
 	nPos = sInitialFile.ReverseFind(_T('.'));
@@ -248,7 +249,7 @@ CFileList::CFileList(const CString & sInitialFile, CDirectoryWatcher & directory
 		if (bImageFile || bIsDirectory) {
 			FindFiles();
 			m_iter = FindFile(sInitialFile);
-			m_iterStart = bWrapAroundFolder ? m_iter : m_fileList.begin();
+			m_iterStart = UsesStartFileAsLoopStart() ? m_iter : m_fileList.begin();
 		} else {
 			// neither image file nor directory nor list of file names - try to read anyway but normally will fail
 			CFindFile fileFind;
@@ -304,11 +305,12 @@ void CFileList::Reload(LPCTSTR sFileName, bool clearForwardHistory) {
 			delete thisList;
 		}
 		m_next = NULL;
+		m_bNextIsAdjacent = false;
 	}
 
 	if (!m_bIsSlideShowList) {
 		FindFiles();
-		m_iterStart = m_bWrapAroundFolder ? FindFile(m_sInitialFile) : m_fileList.begin();
+		m_iterStart = UsesStartFileAsLoopStart() ? FindFile(m_sInitialFile) : m_fileList.begin();
 	} else {
 		VerifyFiles(); // maybe some of the files got deleted or moved
 		m_iterStart = m_fileList.begin();
@@ -391,6 +393,9 @@ void CFileList::ModificationTimeChanged() {
 
 CFileList* CFileList::Next() {
 	m_nMarkedIndexShow = -1;
+	if (sm_eMode == Helpers::NM_LoopSameDirectoryLevel) {
+		return NextInSiblingFolders();
+	}
 	if (m_fileList.size() > 0) {
 		std::list<CFileDesc>::iterator iterTemp = m_iter;
 		if (iterTemp == m_fileList.end())
@@ -401,7 +406,7 @@ CFileList* CFileList::Next() {
 		}
 		if (iterTemp == m_iterStart) {
 			// we are finished with this folder
-			if (!m_bWrapAroundFolder && sm_eMode == Helpers::NM_LoopDirectory) {
+			if (!WrapsAround() && sm_eMode == Helpers::NM_LoopDirectory) {
 				return this;
 			}
 			CFileList* pNextList = WrapToNextImage();
@@ -410,7 +415,7 @@ CFileList* CFileList::Next() {
 				pNextList = this;
 				while (pNextList->m_prev != NULL) pNextList = pNextList->m_prev;
 				if (pNextList != this) {
-					return m_bWrapAroundFolder ? GotoFirstShown() : this; // stop here, do not wrap around
+					return WrapsAround() ? GotoFirstShown() : this; // stop here, do not wrap around
 				}
 			}
 			if (pNextList != this) {
@@ -431,9 +436,12 @@ CFileList* CFileList::Next() {
 
 CFileList* CFileList::Prev() {
 	m_nMarkedIndexShow = -1;
+	if (sm_eMode == Helpers::NM_LoopSameDirectoryLevel) {
+		return PrevInSiblingFolders();
+	}
 	if (m_iter == m_iterStart) {
 		if (sm_eMode == Helpers::NM_LoopDirectory) {
-			if (!m_bWrapAroundFolder) {
+			if (!WrapsAround()) {
 				return this;
 			}
 			if (m_iter == m_fileList.begin()) {
@@ -457,15 +465,38 @@ CFileList* CFileList::Prev() {
 	return this;
 }
 
-void CFileList::First() {
+CFileList* CFileList::First() {
 	m_nMarkedIndexShow = -1;
-	m_iter = m_iterStart = m_fileList.begin();
+	CFileList* pFirst = this;
+	if (sm_eMode == Helpers::NM_LoopSameDirectoryLevel) {
+		pFirst = OuterSiblingFolder(true);
+		if (pFirst == NULL) {
+			pFirst = this; // no images at all
+		}
+		pFirst->m_nMarkedIndexShow = -1;
+	}
+	pFirst->m_iter = pFirst->m_iterStart = pFirst->m_fileList.begin();
+	return pFirst;
 }
 
-void CFileList::Last() {
+CFileList* CFileList::Last() {
 	m_nMarkedIndexShow = -1;
-	MoveIterToLast();
-	m_iterStart = m_fileList.begin();
+	CFileList* pLast = this;
+	if (sm_eMode == Helpers::NM_LoopSameDirectoryLevel) {
+		pLast = OuterSiblingFolder(false);
+		if (pLast == NULL) {
+			pLast = this; // no images at all
+		}
+		pLast->m_nMarkedIndexShow = -1;
+	}
+	pLast->MoveIterToLast();
+	pLast->m_iterStart = pLast->m_fileList.begin();
+	return pLast;
+}
+
+bool CFileList::WrapsAround() const {
+	// LoopSubFolders does not wrap around yet: at the end of the loop navigation stops, as before
+	return m_bWrapAroundFolder && sm_eMode != Helpers::NM_LoopSubDirectories;
 }
 
 CFileList* CFileList::AwayFromCurrent() {
@@ -553,7 +584,11 @@ void CFileList::SetSorting(Helpers::ESorting eSorting, bool sortAscending) {
 		CFileDesc::SetSorting(eSorting, sortAscending);
 		m_fileList.sort();
 		m_iter = FindFile(sThisFile);
-		m_iterStart = m_bWrapAroundFolder ? m_iter : m_fileList.begin();
+		m_iterStart = UsesStartFileAsLoopStart() ? m_iter : m_fileList.begin();
+		if (sm_eMode == Helpers::NM_LoopSameDirectoryLevel) {
+			// the other loaded folders are neither resorted nor in the new folder order, reload them when needed
+			DeleteHistory();
+		}
 	}
 }
 
@@ -573,7 +608,7 @@ void CFileList::SetNavigationMode(Helpers::ENavigationMode eMode) {
 	sm_eMode = eMode;
 	DeleteHistory();
 	m_nLevel = 0;
-	m_iterStart = m_bWrapAroundFolder ? m_iter : m_fileList.begin();
+	m_iterStart = UsesStartFileAsLoopStart() ? m_iter : m_fileList.begin();
 }
 
 void CFileList::MarkCurrentFile() {
@@ -642,9 +677,10 @@ void CFileList::DeleteHistory(bool onlyForward) {
 			delete thisList;
 		}
 		m_prev = NULL;
+		m_bPrevIsAdjacent = false;
 	}
 	m_next = NULL;
-	
+	m_bNextIsAdjacent = false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////
@@ -652,12 +688,11 @@ void CFileList::DeleteHistory(bool onlyForward) {
 ///////////////////////////////////////////////////////////////////////////////////
 
 void CFileList::MoveIterToLast() {
-	std::list<CFileDesc>::iterator lastIter = m_iter;
-	while (m_iter != m_fileList.end()) {
-		lastIter = m_iter;
-		m_iter++;
+	// also correct when m_iter is end(), e.g. after AwayFromCurrent() found no other image
+	m_iter = m_fileList.end();
+	if (m_fileList.size() > 0) {
+		m_iter--;
 	}
-	m_iter = lastIter;
 }
 
 std::list<CFileDesc>::iterator CFileList::FindFile(const CString& sName) {
@@ -680,50 +715,8 @@ CFileList* CFileList::WrapToNextImage() {
 		return m_next;
 	}
 
-	if (sm_eMode == Helpers::NM_LoopDirectory) {
-		return NULL;
-	} else if (sm_eMode == Helpers::NM_LoopSameDirectoryLevel) {
-		int nPos = m_sDirectory.ReverseFind(_T('\\'));
-		if (nPos <= 0) {
-			return NULL; // root dir - no siblings
-		}
-		CString sNextDirRoot = m_sDirectory.Left(nPos);
-		CString sThisDirTitle = m_sDirectory.Right(m_sDirectory.GetLength() - nPos - 1);
-		// collect all sibling folders
-		CFindFile fileFind;
-		std::list<CString> dirList;
-		if (fileFind.FindFile(sNextDirRoot + "\\*")) {
-			if (fileFind.IsDirectory() && !fileFind.IsDots()) {
-				dirList.push_back(fileFind.GetFileName());
-			}
-			while (fileFind.FindNextFile()) {
-				if (fileFind.IsDirectory() && !fileFind.IsDots()) {
-					dirList.push_back(fileFind.GetFileName());
-				}
-			}
-		}
-		if (dirList.size() == 0) {
-			return NULL; // no sibling folders
-		}
-		dirList.sort(FolderNameLess);
-
-		// now find the current folder and take the next in list
-		// to handle the wrap around, two iterations are needed (in case the current folder is the last in the list)
-		std::list<CString>::iterator iter;
-		bool bFound = false;
-		for (int nStep = 0; nStep < 2; nStep++) {
-			for (iter = dirList.begin( ); iter != dirList.end( ); iter++ ) {
-				if (iter->CompareNoCase(sThisDirTitle) == 0) {
-					bFound = true;
-				} else if (bFound) {
-					CFileList* pNewList = TryCreateFileList(sNextDirRoot + '\\' + *iter + '\\', 0);
-					if (pNewList != NULL) {
-						return pNewList;
-					}
-				}
-			}
-		}
-	} else if (sm_eMode == Helpers::NM_LoopSubDirectories) {
+	// LoopSameFolderLevel does not come here, see NextInSiblingFolders()
+	if (sm_eMode == Helpers::NM_LoopSubDirectories) {
 		CFileList* pFileList = FindFileRecursively(m_sDirectory, _T(""), false, m_nLevel, 0);
 		return pFileList;
 	}
@@ -792,6 +785,226 @@ CFileList* CFileList::WrapToPrevImage() {
 		return m_prev;
 	}
 	return this;
+}
+
+bool CFileList::UsesStartFileAsLoopStart() const {
+	// Only LoopFolder with wrap around starts the loop at the start file. In LoopSameFolderLevel all
+	// sibling folders form one file list and the start file is just a position in it. LoopSubFolders
+	// does not wrap around (see WrapsAround()), so it starts at the beginning of the folder as before.
+	return m_bWrapAroundFolder && sm_eMode == Helpers::NM_LoopDirectory;
+}
+
+// LoopSameFolderLevel: the files of all sibling folders form one list, in folder order and within
+// each folder in file order. With wrap around, the last file of the last folder is followed by the
+// first file of the first folder; without, navigation stops there.
+CFileList* CFileList::NextInSiblingFolders() {
+	if (m_fileList.size() > 0) {
+		if (m_iter == m_fileList.end()) {
+			return this;
+		}
+		std::list<CFileDesc>::iterator iterNext = m_iter;
+		iterNext++;
+		if (iterNext != m_fileList.end()) {
+			m_iter = iterNext;
+			return this;
+		}
+	}
+	// last file of this folder (or no files): continue with the first file of the next folder
+	CFileList* pNext = AdjacentSiblingFolder(true);
+	if (pNext == NULL) {
+		if (!WrapsAround()) {
+			return this;
+		}
+		pNext = OuterSiblingFolder(true);
+		if (pNext == NULL) {
+			return this;
+		}
+	}
+	pNext->m_nMarkedIndexShow = -1;
+	pNext->m_iter = pNext->m_fileList.begin();
+	return pNext;
+}
+
+CFileList* CFileList::PrevInSiblingFolders() {
+	if (m_fileList.size() > 0 && m_iter != m_fileList.begin()) {
+		m_iter--;
+		return this;
+	}
+	// first file of this folder (or no files): continue with the last file of the previous folder
+	CFileList* pPrev = AdjacentSiblingFolder(false);
+	if (pPrev == NULL) {
+		if (!WrapsAround()) {
+			return this;
+		}
+		pPrev = OuterSiblingFolder(false);
+		if (pPrev == NULL) {
+			return this;
+		}
+	}
+	pPrev->m_nMarkedIndexShow = -1;
+	pPrev->MoveIterToLast();
+	return pPrev;
+}
+
+// Gets the parent folder and the names of all its subfolders (including this folder), in folder order.
+// Returns false if this folder has no parent folder.
+bool CFileList::GetSiblingFolders(CString& sParentDir, std::list<CString>& dirList) const {
+	int nPos = m_sDirectory.ReverseFind(_T('\\'));
+	if (nPos <= 0) {
+		return false; // root dir - no siblings
+	}
+	sParentDir = m_sDirectory.Left(nPos);
+	CFindFile fileFind;
+	if (fileFind.FindFile(sParentDir + _T("\\*"))) {
+		do {
+			if (fileFind.IsDirectory() && !fileFind.IsDots()) {
+				dirList.push_back(fileFind.GetFileName());
+			}
+		} while (fileFind.FindNextFile());
+	}
+	dirList.sort(FolderNameLess);
+	return true;
+}
+
+// Returns the nearest sibling folder with images after (before) this folder, without wrap around.
+// NULL if there is none.
+CFileList* CFileList::AdjacentSiblingFolder(bool bForward) {
+	if (bForward && m_next != NULL && m_bNextIsAdjacent) {
+		return m_next;
+	}
+	if (!bForward && m_prev != NULL && m_bPrevIsAdjacent) {
+		return m_prev;
+	}
+	CString sParentDir;
+	std::list<CString> dirList;
+	if (!GetSiblingFolders(sParentDir, dirList)) {
+		return NULL;
+	}
+	// compared by name, so this also works if this folder has been deleted or renamed meanwhile
+	CString sThisTitle = m_sDirectory.Mid(sParentDir.GetLength() + 1);
+	if (!bForward) {
+		dirList.reverse();
+	}
+	for (std::list<CString>::iterator iter = dirList.begin(); iter != dirList.end(); iter++) {
+		if (iter->CompareNoCase(sThisTitle) == 0) {
+			continue;
+		}
+		bool bBehindThis = bForward ? FolderNameLess(sThisTitle, *iter) : FolderNameLess(*iter, sThisTitle);
+		if (bBehindThis) {
+			CFileList* pList = GetSiblingFolderList(sParentDir + _T('\\') + *iter);
+			if (pList != NULL) {
+				if (bForward) {
+					InsertAfter(pList, true);
+				} else {
+					InsertBefore(pList, true);
+				}
+				return pList;
+			}
+		}
+	}
+	return NULL;
+}
+
+// Returns the first (last) sibling folder with images, this folder included. NULL if there is none.
+CFileList* CFileList::OuterSiblingFolder(bool bFirst) {
+	CString sParentDir;
+	std::list<CString> dirList;
+	if (GetSiblingFolders(sParentDir, dirList)) {
+		if (!bFirst) {
+			dirList.reverse();
+		}
+		for (std::list<CString>::iterator iter = dirList.begin(); iter != dirList.end(); iter++) {
+			CString sDirectory = sParentDir + _T('\\') + *iter;
+			if (sDirectory.CompareNoCase(m_sDirectory) == 0) {
+				if (m_fileList.size() > 0) {
+					return this;
+				}
+				continue;
+			}
+			CFileList* pList = GetSiblingFolderList(sDirectory);
+			if (pList != NULL) {
+				// keep the chain in folder order: the first (last) folder belongs to its start (end)
+				CFileList* pOuter = this;
+				if (bFirst) {
+					while (pOuter->m_prev != NULL) pOuter = pOuter->m_prev;
+					if (pOuter != pList) pOuter->InsertBefore(pList, false);
+				} else {
+					while (pOuter->m_next != NULL) pOuter = pOuter->m_next;
+					if (pOuter != pList) pOuter->InsertAfter(pList, false);
+				}
+				return pList;
+			}
+		}
+	}
+	return (m_fileList.size() > 0) ? this : NULL;
+}
+
+// Returns the file list of the given sibling folder (without backslash at the end), from the chain if
+// already loaded, else newly created and not yet linked into the chain. NULL if the folder has no images.
+CFileList* CFileList::GetSiblingFolderList(const CString& sDirectory) {
+	CFileList* pList = this;
+	while (pList->m_prev != NULL) pList = pList->m_prev;
+	for (; pList != NULL; pList = pList->m_next) {
+		if (pList->m_sDirectory.CompareNoCase(sDirectory) == 0) {
+			return (pList->m_fileList.size() > 0) ? pList : NULL;
+		}
+	}
+	CFileList* pNewList = new CFileList(sDirectory + _T('\\'), m_directoryWatcher, CFileDesc::GetSorting(), CFileDesc::IsSortedAscending(), m_bWrapAroundFolder, 0);
+	if (pNewList->m_fileList.size() == 0) {
+		delete pNewList;
+		return NULL;
+	}
+	return pNewList;
+}
+
+// Inserts pList into the chain directly behind this list, taking it out of its old place first
+void CFileList::InsertAfter(CFileList* pList, bool bAdjacent) {
+	if (pList != m_next) {
+		pList->Unlink();
+		pList->m_next = m_next;
+		pList->m_bNextIsAdjacent = false;
+		if (m_next != NULL) {
+			m_next->m_prev = pList;
+			m_next->m_bPrevIsAdjacent = false;
+		}
+		m_next = pList;
+		pList->m_prev = this;
+		m_bNextIsAdjacent = pList->m_bPrevIsAdjacent = bAdjacent;
+	} else if (bAdjacent) {
+		m_bNextIsAdjacent = pList->m_bPrevIsAdjacent = true; // already linked, now known to be adjacent
+	}
+}
+
+// Inserts pList into the chain directly in front of this list, taking it out of its old place first
+void CFileList::InsertBefore(CFileList* pList, bool bAdjacent) {
+	if (pList != m_prev) {
+		pList->Unlink();
+		pList->m_prev = m_prev;
+		pList->m_bPrevIsAdjacent = false;
+		if (m_prev != NULL) {
+			m_prev->m_next = pList;
+			m_prev->m_bNextIsAdjacent = false;
+		}
+		m_prev = pList;
+		pList->m_next = this;
+		m_bPrevIsAdjacent = pList->m_bNextIsAdjacent = bAdjacent;
+	} else if (bAdjacent) {
+		m_bPrevIsAdjacent = pList->m_bNextIsAdjacent = true; // already linked, now known to be adjacent
+	}
+}
+
+// Takes this list out of the chain, its neighbors are linked to each other
+void CFileList::Unlink() {
+	if (m_prev != NULL) {
+		m_prev->m_next = m_next;
+		m_prev->m_bNextIsAdjacent = false;
+	}
+	if (m_next != NULL) {
+		m_next->m_prev = m_prev;
+		m_next->m_bPrevIsAdjacent = false;
+	}
+	m_prev = m_next = NULL;
+	m_bPrevIsAdjacent = m_bNextIsAdjacent = false;
 }
 
 void CFileList::NextInFolder() {

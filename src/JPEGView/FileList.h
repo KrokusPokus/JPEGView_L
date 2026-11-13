@@ -80,10 +80,14 @@ public:
 	CFileList* Next();
 	// Move to previous file in list. The filelist object of the prev item is returned.
 	CFileList* Prev();
-	// Move to first file in current folder (according to sort order)
-	void First();
-	// Move to last file in current folder (according to sort order)
-	void Last();
+	// Move to first file (according to sort order): of the current folder, or in LoopSameFolderLevel mode
+	// of the first sibling folder containing images. The filelist object of that file is returned.
+	CFileList* First();
+	// Move to last file (according to sort order): of the current folder, or in LoopSameFolderLevel mode
+	// of the last sibling folder containing images. The filelist object of that file is returned.
+	CFileList* Last();
+	// Returns if navigation wraps around from the last to the first file and vice versa in the current navigation mode
+	bool WrapsAround() const;
 	// Move away from current image, either forward or backward (if on last image)
 	CFileList* AwayFromCurrent();
 	// Filename (with path) of the current item in the list, NULL if none
@@ -160,6 +164,11 @@ private:
 	// filelists for several folders are chained
 	CFileList* m_next;
 	CFileList* m_prev;
+	// LoopSameFolderLevel: the chain is a cache of the sibling folders loaded so far, in folder order.
+	// These flags are true if it is known that no other sibling folder with images lies between
+	// this folder and m_next (m_prev), so the folders on disk need not be enumerated again.
+	bool m_bNextIsAdjacent;
+	bool m_bPrevIsAdjacent;
 	std::list<CFileDesc> m_fileList;
 	std::list<CFileDesc>::iterator m_iter; // current position in m_fileList
 	std::list<CFileDesc>::iterator m_iterStart; // start of iteration in m_fileList
@@ -180,6 +189,17 @@ private:
 	CFileList* TryCreateFileList(const CString& directory, int nNewLevel);
 	CFileList* WrapToNextImage();
 	CFileList* WrapToPrevImage();
+	// LoopSameFolderLevel: all sibling folders form one file list, see Next()
+	bool UsesStartFileAsLoopStart() const;
+	CFileList* NextInSiblingFolders();
+	CFileList* PrevInSiblingFolders();
+	bool GetSiblingFolders(CString& sParentDir, std::list<CString>& dirList) const;
+	CFileList* AdjacentSiblingFolder(bool bForward);
+	CFileList* OuterSiblingFolder(bool bFirst);
+	CFileList* GetSiblingFolderList(const CString& sDirectory);
+	void InsertAfter(CFileList* pList, bool bAdjacent);
+	void InsertBefore(CFileList* pList, bool bAdjacent);
+	void Unlink();
 	void FindFiles();
 	void VerifyFiles();
 	bool IsImageFile(const CString & sEnding);
